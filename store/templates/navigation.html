@@ -1,0 +1,135 @@
+{% load static %}
+<style>
+  .suggestion-container {
+    position: absolute;
+    margin-top: 2px;
+    max-height: 20rem;
+    width: 22.51rem;
+    overflow-y: auto;
+    background-color: #fff;
+    border: 1px solid #cfd4f3;
+    z-index: 1;
+  }
+  .autocomplete-item {
+    padding: 5px;
+    cursor: pointer;
+  }
+  .autocomplete-item:hover {
+    background-color: #f1f1f1;
+  }
+</style>
+<!-- Topbar -->
+<nav class="navbar navbar-expand navbar-light bg-white topbar mb-4 static-top shadow">
+  <!-- Sidebar Toggle (Topbar) -->
+  <button id="sidebarToggleTop" class="btn btn-link d-md-none rounded-circle mr-3">
+    <i class="fa fa-bars"></i>
+  </button>
+
+  <!-- Topbar Search -->
+  <form
+    class="d-none d-sm-inline-block form-inline mr-auto ml-md-3 my-2 my-md-0 mw-100 navbar-search">
+    <div class="input-group">
+      <input type="text" class="form-control bg-light border-0 small" placeholder="Type customer name here..."
+        aria-label="Search" aria-describedby="basic-addon2" id="customerNameInput"
+        autocomplete="off"
+      >
+      <div class="input-group-append">
+        <button class="btn btn-primary" type="button">
+          <i class="fas fa-search fa-sm"></i>
+        </button>
+      </div>
+    </div>
+    <div class="suggestion-container"></div>
+  </form>
+
+  <!-- Topbar Navbar -->
+  <ul class="navbar-nav ml-auto">
+    <!-- Nav Item - Search Dropdown (Visible Only XS) -->
+    <li class="nav-item dropdown no-arrow d-sm-none">
+      <a class="nav-link dropdown-toggle" href="#" id="searchDropdown" role="button"
+        data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+        <i class="fas fa-search fa-fw"></i>
+      </a>
+      <!-- Dropdown - Messages -->
+      <div class="dropdown-menu dropdown-menu-right p-3 shadow animated--grow-in"
+        aria-labelledby="searchDropdown">
+        <form class="form-inline mr-auto w-100 navbar-search">
+          <div class="input-group">
+            <input type="text" class="form-control bg-light border-0 small"
+              placeholder="Search for..." aria-label="Search"
+              aria-describedby="basic-addon2"
+            >
+            <div class="input-group-append">
+              <button class="btn btn-primary" type="button">
+                <i class="fas fa-search fa-sm"></i>
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </li>
+    <div class="topbar-divider d-none d-sm-block"></div>
+
+    <!-- User Information -->
+    <li class="nav-item dropdown no-arrow">
+      <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button"
+        data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+        <span class="mr-2 d-none d-lg-inline text-gray-600 small">{{ user.username }}</span>
+        <img class="img-profile rounded-circle" src="{% static 'img/undraw_profile.svg' %}">
+      </a>
+      <!-- Dropdown - User Information -->
+      <div class="dropdown-menu dropdown-menu-right shadow animated--grow-in"
+        aria-labelledby="userDropdown">
+        <a class="dropdown-item" href="#" data-toggle="modal" data-target="#logoutModal">
+          <i class="fas fa-sign-out-alt fa-sm fa-fw mr-2 text-gray-400"></i>
+          Logout
+        </a>
+      </div>
+    </li>
+  </ul>
+</nav>
+<!-- End of Topbar -->
+
+<script>
+  $(document).ready(function() {
+    const customerNameInput = $("#customerNameInput");
+    const suggestionContainer = $(".suggestion-container");
+
+    customerNameInput.on("input", function() {
+      const query = customerNameInput.val();
+
+      // Send AJAX request to the Django view to fetch suggestions
+      axios.get(`{% url 'customers:suggest_customer' %}?query=${query}`)
+        .then(function(response) {
+          const data = response.data;
+          // Clear previous suggestions
+          $(".autocomplete-item").remove();
+          const customers = data.customers;
+          // Display the new suggestions
+          customers.forEach(function(customer) {
+            const suggestionItem = $(`<p class="autocomplete-item m-0 hehe" data-id="${customer.id}">${customer.name}</p>`);
+            // Handle suggestion item click to populate the input field
+            
+            suggestionContainer.append(suggestionItem);
+          });
+        })
+        .catch(function(error) {
+          console.error("Error fetching suggestions:", error);
+        });
+    });
+
+    // Hide suggestions when the input field loses focus
+    customerNameInput.on('blur', function() {
+      setTimeout(function() {
+        suggestionContainer.empty(); // Clear suggestions on blur
+      }, 200);
+    });
+
+    // On click on suggession we will redirect the customer to the customer page.
+    suggestionContainer.on('click', '.hehe', (event)=>{
+      let customer_id = event.currentTarget.dataset.id;
+      let url = `/customers/${customer_id}`;
+      window.location.href = url;
+    });
+  });
+</script>
