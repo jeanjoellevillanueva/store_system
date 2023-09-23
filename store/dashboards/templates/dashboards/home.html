@@ -1,0 +1,125 @@
+{% extends 'base.html' %}
+{% block header %}Financials Dashboard{% if source.display_name %} ({{ source.display_name }}){% endif %}{% endblock %}
+
+{% block button %}
+<div class="dropdown no-arrow">
+  <button
+    class="dropdown-toggle d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm btn-icon-split"
+    id="dropdownMenuLink"
+    data-toggle="dropdown"
+    aria-haspopup="true"
+    aria-expanded="false"
+  >
+    <span class="icon text-white-50">
+      <i class="fas fa-caret-down"></i>
+    </span>
+    <span class="text">Action</span>
+  </button>
+  <div class="dropdown-menu dropdown-menu-right shadow animated--fade-in"
+    aria-labelledby="dropdownMenuLink">
+    <div class="dropdown-header">Sources:</div>
+    {% for source in sources %}
+    <a class="dropdown-item" href="{% url 'dashboards:dashboard_financial_source' source.name %}">{{ source.display_name }}</a>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}
+  {% include 'generic/filters/filter_date_range.html' %}  
+
+  <div class="row">
+    <div class="col-xl-4 col-md-4 mb-4" id="totalSaleContainer">
+      {% include 'sales/cards/card_total_sale.html' %}
+    </div>
+    <div class="col-xl-4 col-md-4 mb-4" id="totalExpenseContainer">
+      {% include 'expenses/cards/card_total_expense.html' %}
+    </div>
+    <div class="col-xl-4 col-md-4 mb-4" id="totalProfitContainer">
+      {% include 'sales/cards/card_profit.html' %}
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-xl-12 col-lg-12">
+      <div class="card shadow mb-4">
+        <div
+          class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+          <h6 class="m-0 font-weight-bold text-primary">Financial</h6>
+        </div>
+        <div class="card-body d-flex justify-content-center align-items-center" id="financialLineChartContainer" style="height: 20rem">
+          <canvas id="lineChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-xl-12 col-lg-12">
+      <div class="card shadow mb-4">
+        <div
+          class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+          <h6 class="m-0 font-weight-bold text-primary">Monthly Financial Chart (2023)</h6>
+        </div>
+        <div class="card-body d-flex justify-content-center align-items-center" id="" style="height: 20rem">
+          <canvas id="barChart" width="800" height="400"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}
+
+{% block javascript %}
+<script>
+  $(document).ready(()=>{
+    let ctx = document.getElementById('lineChart').getContext('2d');
+    let lineChart = new Chart(ctx, {
+      type: 'line',
+      data: JSON.parse('{{ financial_data|safe }}'),
+      options: {
+        maintainAspectRatio: false,
+        scales: {
+          x: {
+            type: 'time',
+            time: {
+                unit: 'month',
+                displayFormats: {
+                month: 'MMM YYYY'
+              },
+            },
+            distribution: 'linear',
+            title: {
+              display: true,
+              text: 'Month',
+            },
+          },
+          y: {
+            beginAtZero: true,
+            title: {
+              display: true,
+              text: 'Amount',
+            },
+          },
+        },
+      },
+    });
+  });
+</script>
+<script>
+  $(document).ready(()=>{
+  var ctx = document.getElementById('barChart').getContext('2d');
+  var barChart = new Chart(ctx, {
+      type: 'bar',
+      data: JSON.parse('{{ bar_data|safe }}'),
+      options: {
+          maintainAspectRatio: false,
+          scales: {
+              y: {
+                  beginAtZero: true
+              }
+          }
+      }
+  });
+});
+</script>
+{% endblock %}
