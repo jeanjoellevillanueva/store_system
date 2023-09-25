@@ -3,26 +3,18 @@
 <ul class="navbar-nav bg-gradient-primary sidebar sidebar-dark accordion" id="accordionSidebar">
 
   <!-- Sidebar - Brand -->
-  <a class="sidebar-brand d-flex align-items-center justify-content-center" href="{% url 'dashboards:dashboard_customer' %}">
+  <a class="sidebar-brand d-flex align-items-center justify-content-center" href="{% url 'dashboards:home' %}">
     <div class="sidebar-brand-icon">
       <img src="{% static 'img/logo.jpeg' %}" class="rounded-circle" style="height: 3rem"/>
     </div>
-    <div class="sidebar-brand-text mx-3">Galinduh</div>
+    <div class="sidebar-brand-text mx-3">{{ PROJECT_NAME }}</div>
   </a>
 
   <hr class="sidebar-divider my-0">
   <li class="nav-item">
-    <a class="nav-link" href="{% url 'dashboards:dashboard_customer' %}">
-      <i class="fas fa-fw fa-user-circle"></i>
-      <span>Customers</span>
-    </a>
-  </li>
-
-  <hr class="sidebar-divider my-0">
-  <li class="nav-item">
-    <a class="nav-link" href="{% url 'dashboards:dashboard_financial' %}">
+    <a class="nav-link" href="{% url 'dashboards:home' %}">
       <i class="fas fa-fw fa-cash-register"></i>
-      <span>Financials</span>
+      <span>POS</span>
     </a>
   </li>
 

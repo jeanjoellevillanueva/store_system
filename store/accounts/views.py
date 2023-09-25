@@ -1,8 +1,8 @@
 from django.contrib.auth import login
 from django.contrib.auth import logout
-from django.views.generic import FormView
 from django.shortcuts import redirect
 from django.urls import reverse_lazy
+from django.views.generic import FormView
 
 from .forms import LoginForm
 
@@ -14,7 +14,7 @@ class LoginView(FormView):
 
     template_name = 'login.html'
     form_class = LoginForm
-    success_url = reverse_lazy('dashboards:dashboard_customer')
+    success_url = reverse_lazy('dashboards:home')
 
     def form_valid(self, form):
         user = form.get_user()

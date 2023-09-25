@@ -99,7 +99,7 @@
       const query = customerNameInput.val();
 
       // Send AJAX request to the Django view to fetch suggestions
-      axios.get(`{% url 'customers:suggest_customer' %}?query=${query}`)
+      axios.get(`{# url 'customers:suggest_customer' #}?query=${query}`)
         .then(function(response) {
           const data = response.data;
           // Clear previous suggestions
