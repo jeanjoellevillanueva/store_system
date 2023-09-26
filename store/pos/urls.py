@@ -1,15 +1,15 @@
 from django.urls import path
 
-from .views import HomeTemplateView
+from .views import POSTemplateView
 
 
-app_name = 'dashboards'
+app_name = 'pos'
 
 
 urlpatterns = [
     path(
         '',
-        HomeTemplateView.as_view(),
+        POSTemplateView.as_view(),
         name='home'
     ),
 ]

@@ -32,9 +32,9 @@ ALLOWED_HOSTS = []
 
 LOCAL_APPS = [
     'accounts',
-    'dashboards',
     'inventory',
     'mixins',
+    'pos',
 ]
 
 THIRDPARTY_APPS = [
@@ -141,6 +141,6 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Login Settings.
 LOGIN_URL = 'accounts:login'
-LOGIN_REDIRECT_URL = 'dashboards:home'
+LOGIN_REDIRECT_URL = 'pos:home'
 
 PROJECT_NAME = 'JNS Motoshop'

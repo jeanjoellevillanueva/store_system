@@ -14,7 +14,7 @@ class LoginView(FormView):
 
     template_name = 'login.html'
     form_class = LoginForm
-    success_url = reverse_lazy('dashboards:home')
+    success_url = reverse_lazy('pos:home')
 
     def form_valid(self, form):
         user = form.get_user()

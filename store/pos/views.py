@@ -3,7 +3,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic import TemplateView
 
 
-class InventoryTemplateView(LoginRequiredMixin, TemplateView):
+class POSTemplateView(LoginRequiredMixin, TemplateView):
     """
     """
-    template_name = 'inventory/home.html'
+    template_name = 'pos/home.html'

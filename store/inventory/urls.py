@@ -1,6 +1,6 @@
 from django.urls import path
 
-from .views import ProductDatatableTemplateView
+from .views import InventoryTemplateView
 
 
 app_name = 'inventory'
@@ -9,7 +9,7 @@ app_name = 'inventory'
 urlpatterns = [
      path(
         'products/',
-        ProductDatatableTemplateView.as_view(),
-        name='list_products'
+        InventoryTemplateView.as_view(),
+        name='products'
     ),
 ]

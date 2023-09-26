@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+{% block header %}Inventory{% endblock %}
+
+{% block button %}
+<div class="dropdown no-arrow">
+  <button
+    class="dropdown-toggle d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm btn-icon-split"
+    id="dropdownMenuLink"
+    data-toggle="dropdown"
+    aria-haspopup="true"
+    aria-expanded="false"
+  >
+    <span class="text">Add an Item</span>
+  </button>
+</div>
+{% endblock %}
+
+{% block content %} 
+  <div class="row">
+    <div class="col-xl-4 col-md-4 mb-4" id="totalSaleContainer">
+      {# include 'sales/cards/card_total_sale.html' #}
+    </div>
+    <div class="col-xl-4 col-md-4 mb-4" id="totalExpenseContainer">
+      {# include 'expenses/cards/card_total_expense.html' #}
+    </div>
+    <div class="col-xl-4 col-md-4 mb-4" id="totalProfitContainer">
+      {# include 'sales/cards/card_profit.html' #}
+    </div>
+  </div>
+{% endblock %}
