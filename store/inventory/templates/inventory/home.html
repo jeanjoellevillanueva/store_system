@@ -2,17 +2,12 @@
 {% block header %}Inventory{% endblock %}
 
 {% block button %}
-<div class="dropdown no-arrow">
-  <button
-    class="dropdown-toggle d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm btn-icon-split"
-    id="dropdownMenuLink"
-    data-toggle="dropdown"
-    aria-haspopup="true"
-    aria-expanded="false"
-  >
-    <span class="text">Add an Item</span>
-  </button>
-</div>
+<button data-toggle="modal" data-target="#customerModal" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm btn-icon-split">
+  <span class="icon text-white-50">
+    <i class="fas fa-user-plus"></i>
+  </span>
+  <span class="text">Add an item</span>
+</button>
 {% endblock %}
 
 {% block content %} 
