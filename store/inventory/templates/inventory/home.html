@@ -22,5 +22,28 @@
       {# include 'sales/cards/card_profit.html' #}
     </div>
   </div>
+
+  <div class="row">
+    <div class="col-xl-12 col-lg-12">
+      <div class="card shadow mb-4">
+        <div
+          class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+          <h6 class="m-0 font-weight-bold text-primary">Products</h6>
+        </div>
+        <div id="idProductTableContainer" class="card-body d-flex justify-content-center align-items-center">
+          <!-- This will be filled by axios -->
+        </div>
+      </div>
+    </div>
+  </div>
   {% include 'inventory/forms/create_inventory.html' %}
+{% endblock %}
+
+{% block javascript %}
+<script>
+  $(document).ready(()=>{
+    // Call the function to fetch data and populate the DataTable
+    reloadComponent("{% url 'inventory:list_product' %}", 'idProductTableContainer', true);
+  });
+</script>
 {% endblock %}

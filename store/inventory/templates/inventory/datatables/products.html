@@ -1,0 +1,55 @@
+<div class="table-responsive">
+  <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+    <thead>
+      <tr>
+        <th class="text-center">Item Code</th>
+        <th class="text-center">Product</th>
+        <th class="text-center">Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for product in products %}
+      <tr>
+        <td>{{ product.item_code }}</td>
+        <td>
+          <a href="{% url 'inventory:product' product.item_code %}">
+            {{ product.name }}
+          </a>
+        </td>
+        <td class="text-center">
+          <a
+            class="btn btn-warning update-expense-button"
+            data-toggle="modal"
+            data-target="#expenseEditModal"
+            data-url="{# url 'expenses:update_expense' expense.id #}"
+          >
+            <span class="icon text-white-50">
+              <i class="fas fa-pen"></i>
+            </span>
+          </a>
+          <a
+            class="btn btn-danger delete-expense-button"
+            data-toggle="modal"
+            data-target="#expenseDeleteModal"
+            data-url="{# url 'expenses:delete_expense' expense.id #}"
+          >
+            <span class="icon text-white-50">
+              <i class="fas fa-trash"></i>
+            </span>
+          </a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+<script>
+  /**
+   * Apply datatable.net plugin on the table.
+   */
+  $(document).ready(function() {
+    $('#dataTable').DataTable({
+      order: [],
+    });
+  });
+</script>

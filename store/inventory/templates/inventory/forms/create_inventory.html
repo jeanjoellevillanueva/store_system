@@ -11,7 +11,7 @@
   }
 </style>
 <div class="modal fade" id="inventoryModal" tabindex="-1" role="dialog" aria-labelledby="inventoryModalLabel" aria-hidden="true">
-  <div class="modal-dialog" role="document">
+  <div class="modal-dialog modal-lg" role="document">
     <div class="modal-content">
       <form id="inventoryForm" method="POST">
         {% csrf_token %}
@@ -31,31 +31,43 @@
           {% endfor %}
           <div class="form-row" style="margin-bottom: 1rem;" id="idVariationQuantityFieldset0">
             <div class="col-5">
-              <label for="idProductVariation">Variation</label>
-              <input class="form-control" type="text" name="variation_0" id="idProductVariation" required/>
-            </div>
-            <div class="col-5">
-              <label for="idProductQuantity">Quantity:</label>
-              <input class="form-control" type="number" name="quantity_0" id="idProductQuantity" required>
+              <label for="idProductVariation">Variation:</label>
+              <input class="form-control" type="text" placeholder="Size or color.." name="variation_0" id="idProductVariation" required/>
+              <div id="id_variation_0_error"></div>
             </div>
             <div class="col-2">
+              <label for="idProductQuantity">Quantity:</label>
+              <input class="form-control" type="number" value="1" name="quantity_0" id="idProductQuantity" required>
+            </div>
+            <div class="col-2">
+              <label for="idProductCapital">Capital:</label>
+              <input class="form-control" type="number" value="0" name="capital_0" id="idProductCapital" required>
+            </div>
+            <div class="col-2">
+              <label for="idProductPrice">Price:</label>
+              <input class="form-control" type="number" value="0" name="price_0" id="idProductPrice" required>
+            </div>
+            <div class="col-1">
               <!-- Leave Empty -->
             </div>
           </div>
           <div id="idVariationQuantityContainer">
             <!-- Dynamic fields for colors and quantities will be added here -->
           </div>
-          <button type="button" class="btn btn-success" id="addVariationFieldBtn">Add Color</button>
+          <a href="#" class="btn btn-success" id="addVariationFieldBtn">Add Color</a>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-danger" data-dismiss="modal">Close</button>
-          <button type="submit" class="btn btn-primary" id="customerSave">Save</button>
+          <button type="button" class="btn btn-primary" id="idInventorySave">Save</button>
         </div>
       </form>
     </div>
   </div>
 </div>
 <script>
+  /**
+   * Script for managing product variation fields.
+   */
   $(document).ready(() => {
     let counter = 1;
     $('#addVariationFieldBtn').on('click', () => {
@@ -66,16 +78,27 @@
       VariationQuantityFieldset.innerHTML = `
         <div class="form-row" style="margin-bottom: 1rem;" id="idVariationQuantityFieldset${counter}">
           <div class="col-5">
-            <label for="idProductVariation${counter}">Variation</label>
-            <input class="form-control" type="text" name="variation_${counter}" id="idProductVariation${counter}" required/>
+            <label for="idProductVariation${counter}">Variation:</label>
+            <input class="form-control" type="text" placeholder="Size or color.." name="variation_${counter}" id="idProductVariation${counter}" required/>
+            <div id="id_variation_${counter}_error"></div>
           </div>
           
-          <div class="col-5">
+          <div class="col-2">
             <label for="idProductQuantity${counter}">Quantity:</label>
-            <input class="form-control" type="number" name="quantity_${counter}" id="idProductQuantity${counter}" required>
+            <input class="form-control" type="number" value="1" name="quantity_${counter}" id="idProductQuantity${counter}" required>
           </div>
 
           <div class="col-2">
+              <label for="idProductCapital${counter}">Capital:</label>
+              <input class="form-control" type="number" value="0" name="capital_${counter}" id="idProductCapital${counter}" required>
+            </div>
+
+          <div class="col-2">
+            <label for="idProductPrice${counter}">Price:</label>
+            <input class="form-control" type="number" value="0" name="price_${counter}" id="idProductPrice${counter}" required>
+          </div>
+
+          <div class="col-1">
             <label class="invisible">DeleteBtn</label>
             <button type="button" class="btn btn-danger color-delete-btn" id="idVariationDeleteBtn${counter}" data-id="${counter}" style="width: 100%">-</button>
           </div>
@@ -92,4 +115,64 @@
       $(`#idVariationQuantityFieldset${id}`).remove();
     });
   });
-  </script>
+</script>
+
+<script>
+  /**
+   * Script for submitting the form.
+   */
+  $(document).ready(() => {
+    let inventoryForm = $('#inventoryForm'); // Get the form element
+    let saveButton = $('#idInventorySave');
+    let inventoryModal = $('#inventoryModal');
+
+    /**
+     * Remove all error messages on the customer form.
+     */
+    function clearErrorMessages() {
+      $('[id^="id_"][id$="_error"]').empty();
+    }
+
+    function resetForm() {
+      inventoryForm[0].reset();
+      clearErrorMessages();
+    }
+
+    // Event handler for modal close and reset the fields.
+    inventoryModal.on('hidden.bs.modal', () => {
+      resetForm();
+    });
+
+    /**
+     * Script for creating/updating product information.
+     */
+    saveButton.on('click', () => {
+      // Serialize the form data and convert it to JSON
+      let formData = new FormData(inventoryForm[0]);
+      let spinner = `
+      <div class="spinner-border text-light" role="status" style="height: 1.4rem; width: 1.4rem">
+        <span class="sr-only">Loading...</span>
+      </div>`;
+      saveButton.html(spinner);
+      axios.post("{% url 'inventory:create_product' %}", formData)
+        .then(function (response) {
+          inventoryModal.modal('hide');
+          clearErrorMessages();
+          reloadComponent("{% url 'inventory:list_product' %}", 'idProductTableContainer', true);
+        })
+        .catch(function (error) {
+          console.log(error.response.data);
+          if (error.response && error.response.data) {
+            let errors = error.response.data.errors;
+            for (let field in errors) {
+              let errorMsgs = errors[field];
+              $(`#id_${field}_error`).html(`<div class="text-danger">${errorMsgs}</div>`);
+            }
+          }
+        })
+        .finally(function () {
+          saveButton.html('Save');
+        });
+    });
+  });
+</script>
