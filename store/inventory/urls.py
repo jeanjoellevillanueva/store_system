@@ -5,6 +5,7 @@ from .views import ProductCustomCreateView
 from .views import ProductCustomUpdateView
 from .views import ProductListDatatableTemplateView
 from .views import ProductTemplateView
+from .views import VariationCustomCreateView
 from .views import VariationListDatatableTemplateView
 
 app_name = 'inventory'
@@ -40,5 +41,10 @@ urlpatterns = [
         'products/<str:item_code>/variations/',
         VariationListDatatableTemplateView.as_view(),
         name='list_variation'
+    ),
+    path(
+        'products/<str:item_code>/variations/create/',
+        VariationCustomCreateView.as_view(),
+        name='create_variation'
     ),
 ]

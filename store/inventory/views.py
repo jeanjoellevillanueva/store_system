@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Any
 from typing import Dict
 
@@ -106,6 +107,8 @@ class ProductCustomUpdateView(LoginRequiredMixin, JSONResponseMixin, View):
                     product.item_code = form.cleaned_data['item_code']
                     product.name = form.cleaned_data['name']
                     product.description = form.cleaned_data['description']
+                    product.updated_date = datetime.today()
+                    product.updated_by = request.user
                     product.save()
                 json_data = {
                     'status': 'success',
@@ -145,3 +148,51 @@ class VariationListDatatableTemplateView(LoginRequiredMixin, TemplateView):
         context =  super().get_context_data(**kwargs)
         context['variations'] = Product.objects.filter(item_code=self.kwargs['item_code'])
         return context
+
+
+class VariationCustomCreateView(LoginRequiredMixin, JSONResponseMixin, View):
+    """
+    View used when creating product variation.
+    """
+
+    def post(self, request, *args, **kwargs):
+        with transaction.atomic():
+            variations = parse_variation(request.POST)
+            # Check if the variations are empty.
+            invalid_variations = []
+            for product_variation in variations:
+                if not product_variation['variation']:
+                    invalid_variations.append(product_variation['orig_key'])
+            if invalid_variations:
+                form_error = {}
+                for var_key in invalid_variations:
+                    form_error[var_key] = ['This field is required.']
+                json_data = {'status': 'error', 'errors': form_error}
+                return self.render_json_response(json_data, status=400)
+            
+            try:
+                sample_product = Product.objects.filter(item_code=self.kwargs['item_code'])
+            except Product.DoesNotExist:
+                raise Http404('Product Does Not Exist')
+            
+            sample_product = sample_product[0]
+            # If items are valid then continue to save to the database.
+            for product_variation in variations:
+                product = Product(
+                    item_code=sample_product.item_code,
+                    name=sample_product.name,
+                    description=sample_product.description,
+                )
+                product.pk = None  # Reset the primary key to create a new instance.
+                product.variation = product_variation['variation']
+                product.quantity = product_variation['quantity']
+                product.price = product_variation['price']
+                product.capital = product_variation['capital']
+                product.created_by = request.user
+                product.save()
+            json_data = {
+                'status': 'success',
+                'message': 'Product Variation successfully created.'
+            }
+            return  self.render_json_response(json_data, status=201)
+
