@@ -11,6 +11,7 @@ from django.views import View
 from django.views.generic import TemplateView
 
 from .forms import ProductForm
+from .forms import ProductUpdateForm
 from .models import Product
 from .utils import parse_variation
 
@@ -24,6 +25,7 @@ class InventoryTemplateView(LoginRequiredMixin, TemplateView):
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
         context['product_form'] = ProductForm
+        context['product_update_form'] = ProductUpdateForm(auto_id='id_%s_update')
         return context
     
 
@@ -36,7 +38,11 @@ class ProductListDatatableTemplateView(LoginRequiredMixin, TemplateView):
 
     def get_context_data(self, **kwargs: Any) -> Dict[str, Any]:
         context =  super().get_context_data(**kwargs)
-        context['products'] = Product.objects.values('item_code', 'name').distinct()
+        context['products'] = Product.objects.values(
+            'item_code',
+            'name',
+            'description'
+        ).distinct()
         return context
 
 
@@ -78,6 +84,34 @@ class ProductCustomCreateView(LoginRequiredMixin, JSONResponseMixin, View):
                     'message': 'Product successfully created.'
                 }
                 return  self.render_json_response(json_data, status=201)
+        json_data = {'status': 'error', 'errors': form.errors}
+        return self.render_json_response(json_data, status=400)
+
+
+class ProductCustomUpdateView(LoginRequiredMixin, JSONResponseMixin, View):
+    """
+    View used when updating products.
+    """
+
+    def post(self, request, *args, **kwargs):
+        form = ProductUpdateForm(request.POST)
+
+        if form.is_valid():
+            with transaction.atomic():
+                try:
+                    products = Product.objects.filter(item_code=request.POST['old_item_code'])
+                except Product.DoesNotExist:
+                    raise Http404('Product does not exist')
+                for product in products:
+                    product.item_code = form.cleaned_data['item_code']
+                    product.name = form.cleaned_data['name']
+                    product.description = form.cleaned_data['description']
+                    product.save()
+                json_data = {
+                    'status': 'success',
+                    'message': 'Product successfully Updated.'
+                }
+                return  self.render_json_response(json_data, status=200)
         json_data = {'status': 'error', 'errors': form.errors}
         return self.render_json_response(json_data, status=400)
 

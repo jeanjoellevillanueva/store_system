@@ -1,0 +1,107 @@
+{% load widget_tweaks %}
+
+<div class="modal fade" id="inventoryUpdateModal" tabindex="-1" role="dialog" aria-labelledby="inventoryUpdateModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <form id="inventoryUpdateForm" method="POST">
+        {% csrf_token %}
+        <div class="modal-header">
+          <h5 class="modal-title" id="inventoryUpdateModalLabel">Update Item</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          {% for field in product_update_form %}
+          <div class="form-group">
+            {{ field.label_tag }}
+            {{ field|add_class:"form-control" }}
+            <div id="{{ field.id_for_label }}_error"></div>
+          </div>
+          {% endfor %}
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-danger" data-dismiss="modal">Close</button>
+          <button type="button" class="btn btn-primary" id="idInventoryUpdateSave">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+  /**
+   * Script for submitting the form.
+   */
+  $(document).ready(() => {
+    let old_item_code;
+    $('#idProductTableContainer').on('click', '.update-product', (event) => {
+      let item_code = event.currentTarget.dataset.item_code;
+      let name = event.currentTarget.dataset.name;
+      let description = event.currentTarget.dataset.description;
+
+      old_item_code = item_code;
+      // Set the values on the update form.
+      $('#id_item_code_update').val(item_code);
+      $('#id_name_update').val(name);
+      $('#id_description_update').val(description);
+
+      $('#inventoryUpdateModal').modal('show');
+    });
+
+    let inventoryUpdateForm = $('#inventoryUpdateForm');
+    let saveButton = $('#idInventoryUpdateSave');
+    let inventoryUpdateModal = $('#inventoryUpdateModal');
+
+    /**
+     * Remove all error messages on the customer form.
+     */
+    function clearErrorMessages() {
+      $('[id^="id_"][id$="_error"]').empty();
+    }
+
+    function resetForm() {
+      inventoryUpdateForm[0].reset();
+      clearErrorMessages();
+    }
+
+    // Event handler for modal close and reset the fields.
+    inventoryUpdateModal.on('hidden.bs.modal', () => {
+      resetForm();
+    });
+
+    /**
+     * Script for creating/updating product information.
+     */
+    saveButton.on('click', () => {
+      // Serialize the form data and convert it to JSON
+      let formData = new FormData(inventoryUpdateForm[0]);
+      const old_data = {'old_item_code': old_item_code};
+      formData.append('old_item_code', old_item_code);
+      let spinner = `
+      <div class="spinner-border text-light" role="status" style="height: 1.4rem; width: 1.4rem">
+        <span class="sr-only">Loading...</span>
+      </div>`;
+      saveButton.html(spinner);
+      axios.post("{% url 'inventory:update_product' %}", formData)
+        .then(function (response) {
+          inventoryUpdateModal.modal('hide');
+          clearErrorMessages();
+          reloadComponent("{% url 'inventory:list_product' %}", 'idProductTableContainer', true);
+        })
+        .catch(function (error) {
+          console.log(error.response.data);
+          if (error.response && error.response.data) {
+            let errors = error.response.data.errors;
+            for (let field in errors) {
+              let errorMsgs = errors[field];
+              $(`#id_${field}_update_error`).html(`<div class="text-danger">${errorMsgs}</div>`);
+            }
+          }
+        })
+        .finally(function () {
+          saveButton.html('Save');
+        });
+    });
+  });
+</script>

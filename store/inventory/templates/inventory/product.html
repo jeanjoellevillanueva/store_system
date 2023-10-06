@@ -1,5 +1,12 @@
 {% extends 'base.html' %}
-{% block header %}Product{% endblock %}
+{% block header %}
+  <a href="{% url 'inventory:home' %}" style="text-decoration:none">
+    <span>
+      <i class="fa fa-arrow-circle-left"></i>
+    </span>
+  </a>
+  Inventory / Product
+{% endblock %}
 
 {% block content %} 
   <div class="row">

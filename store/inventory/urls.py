@@ -2,6 +2,7 @@ from django.urls import path
 
 from .views import InventoryTemplateView
 from .views import ProductCustomCreateView
+from .views import ProductCustomUpdateView
 from .views import ProductListDatatableTemplateView
 from .views import ProductTemplateView
 from .views import VariationListDatatableTemplateView
@@ -24,6 +25,11 @@ urlpatterns = [
         'products/create/',
         ProductCustomCreateView.as_view(),
         name='create_product'
+    ),
+    path(
+        'products/update/',
+        ProductCustomUpdateView.as_view(),
+        name='update_product'
     ),
     path(
         'products/<str:item_code>/',

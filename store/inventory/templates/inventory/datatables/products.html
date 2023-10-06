@@ -2,9 +2,10 @@
   <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
     <thead>
       <tr>
-        <th class="text-center">Item Code</th>
-        <th class="text-center">Product</th>
-        <th class="text-center">Action</th>
+        <th class="text-center" style="width: 10%;">Item Code</th>
+        <th class="text-center" style="width: 30%;">Product</th>
+        <th class="text-center" style="width: 50%;">Description</th>
+        <th class="text-center" style="width: 10%;">Action</th>
       </tr>
     </thead>
     <tbody>
@@ -16,25 +17,16 @@
             {{ product.name }}
           </a>
         </td>
+        <td>{{ product.description }}</td>
         <td class="text-center">
-          <a
-            class="btn btn-warning update-expense-button"
-            data-toggle="modal"
-            data-target="#expenseEditModal"
-            data-url="{# url 'expenses:update_expense' expense.id #}"
+          <a 
+            class="btn btn-warning update-product"
+            data-item_code="{{ product.item_code }}"
+            data-name="{{ product.name }}"
+            data-description="{{ product.description }}"
           >
             <span class="icon text-white-50">
               <i class="fas fa-pen"></i>
-            </span>
-          </a>
-          <a
-            class="btn btn-danger delete-expense-button"
-            data-toggle="modal"
-            data-target="#expenseDeleteModal"
-            data-url="{# url 'expenses:delete_expense' expense.id #}"
-          >
-            <span class="icon text-white-50">
-              <i class="fas fa-trash"></i>
             </span>
           </a>
         </td>
