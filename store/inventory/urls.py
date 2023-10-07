@@ -1,5 +1,6 @@
 from django.urls import path
 
+from .views import DeliveryCustomCreateView
 from .views import InventoryTemplateView
 from .views import ProductCustomCreateView
 from .views import ProductCustomUpdateView
@@ -50,13 +51,18 @@ urlpatterns = [
         name='create_variation'
     ),
     path(
-        'products/<str:item_code>/variations/update/<str:id>',
+        'products/<str:item_code>/variations/update/<str:id>/',
         VariationCustomUpdateView.as_view(),
         name='update_variation'
     ),
     path(
-        'products/<str:item_code>/variations/delete/<str:id>',
+        'products/<str:item_code>/variations/delete/<str:id>/',
         VariationCustomDeleteView.as_view(),
         name='delete_variation'
+    ),
+    path(
+        'delivery/<str:product_id>/',
+        DeliveryCustomCreateView.as_view(),
+        name='add_delivery'
     ),
 ]

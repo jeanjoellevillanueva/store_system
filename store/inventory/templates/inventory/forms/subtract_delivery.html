@@ -1,28 +1,21 @@
 {% load widget_tweaks %}
-<style>
-  label.invisible {
-    color: transparent;
-    -webkit-touch-callout: none;
-    -webkit-user-select: none;
-    -khtml-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
-    user-select: none;
-  }
-</style>
-<div class="modal fade" id="variationUpdateModal" tabindex="-1" role="dialog" aria-labelledby="variationUpdateModalLabel" aria-hidden="true">
+<div class="modal fade" id="deliverySubtactModal" tabindex="-1" role="dialog" aria-labelledby="deliverySubtactModalLabel" aria-hidden="true">
   <div class="modal-dialog" role="document">
     <div class="modal-content">
-      <form id="variationUpdateForm" method="POST">
+      <form id="subtractDeliveryForm" method="POST">
         {% csrf_token %}
         <div class="modal-header">
-          <h5 class="modal-title" id="variationUpdateModalLabel">Update variation</h5>
+          <h5 class="modal-title" id="deliverySubtactModalLabel">Pull out</h5>
           <button type="button" class="close" data-dismiss="modal" aria-label="Close">
             <span aria-hidden="true">&times;</span>
           </button>
         </div>
         <div class="modal-body">
-          {% for field in variation_update_form %}
+          <div class="form-group">
+            <label for="idDeliverySubInput">Product</label>
+            <input class="form-control" type="text" id="idDeliverySubInput" readonly/>
+          </div>
+          {% for field in delivery_subtract_form %}
           <div class="form-group">
             {{ field.label_tag }}
             {{ field|add_class:"form-control" }}
@@ -32,7 +25,7 @@
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-danger" data-dismiss="modal">Close</button>
-          <button type="button" class="btn btn-primary" id="idVariationUpdateSave">Save</button>
+          <button type="button" class="btn btn-primary" id="idSubtractQuantity">Pull out</button>
         </div>
       </form>
     </div>
@@ -43,42 +36,33 @@
    * Script for submitting the form.
    */
   $(document).ready(() => {
-    let updateURL;
-    $('#idVariationsTableContainer').on('click', '.update-variation', (event) => {
-      let id = event.currentTarget.dataset.id;
+    let deliverySubtactModal = $('#deliverySubtactModal');
+    let subtractDeliveryForm = $('#subtractDeliveryForm');
+    let saveButton = $('#idSubtractQuantity');
+    let addDeliveryUrl;
+
+    $('#idVariationsTableContainer').on('click', '.subtract-delivery', (event) => {
+      addDeliveryUrl = event.currentTarget.dataset.url;
+      let name = event.currentTarget.dataset.name;
       let variation = event.currentTarget.dataset.variation;
-      let price = event.currentTarget.dataset.price;
-      let capital = event.currentTarget.dataset.capital;
-      let quantity = event.currentTarget.dataset.quantity;
-      // Set the update url on click event.
-      updateURL = event.currentTarget.dataset.url;
-
-      $('#id_id_update').val(id);
-      $('#id_variation_update').val(variation);
-      $('#id_price_update').val(price);
-      $('#id_capital_update').val(capital);
-      $('#id_quantity_update').val(quantity);
-      $('#variationUpdateModal').modal('show');
+      $('#idDeliverySubInput').val(`${name} (${variation})`);
+      deliverySubtactModal.modal('show');
     });
-
-    let variationUpdateForm = $('#variationUpdateForm'); // Get the form element
-    let saveButton = $('#idVariationUpdateSave');
-    let variationUpdateModal = $('#variationUpdateModal');
 
     /**
      * Remove all error messages on the customer form.
      */
     function clearErrorMessages() {
-      $('[id^="id_"][id$="_update_error"]').empty();
+      $('[id^="id_"][id$="_error"]').empty();
     }
 
     function resetForm() {
-      variationUpdateForm[0].reset();
+      subtractDeliveryForm[0].reset();
       clearErrorMessages();
     }
 
     // Event handler for modal close and reset the fields.
-    variationUpdateModal.on('hidden.bs.modal', () => {
+    deliverySubtactModal.on('hidden.bs.modal', () => {
       resetForm();
     });
 
@@ -87,15 +71,15 @@
      */
     saveButton.on('click', () => {
       // Serialize the form data and convert it to JSON
-      let formData = new FormData(variationUpdateForm[0]);
+      let formData = new FormData(subtractDeliveryForm[0]);
       let spinner = `
       <div class="spinner-border text-light" role="status" style="height: 1.4rem; width: 1.4rem">
         <span class="sr-only">Loading...</span>
       </div>`;
       saveButton.html(spinner);
-      axios.post(updateURL, formData)
+      axios.post(addDeliveryUrl, formData)
         .then(function (response) {
-          variationUpdateModal.modal('hide');
+          deliverySubtactModal.modal('hide');
           clearErrorMessages();
           reloadComponent("{% url 'inventory:list_variation' product.item_code %}", 'idVariationsTableContainer', true);
         })
@@ -105,12 +89,12 @@
             let errors = error.response.data.errors;
             for (let field in errors) {
               let errorMsgs = errors[field];
-              $(`#id_${field}_update_error`).html(`<div class="text-danger">${errorMsgs}</div>`);
+              $(`#id_${field}_sub_deliver_error`).html(`<div class="text-danger">${errorMsgs}</div>`);
             }
           }
         })
         .finally(function () {
-          saveButton.html('Save');
+          saveButton.html('Pull out');
         });
     });
   });

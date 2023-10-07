@@ -16,7 +16,7 @@
       <form id="inventoryForm" method="POST">
         {% csrf_token %}
         <div class="modal-header">
-          <h5 class="modal-title" id="inventoryModalLabel">Add an item</h5>
+          <h5 class="modal-title" id="inventoryModalLabel">Create product</h5>
           <button type="button" class="close" data-dismiss="modal" aria-label="Close">
             <span aria-hidden="true">&times;</span>
           </button>
@@ -35,15 +35,11 @@
               <input class="form-control" type="text" placeholder="Size or color.." name="variation_0" id="idProductVariation" required/>
               <div id="id_variation_0_error"></div>
             </div>
-            <div class="col-2">
-              <label for="idProductQuantity">Quantity:</label>
-              <input class="form-control" type="number" value="1" name="quantity_0" id="idProductQuantity" required>
-            </div>
-            <div class="col-2">
+            <div class="col-3">
               <label for="idProductCapital">Capital:</label>
               <input class="form-control" type="number" value="0" name="capital_0" id="idProductCapital" required>
             </div>
-            <div class="col-2">
+            <div class="col-3">
               <label for="idProductPrice">Price:</label>
               <input class="form-control" type="number" value="0" name="price_0" id="idProductPrice" required>
             </div>
@@ -82,18 +78,13 @@
             <input class="form-control" type="text" placeholder="Size or color.." name="variation_${counter}" id="idProductVariation${counter}" required/>
             <div id="id_variation_${counter}_error"></div>
           </div>
-          
-          <div class="col-2">
-            <label for="idProductQuantity${counter}">Quantity:</label>
-            <input class="form-control" type="number" value="1" name="quantity_${counter}" id="idProductQuantity${counter}" required>
-          </div>
 
-          <div class="col-2">
+          <div class="col-3">
               <label for="idProductCapital${counter}">Capital:</label>
               <input class="form-control" type="number" value="0" name="capital_${counter}" id="idProductCapital${counter}" required>
             </div>
 
-          <div class="col-2">
+          <div class="col-3">
             <label for="idProductPrice${counter}">Price:</label>
             <input class="form-control" type="number" value="0" name="price_${counter}" id="idProductPrice${counter}" required>
           </div>

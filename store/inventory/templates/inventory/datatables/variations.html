@@ -5,6 +5,7 @@
         <th class="text-center">Variation</th>
         <th class="text-center">Price</th>
         <th class="text-center">Quantity</th>
+        <th class="text-center">Delivery</th>
         <th class="text-center">Action</th>
       </tr>
     </thead>
@@ -13,7 +14,31 @@
       <tr>
         <td>{{ variation.variation }}</td>
         <td>{{ variation.price }}</td>
-        <td>{{ variation.quantity }}</td>
+        <td>{% if not variation.quantity %}<span class="text-danger">Out of stock</span>{% else %}{{ variation.quantity }}{% endif %}</td>
+        <td class="text-center">
+          <a
+            class="btn btn-success add-delivery"
+            data-id="{{ variation.id }}"
+            data-name="{{ variation.name }}"
+            data-variation="{{ variation.variation }}"
+            data-url="{% url 'inventory:add_delivery' variation.id %}"
+          >
+            <span class="icon text-white-50">
+              <i class="fas fa-truck"></i>
+            </span>
+          </a>
+          <a
+            class="btn btn-danger subtract-delivery"
+            data-id="{{ variation.id }}"
+            data-name="{{ variation.name }}"
+            data-variation="{{ variation.variation }}"
+            data-url="{% url 'inventory:add_delivery' variation.id %}"
+          >
+            <span class="icon text-white-50">
+              <i class="fas fa-cart-arrow-down"></i>
+            </span>
+          </a>
+        </td>
         <td class="text-center">
           <a
             class="btn btn-warning update-variation"

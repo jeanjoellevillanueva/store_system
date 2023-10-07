@@ -24,3 +24,31 @@ class Product(ModelMixin):
 
     def __str__(self):
         return self.name
+
+
+class Delivery(models.Model):
+    """
+    Represents the movement of the stock of products.
+    """
+    
+    class Meta:
+        db_table = 'deliveries'
+
+    DELIVER = 'deliver'
+    RETURNED = 'returned'
+    PULL_OUT = 'pull_out'
+    WRONG_INPUT = 'wrong_input'
+    IN_CHOICES = [
+        (DELIVER, 'Deliver'),
+        (RETURNED, 'Returned Item'),
+    ]
+    OUT_CHOICES = [
+        (PULL_OUT, 'Pull-out'),
+        (WRONG_INPUT, 'Wrong Input'),
+    ]
+    DELIVER_CHOICES = IN_CHOICES + OUT_CHOICES
+
+    product = models.ForeignKey(Product, on_delete=models.DO_NOTHING)
+    quantity = models.PositiveIntegerField(default=1)
+    reason = models.CharField(max_length=50, choices=DELIVER_CHOICES, default=DELIVER)
+    created_date = models.DateTimeField(auto_now_add=True)

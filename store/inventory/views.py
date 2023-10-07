@@ -11,9 +11,12 @@ from django.http import Http404
 from django.views import View
 from django.views.generic import TemplateView
 
+from .forms import DeliveryAddForm
+from .forms import DeliverySubtractForm
 from .forms import ProductForm
 from .forms import ProductUpdateForm
 from .forms import VariationUpdateForm
+from .models import Delivery
 from .models import Product
 from .utils import parse_variation
 
@@ -44,7 +47,7 @@ class ProductListDatatableTemplateView(LoginRequiredMixin, TemplateView):
             'item_code',
             'name',
             'description'
-        ).distinct()
+        ).order_by('name').distinct()
         return context
 
 
@@ -58,6 +61,14 @@ class ProductCustomCreateView(LoginRequiredMixin, JSONResponseMixin, View):
         if form.is_valid():
             with transaction.atomic():
                 variations = parse_variation(request.POST)
+
+                # Check if item code already exists.
+                is_exist = Product.objects.filter(item_code=form.cleaned_data['item_code'])
+                if is_exist:
+                    form_error = {}
+                    form_error['item_code'] = ['Item code already exists.']
+                    json_data = {'status': 'error', 'errors': form_error}
+                    return self.render_json_response(json_data, status=400)
 
                 # Check if the variations are empty.
                 invalid_variations = []
@@ -76,7 +87,6 @@ class ProductCustomCreateView(LoginRequiredMixin, JSONResponseMixin, View):
                     product = form.save(commit=False)
                     product.pk = None  # Reset the primary key to create a new instance.
                     product.variation = product_variation['variation']
-                    product.quantity = product_variation['quantity']
                     product.price = product_variation['price']
                     product.capital = product_variation['capital']
                     product.created_by = request.user
@@ -104,6 +114,19 @@ class ProductCustomUpdateView(LoginRequiredMixin, JSONResponseMixin, View):
                     products = Product.objects.filter(item_code=request.POST['old_item_code'])
                 except Product.DoesNotExist:
                     raise Http404('Product does not exist')
+
+                # Check if item code already exists.
+                is_exist = (
+                    Product.objects
+                        .filter(item_code=form.cleaned_data['item_code'])
+                        .exclude(item_code=request.POST['old_item_code'])
+                )
+                if is_exist:
+                    form_error = {}
+                    form_error['item_code'] = ['Item code already exists.']
+                    json_data = {'status': 'error', 'errors': form_error}
+                    return self.render_json_response(json_data, status=400)
+
                 for product in products:
                     product.item_code = form.cleaned_data['item_code']
                     product.name = form.cleaned_data['name']
@@ -136,6 +159,8 @@ class ProductTemplateView(LoginRequiredMixin, TemplateView):
         context['product'] = products[0]
         context['variations'] = products
         context['variation_update_form'] = VariationUpdateForm(auto_id='id_%s_update')
+        context['delivery_add_form'] = DeliveryAddForm(auto_id='id_%s_add_deliver')
+        context['delivery_subtract_form'] = DeliverySubtractForm(auto_id='id_%s_sub_deliver')
         return context
     
 
@@ -187,7 +212,6 @@ class VariationCustomCreateView(LoginRequiredMixin, JSONResponseMixin, View):
                 )
                 product.pk = None  # Reset the primary key to create a new instance.
                 product.variation = product_variation['variation']
-                product.quantity = product_variation['quantity']
                 product.price = product_variation['price']
                 product.capital = product_variation['capital']
                 product.created_by = request.user
@@ -215,7 +239,6 @@ class VariationCustomUpdateView(LoginRequiredMixin, JSONResponseMixin, View):
                 product.variation = form.cleaned_data['variation']
                 product.price = form.cleaned_data['price']
                 product.capital = form.cleaned_data['capital']
-                product.quantity = form.cleaned_data['quantity']
                 product.updated_date = datetime.today()
                 product.updated_by = request.user
                 product.save()
@@ -244,3 +267,49 @@ class VariationCustomDeleteView(LoginRequiredMixin, JSONResponseMixin, View):
             'message': 'Successfully deleted.'
         }
         return self.render_json_response(json_data, status=204)
+
+
+class DeliveryCustomCreateView(LoginRequiredMixin, JSONResponseMixin, View):
+    """
+    View used when adding stock of a product.
+    """
+
+    def post(self, request, *args, **kwargs):
+        out_choices = [choice[0] for choice in Delivery.OUT_CHOICES]
+        if request.POST.get('reason') in out_choices:
+            form = DeliverySubtractForm(request.POST)
+        else:
+            form = DeliveryAddForm(request.POST)
+        if form.is_valid():
+            try:
+                product = Product.objects.filter(id=self.kwargs['product_id'])[0]
+            except Product.DoesNotExist:
+                json_data = {'status': 'error', 'errors': {
+                    'name': 'Product does not exists.'}}
+                return self.render_json_response(json_data, status=404)
+            with transaction.atomic():
+                current_quantity = product.quantity
+                quantity_to_add = int(form.cleaned_data['quantity'])
+                reason = form.cleaned_data['reason']
+                if reason in out_choices:
+                    if quantity_to_add > current_quantity:
+                        json_data = {'status': 'error', 'errors': {
+                            'quantity': 'Cannot exceed the quantity in stock.'}}
+                        return self.render_json_response(json_data, status=403)
+                    product.quantity = current_quantity - quantity_to_add
+                else:
+                    product.quantity = current_quantity + quantity_to_add
+                product.save()
+                delivery_kwargs = {
+                    'product': product,
+                    'quantity': quantity_to_add,
+                    'reason': form.cleaned_data['reason'],
+                }
+                Delivery.objects.create(**delivery_kwargs)
+                json_data = {
+                    'status': 'success',
+                    'message': 'Delivery Successful'
+                }
+                return self.render_json_response(json_data, status=200)
+        json_data = {'status': 'error', 'errors': form.errors}
+        return self.render_json_response(json_data, status=400)

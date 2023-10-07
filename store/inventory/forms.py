@@ -1,5 +1,6 @@
 from django import forms
 
+from .models import Delivery
 from .models import Product
 
 
@@ -42,7 +43,40 @@ class VariationUpdateForm(forms.ModelForm):
         model = Product
         fields = [
             'variation',
-            'quantity',
             'capital',
             'price',        
+        ]
+
+
+class DeliveryAddForm(forms.ModelForm):
+    """
+    Form used when adding stock of a product.
+    """
+    reason = forms.ChoiceField(
+        choices=Delivery.IN_CHOICES,
+        widget=forms.Select(attrs={'class': 'form-control'}),
+    )
+
+    class Meta:
+        model = Delivery
+        fields = [
+            'quantity',
+            'reason',
+        ]
+
+
+class DeliverySubtractForm(forms.ModelForm):
+    """
+    Form used when subtracting stock on a product.
+    """
+    reason = forms.ChoiceField(
+        choices=Delivery.OUT_CHOICES,
+        widget=forms.Select(attrs={'class': 'form-control'}),
+    )
+
+    class Meta:
+        model = Delivery
+        fields = [
+            'quantity',
+            'reason',
         ]
