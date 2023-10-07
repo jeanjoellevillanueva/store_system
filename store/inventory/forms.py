@@ -31,3 +31,18 @@ class ProductUpdateForm(forms.ModelForm):
             'name',
             'description', 
         ]
+
+
+class VariationUpdateForm(forms.ModelForm):
+    """
+    Form used when updating a variation of a product.
+    """
+
+    class Meta:
+        model = Product
+        fields = [
+            'variation',
+            'quantity',
+            'capital',
+            'price',        
+        ]

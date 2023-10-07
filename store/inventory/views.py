@@ -13,6 +13,7 @@ from django.views.generic import TemplateView
 
 from .forms import ProductForm
 from .forms import ProductUpdateForm
+from .forms import VariationUpdateForm
 from .models import Product
 from .utils import parse_variation
 
@@ -134,6 +135,7 @@ class ProductTemplateView(LoginRequiredMixin, TemplateView):
             raise Http404('Product does not exist')
         context['product'] = products[0]
         context['variations'] = products
+        context['variation_update_form'] = VariationUpdateForm(auto_id='id_%s_update')
         return context
     
 
@@ -196,3 +198,49 @@ class VariationCustomCreateView(LoginRequiredMixin, JSONResponseMixin, View):
             }
             return  self.render_json_response(json_data, status=201)
 
+
+class VariationCustomUpdateView(LoginRequiredMixin, JSONResponseMixin, View):
+    """
+    View used when updating product variation.
+    """
+
+    def post(self, request, *args, **kwargs):
+        form = VariationUpdateForm(request.POST)
+        if form.is_valid():
+            with transaction.atomic():
+                try:
+                    product = Product.objects.get(id=self.kwargs['id'])
+                except Product.DoesNotExist:
+                    raise Http404('Product does not exist')
+                product.variation = form.cleaned_data['variation']
+                product.price = form.cleaned_data['price']
+                product.capital = form.cleaned_data['capital']
+                product.quantity = form.cleaned_data['quantity']
+                product.updated_date = datetime.today()
+                product.updated_by = request.user
+                product.save()
+                json_data = {
+                    'status': 'success',
+                    'message': 'Product variation successfully Updated.'
+                }
+                return  self.render_json_response(json_data, status=200)
+        json_data = {'status': 'error', 'errors': form.errors}
+        return self.render_json_response(json_data, status=400)
+
+
+class VariationCustomDeleteView(LoginRequiredMixin, JSONResponseMixin, View):
+    """
+    View used for deleting a product.
+    """
+
+    def post(self, request, *args, **kwargs):
+        try:
+            product = Product.objects.get(id=self.kwargs['id'])
+        except Exception as e:
+             # Object not found
+             return self.render_json_response({'message': str(e)}, status=404)
+        product.delete()
+        json_data = {
+            'message': 'Successfully deleted.'
+        }
+        return self.render_json_response(json_data, status=204)
