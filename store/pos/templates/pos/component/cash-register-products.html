@@ -22,9 +22,8 @@
   $(document).ready(()=>{
     // Retrieve the selected products from local storage
     const selectedProducts = JSON.parse(localStorage.getItem('selected_products') || '[]');
-
-    // Loop through the selected product IDs and apply class toggle
-    selectedProducts.forEach(productId => {
+    selectedProducts.forEach((productDetail, index) => {
+      let productId = Object.keys(productDetail)[0];
       const productElement = document.querySelector(`[data-id="${productId}"]`);
       if (productElement) {
         productElement.classList.toggle('bg-secondary');

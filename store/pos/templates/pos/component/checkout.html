@@ -2,25 +2,21 @@
   {% for product in products %}
   <div class="form-row">
     <div class="col-md-4 mb-3">
-      <label for="validationCustom01">Product</label>
-      <input type="text" class="form-control" id="validationCustom01" required>
-    </div>
-    <div class="col-md-2 mb-3">
-      <label for="validationCustom02">Quantity</label>
-      <input type="number" class="form-control" id="validationCustom02" value="1"  min="0" required>
-    </div>
-    <div class="col-md-2 mb-3">
-      <label for="validationCustom02">Discount</label>
-      <input type="number" class="form-control" id="validationCustom02" value="0"  min="0" required>
+      <label for="idCheckoutProductName{{ product.id }}">Product</label>
+      <input type="text" class="form-control" id="idCheckoutProductName{{ product.id }}" value="{{ product.name }}" required readonly>
     </div>
     <div class="col-md-3 mb-3">
-      <label for="validationCustom01">Price</label>
-      <input type="text" class="form-control" id="validationCustom01" value="2333" required readonly>
+      <label for="idCheckoutProductQuantity{{ product.id }}">Quantity</label>
+      <input type="number" class="form-control checkout-product-quantity" data-target_id="{{ product.id }}" id="idCheckoutProductQuantity{{ product.id }}" value="{{ product.quantity }}"  max="{{ product.in_stock }}" required>
+    </div>
+    <div class="col-md-4 mb-3">
+      <label for="idCheckoutProductPrice{{ product.id }}">Price</label>
+      <input type="text" class="form-control" id="idCheckoutProductPrice{{ product.id }}" data-price="{{ product.price }}" value="{{ product.total }}" required readonly>
     </div>
     <div class="col-md-1 mb-3">
-      <label for="validationCustom01">Price</label>
-      <a href="#" class="btn btn-danger btn-circle">
-        <i class="fas fa-trash  "></i>
+      <label for="idCheckoutTrash{{ product.id }}" class="invisible">Price</label>
+      <a href="#" class="btn btn-danger btn-circle trash-checkout-item" id="idCheckoutTrash{{ product.id }}" data-target_id="{{ product.id }}">
+        <i class="fas fa-trash "></i>
       </a>
     </div>
   </div>

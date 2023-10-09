@@ -1,3 +1,4 @@
+import json
 from typing import Any
 
 from braces.views import JSONResponseMixin
@@ -9,6 +10,7 @@ from django.views import View
 from django.views.generic import TemplateView
 
 from inventory.models import Product
+from inventory.utils import get_checkout_detail
 
 
 class POSTemplateView(LoginRequiredMixin, TemplateView):
@@ -46,7 +48,11 @@ class POSCheckOutTemplateView(LoginRequiredMixin, TemplateView):
 
     def post(self, request, *args, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['products'] = Product.objects.all()
+        data = json.loads(request.body.decode('utf-8'))
+        product_data = data['products_in_json']
+        products = get_checkout_detail(product_data)
+        context['products'] = products
+        print(products)
         return self.render_to_response(context)
 
 

@@ -19,15 +19,17 @@
       box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
     }
   </style>
-{% endblock %}
-
-{% block button %}
-<button id="testModal" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm btn-icon-split">
-  <span class="icon text-white-50">
-    <i class="fas fa-cart-plus"></i>
-  </span>
-  <span class="text">Remove Items</span>
-</button>
+  <style>
+    label.invisible {
+      color: transparent;
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      -khtml-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+      user-select: none;
+    }
+  </style>
 {% endblock %}
 
 {% block content %}
@@ -53,12 +55,12 @@
         <div
           class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
           <h6 class="m-0 font-weight-bold text-primary">Cash Register</h6>
+          <button id="idClearCashRegister" class="btn btn-sm btn-danger">
+            <i class="fa fa-recycle" aria-hidden="true"></i> Clear</button>
         </div>
         <div class="card-body d-flex justify-content-center align-items-center">
           <div class="row mx-0" id="idCashRegister" >
-            
-
-
+             <!-- Fill this with checkout details -->
           </div>
         </div>
       </div>
@@ -68,11 +70,6 @@
 
 {% block javascript %}
 <script>
-  $('#testModal').on('click', ()=>{
-    localStorage.removeItem('selected_products');
-  });
-</script>
-<script>
   /**
    * Script for loading products on cash register.
    */
@@ -80,6 +77,7 @@
   let productListURL = "{% url 'pos:list_product' %}";
   $(document).ready(() => {
     reloadComponent(productListURL, 'idProductListContainer', false);
+    loadCheckOut();
 
     $('#idProductSearch').on('input', () => {
       clearTimeout(searchTimeout);
@@ -91,19 +89,50 @@
     });
   });
 
-  // Function to add product items in the Local Storage.
-  function saveToLocalStorage (key, value) {
+  // Get and parse the data from local storage.
+  function getProducts(key) {
     const productsInJSON = localStorage.getItem(key);
-    const productsArray = productsInJSON ? JSON.parse(productsInJSON) : [];
+    return productsInJSON ? JSON.parse(productsInJSON) : [];
+  }
 
+  function loadCheckOut () {
+    // Loads the cash register.
+    let products_in_json = getProducts('selected_products');
+    let header = {headers: {
+      'X-CSRFToken': '{{ csrf_token }}',
+      'Content-Type': 'x-www-form-urlencoded'
+    }};
+    let renderCashRegisterURL = "{% url 'pos:checkout' %}";
+    reloadComponentPost(renderCashRegisterURL, {'products_in_json': products_in_json}, header, 'idCashRegister', false);
+  }
+
+  // Function to add product items in the Local Storage.
+  function saveToLocalStorage (key, newProductDetail) {
+    // Get the existing products on the local storage and compile the product IDs.
+    const productsArray = getProducts(key);
     let productIDs = productsArray.map((productDetail, index) => {
       return Object.keys(productDetail)[index];
     });
 
-    if (!productsArray.includes(value)) {
+    // Add the new product in the array if it does not exist.
+    const newProductId = Object.keys(newProductDetail)[0];
+    if (!productIDs.includes(newProductId)) {
+      productsArray.push(newProductDetail);
+      const updatedproductsInJSON = JSON.stringify(productsArray);
+      localStorage.setItem(key, updatedproductsInJSON);
+    }
+  }
 
-
-      productsArray.push(value);
+  // Function to remove an item from local storage based on its key
+  function removeFromLocalStorage(key, itemId) {
+    const productsArray = getProducts(key);
+    // Find the index of the item to remove based on its ID
+    const indexToRemove = productsArray.findIndex((productDetail) => {
+      return Object.keys(productDetail)[0] === itemId;
+    });
+    // If the item was found, remove it from the array and update local storage
+    if (indexToRemove !== -1) {
+      productsArray.splice(indexToRemove, 1);
       const updatedproductsInJSON = JSON.stringify(productsArray);
       localStorage.setItem(key, updatedproductsInJSON);
     }
@@ -111,27 +140,59 @@
 
   // On-click function on the product list/ product selection.
   $('#idProductListContainer').on('click', '.with-stock', (event) => {
-    let productElement   = event.currentTarget;
+    let productElement = event.currentTarget;
     let productId = productElement.dataset.id;
-    let productDetails = {
+    let productDetail = {
       [productId]: {
         'quantity': 1,
-        'discount': 0,
       }
     }
-    saveToLocalStorage('selected_products', productDetails);
+    saveToLocalStorage('selected_products', productDetail);
 
     // Apply highlighting effect when the product is clicked.
     let pElements = productElement.querySelectorAll('p');
-    productElement.classList.toggle('bg-secondary');
+    productElement.classList.add('bg-secondary');
     Array.from(pElements).map(pElement => {
-      pElement.classList.toggle('text-white');
+      pElement.classList.add('text-white');
     });
+    loadCheckOut();
+  });
 
-    reloadComponent(productListURL, 'idProductListContainer', false);
-    let header = {headers: {'X-CSRFToken': '{{ csrf_token }}'}};
-    let renderCashRegisterURL = "{% url 'pos:checkout' %}";
-    reloadComponentPost(renderCashRegisterURL, {}, header, 'idCashRegister', false);
+  $('#idClearCashRegister').on('click', ()=>{
+    localStorage.removeItem('selected_products');
+    loadCheckOut();
+    // Get all elements with class "with-stock" and "bg-secondary"
+    const elements = document.querySelectorAll('.with-stock.bg-secondary');
+
+    // Loop through each element and remove the "bg-secondary" class
+    elements.forEach(element => {
+      element.classList.remove('bg-secondary');
+      const childParagraphs = element.querySelectorAll('p');
+      childParagraphs.forEach(paragraph => {
+        paragraph.classList.remove('text-white');
+      });
+    });
+  });
+
+  $('#idCashRegister').on('click', '.trash-checkout-item', (event) => {
+    let productId = event.currentTarget.dataset.target_id;
+    const productElement = document.querySelector(`[data-id="${productId}"]`);
+    if (productElement) {
+      productElement.classList.toggle('bg-secondary');
+      Array.from(productElement.querySelectorAll('p')).forEach(pElement => {
+        pElement.classList.toggle('text-white');
+      });
+    }
+    removeFromLocalStorage('selected_products', productId);
+    loadCheckOut();
+  });
+
+  $('#idCashRegister').on('change', '.checkout-product-quantity', (event)=> {
+    let productId = event.currentTarget.dataset.target_id;
+    let quantity = parseInt(event.currentTarget.value); // Get the updated quantity
+    let price = parseInt($(`#idCheckoutProductPrice${productId}`).data('price'));
+    let total = price * quantity;
+    $(`#idCheckoutProductPrice${productId}`).val(total);
   });
 </script>
 {% endblock %}
