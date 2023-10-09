@@ -26,3 +26,22 @@ function reloadComponent(url, containerId, isLoadingEffect=false) {
       console.error(error);
     });
 }
+
+
+function reloadComponentPost(url, data, header, containerId, isLoadingEffect=false) {
+  if (isLoadingEffect) {
+    $(`#${containerId}`).html(
+      `<div class="spinner-border" role="status">
+        <span class="sr-only">Loading...</span>
+      </div>
+      `
+    );
+  }
+  axios.post(url, data, header)
+    .then(function (response) {
+      $(`#${containerId}`).html(response.data);
+    })
+    .catch(function (error) {
+      console.error(error);
+    });
+}

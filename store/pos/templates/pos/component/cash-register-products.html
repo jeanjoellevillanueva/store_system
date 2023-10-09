@@ -1,0 +1,37 @@
+{% for product in products %}
+<div class="col p-0">
+  <div
+    class="product-box {% if not product.quantity %}disabled{% else %}with-stock cursor-pointer{% endif %}"
+    data-quantity="{{ product.quantity }}"
+    data-id="{{ product.id }}"
+  >
+    <p class="m-0">{{ product.item_code }}</p>
+    <p class="m-0">{{ product.name }}</p>
+    <p class="m-0">({{ product.variation }})</p>
+    <p class="m-0">Price: {{ product.price }}</p>
+    {% if not product.quantity %}
+      <span class="badge badge-pill badge-danger">Out of stock</span>
+    {% else %}
+      <span class="badge badge-pill badge-success">Stock: {{ product.quantity }}</span>
+    {% endif %}
+  </div>
+</div>
+{% endfor %}
+
+<script>
+  $(document).ready(()=>{
+    // Retrieve the selected products from local storage
+    const selectedProducts = JSON.parse(localStorage.getItem('selected_products') || '[]');
+
+    // Loop through the selected product IDs and apply class toggle
+    selectedProducts.forEach(productId => {
+      const productElement = document.querySelector(`[data-id="${productId}"]`);
+      if (productElement) {
+        productElement.classList.toggle('bg-secondary');
+        Array.from(productElement.querySelectorAll('p')).forEach(pElement => {
+          pElement.classList.toggle('text-white');
+        });
+      }
+    });
+  });
+</script>

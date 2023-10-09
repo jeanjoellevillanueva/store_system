@@ -37,14 +37,14 @@ class Delivery(models.Model):
     DELIVER = 'deliver'
     RETURNED = 'returned'
     PULL_OUT = 'pull_out'
-    WRONG_INPUT = 'wrong_input'
+    VOID = 'void'
     IN_CHOICES = [
         (DELIVER, 'Deliver'),
         (RETURNED, 'Returned Item'),
     ]
     OUT_CHOICES = [
         (PULL_OUT, 'Pull-out'),
-        (WRONG_INPUT, 'Wrong Input'),
+        (VOID, 'Void'),
     ]
     DELIVER_CHOICES = IN_CHOICES + OUT_CHOICES
 
