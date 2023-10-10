@@ -45,3 +45,14 @@ function reloadComponentPost(url, data, header, containerId, isLoadingEffect=fal
       console.error(error);
     });
 }
+
+/**
+ * Hide/Show the success or error message.
+ * @param {string} alertType - Value must be 'Success' or 'Error' ONLY.
+ * @param {string} message - The message you wanted to show.
+ */
+function triggerAlert(alertType, message) {
+  $(`#idAlertMessage${alertType}`).html(`${message}.`);
+  $(`#idAlert${alertType}`).removeClass('d-none');
+  $(`#idAlert${alertType}`).fadeIn();
+}

@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from .models import Product
 
 
@@ -37,14 +39,31 @@ def get_checkout_detail(product_data):
     for product in products:
         product_id = str(product.id)
         quantity = sale_info[product_id]['quantity']
-        total = (quantity * product.price)
+        ordering = sale_info[product_id]['ordering']
+        total_capital = (quantity * product.capital)
+        total_sales = (quantity * product.price)
+        profit = total_sales - total_capital
         checkout_info = {
+            'ordering': ordering,
             'name': f'{product.name} ({product.variation})',
             'id': product_id,
             'quantity': quantity,
-            'total': total,
+            'total': total_sales,
             'in_stock': product.quantity,
             'price': product.price,
+            'capital': product.capital,
+            'profit': profit,
         }
         checkout_data.append(checkout_info)
-    return checkout_data
+    return sorted(checkout_data, key=lambda x: x['ordering'])
+
+
+def compute_total(product_list):
+    """
+    Computes the total of the entire product list.
+    """
+
+    total = Decimal('0.00')
+    for product in product_list:
+        total += product['total']
+    return total

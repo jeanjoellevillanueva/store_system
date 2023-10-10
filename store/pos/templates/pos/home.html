@@ -110,9 +110,7 @@
   function saveToLocalStorage (key, newProductDetail) {
     // Get the existing products on the local storage and compile the product IDs.
     const productsArray = getProducts(key);
-    let productIDs = productsArray.map((productDetail, index) => {
-      return Object.keys(productDetail)[index];
-    });
+    let productIDs = productsArray.map(productDetail => Object.keys(productDetail)[0]);
 
     // Add the new product in the array if it does not exist.
     const newProductId = Object.keys(newProductDetail)[0];
@@ -138,12 +136,52 @@
     }
   }
 
+  // Function to update the quantity of an existing product in Local Storage.
+  function updateQuantityInLocalStorage(key, productID, newQuantity) {
+    const productsArray = getProducts(key);
+
+    // Find the index of the item to update based on its ID
+    const indexToUpdate = productsArray.findIndex((productDetail) => {
+      return Object.keys(productDetail)[0] === productID;
+    });
+
+    // If the item was found, update its quantity and update local storage
+    if (indexToUpdate !== -1) {
+      const existingProductDetail = productsArray[indexToUpdate];
+      const existingProductId = Object.keys(existingProductDetail)[0];
+
+      // Update the quantity of the existing product
+      existingProductDetail[existingProductId].quantity = newQuantity;
+      const updatedProductsInJSON = JSON.stringify(productsArray);
+      localStorage.setItem(key, updatedProductsInJSON);
+    }
+  }
+
+  // Function used to clear cash register and unselect the products in product list.
+  function clearOutCashRegister() {
+    localStorage.removeItem('selected_products');
+    loadCheckOut();
+    // Get all elements with class "with-stock" and "bg-secondary"
+    const elements = document.querySelectorAll('.with-stock.bg-secondary');
+
+    // Loop through each element and remove the "bg-secondary" class
+    elements.forEach(element => {
+      element.classList.remove('bg-secondary');
+      const childParagraphs = element.querySelectorAll('p');
+      childParagraphs.forEach(paragraph => {
+        paragraph.classList.remove('text-white');
+      });
+    });
+  }
+
   // On-click function on the product list/ product selection.
   $('#idProductListContainer').on('click', '.with-stock', (event) => {
     let productElement = event.currentTarget;
     let productId = productElement.dataset.id;
+    let orderNumber = getProducts('selected_products').length + 1;
     let productDetail = {
       [productId]: {
+        'ordering': orderNumber,
         'quantity': 1,
       }
     }
@@ -158,20 +196,9 @@
     loadCheckOut();
   });
 
+  // Onclick function for clear button in the cash register.
   $('#idClearCashRegister').on('click', ()=>{
-    localStorage.removeItem('selected_products');
-    loadCheckOut();
-    // Get all elements with class "with-stock" and "bg-secondary"
-    const elements = document.querySelectorAll('.with-stock.bg-secondary');
-
-    // Loop through each element and remove the "bg-secondary" class
-    elements.forEach(element => {
-      element.classList.remove('bg-secondary');
-      const childParagraphs = element.querySelectorAll('p');
-      childParagraphs.forEach(paragraph => {
-        paragraph.classList.remove('text-white');
-      });
-    });
+    clearOutCashRegister();
   });
 
   $('#idCashRegister').on('click', '.trash-checkout-item', (event) => {
@@ -188,11 +215,49 @@
   });
 
   $('#idCashRegister').on('change', '.checkout-product-quantity', (event)=> {
-    let productId = event.currentTarget.dataset.target_id;
-    let quantity = parseInt(event.currentTarget.value); // Get the updated quantity
-    let price = parseInt($(`#idCheckoutProductPrice${productId}`).data('price'));
+    let quantityInput = event.currentTarget;
+    let productId = quantityInput.dataset.target_id;
+    let quantity = parseInt(quantityInput.value);
+    let inStock = parseInt(quantityInput.getAttribute('max'));
+
+    // Prevent the user for entering zero or negative values and quantities greater than the stock.
+    if (quantity > inStock) {
+      quantityInput.value = inStock;
+      quantity = inStock;
+    } else if (1 > quantity) {
+      quantityInput.value = 1;
+      quantity = 1;
+    }
+
+    // Compute for the total price.
+    let price = parseFloat($(`#idCheckoutProductPrice${productId}`).data('price'));
     let total = price * quantity;
-    $(`#idCheckoutProductPrice${productId}`).val(total);
+
+    $(`#idCheckoutProductPrice${productId}`).val(total.toFixed(2));
+    updateQuantityInLocalStorage('selected_products', productId, quantity);
+    loadCheckOut();
+  });
+
+  $('#idCashRegister').on('click', '#confirmToCheckout', ()=>{
+    // Loads the cash register.
+    let products_in_json = getProducts('selected_products');
+    let header = {headers: {
+      'X-CSRFToken': '{{ csrf_token }}',
+      'Content-Type': 'x-www-form-urlencoded'
+    }};
+    let createSaleURL = "{% url 'pos:create_sale' %}";
+    axios.post(createSaleURL, {'products_in_json': products_in_json}, header)
+      .then(function (response) {
+        triggerAlert('Success', response.data.message);
+        clearOutCashRegister();
+      })
+      .catch(function (error) {
+        triggerAlert('Error', error.message);
+        console.error(error);
+      });
+    $('#checkOutModal').hide();
+    $('body').removeClass('modal-open');
+    $('.modal-backdrop').remove();
   });
 </script>
 {% endblock %}

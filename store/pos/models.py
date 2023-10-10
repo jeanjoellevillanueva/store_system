@@ -13,16 +13,6 @@ class Sale(ModelMixin):
     The transaction that happened between the buyer and the seller.
     """
 
-    BANK_TRANSFER = 'bank_transfer'
-    CASH = 'cash'
-    CREDIT = 'credit'
-
-    PAYMENT_METHODS = [
-        (BANK_TRANSFER, 'Bank Transfer'),
-        (CASH, 'Cash'),
-        (CREDIT, 'Credit Card'),
-    ]
-
     receipt_number = models.CharField(max_length=20, editable=False)
     # Product info.
     product_id = models.CharField(max_length=255)
@@ -37,16 +27,6 @@ class Sale(ModelMixin):
 
     # Computed fields.
     profit = models.DecimalField(max_digits=10, decimal_places=2)
-
-    # Transaction info.
-    amount_paid = models.DecimalField(
-        max_digits=10,
-        decimal_places=2,
-        null=True,
-        blank=True,
-    )
-    payment_method = models.CharField(
-        max_length=50, default=CASH, choices=PAYMENT_METHODS)
 
     def __str__(self):
         return f'Sale {self.receipt_number}'

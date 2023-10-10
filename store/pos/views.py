@@ -3,14 +3,17 @@ from typing import Any
 
 from braces.views import JSONResponseMixin
 
-from django.conf import settings
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.db import transaction
 from django.db.models import Q
 from django.views import View
 from django.views.generic import TemplateView
 
 from inventory.models import Product
+from inventory.utils import compute_total
 from inventory.utils import get_checkout_detail
+
+from .models import Sale
 
 
 class POSTemplateView(LoginRequiredMixin, TemplateView):
@@ -52,7 +55,8 @@ class POSCheckOutTemplateView(LoginRequiredMixin, TemplateView):
         product_data = data['products_in_json']
         products = get_checkout_detail(product_data)
         context['products'] = products
-        print(products)
+        context['products'] = products
+        context['total'] = compute_total(products)
         return self.render_to_response(context)
 
 
@@ -62,5 +66,40 @@ class SaleCustomCreateView(LoginRequiredMixin, JSONResponseMixin, View):
     """
 
     def post(self, request, *args, **kwargs):
-        import pdb; pdb.set_trace()
-        return self.render_to_response()
+        data = json.loads(request.body.decode('utf-8'))
+        product_data = data['products_in_json']
+        products = get_checkout_detail(product_data)
+        sale_instances = []
+        status = 500
+        with transaction.atomic():
+            # For each sale, we will only generate one receipt even if the
+            # sale consisted of multiple products.
+            receipt_number = Sale.generate_receipt_number()
+            for product in products:
+                product_id = product['id']
+                product_name = product['name']
+                capital = product['capital']
+                price = product['price']
+                quantity = product['quantity']
+                discount = 0 # Default to zero because this is not yet implemented.
+                total = product['total']
+                profit = product['profit']
+
+                # Create a Sale instance and append it to the list
+                sale_instance = Sale(
+                    receipt_number=receipt_number,
+                    product_id=product_id,
+                    product_name=product_name,
+                    capital=capital,
+                    price=price,
+                    quantity=quantity,
+                    discount=discount,
+                    total=total,
+                    profit=profit,
+                )
+                sale_instances.append(sale_instance)
+            # Save the created objects.
+            Sale.objects.bulk_create(sale_instances)
+            status = 201
+        data = {'message': 'Transaction was successful'}
+        return self.render_json_response(data, status)
