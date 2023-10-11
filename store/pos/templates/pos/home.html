@@ -250,9 +250,14 @@
       .then(function (response) {
         triggerAlert('Success', response.data.message);
         clearOutCashRegister();
+        reloadComponent(productListURL, 'idProductListContainer', false);
       })
       .catch(function (error) {
-        triggerAlert('Error', error.message);
+        let errorMessage = error.response.data.message;
+        if (error.response.data.message === undefined) {
+          errorMessage = error.message;
+        }
+        triggerAlert('Error', errorMessage);
         console.error(error);
       });
     $('#checkOutModal').hide();

@@ -24,6 +24,17 @@ class Product(ModelMixin):
 
     def __str__(self):
         return self.name
+    
+    @classmethod    
+    def update_stock(cls, product_id, quantity_of_sale):
+        """
+        Class method to update the new stock of a product.
+        """
+
+        product = cls.objects.get(id=product_id)
+        new_quantity = product.quantity - quantity_of_sale
+        product.quantity = new_quantity
+        product.save()
 
 
 class Delivery(models.Model):

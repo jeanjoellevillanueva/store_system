@@ -84,6 +84,19 @@ class SaleCustomCreateView(LoginRequiredMixin, JSONResponseMixin, View):
                 discount = 0 # Default to zero because this is not yet implemented.
                 total = product['total']
                 profit = product['profit']
+                in_stock = product['in_stock']
+
+                # We cannot have negative stock so we will raise
+                # a vaildation error if this happen.
+                if in_stock < quantity:
+                    data = {
+                        'status': 'failed',
+                        'message': 'Insufficient inventory stock available'
+                    }
+                    return self.render_json_response(data, status=400)
+                
+                # Update the stock.
+                Product.update_stock(product_id, quantity)
 
                 # Create a Sale instance and append it to the list
                 sale_instance = Sale(
@@ -101,5 +114,8 @@ class SaleCustomCreateView(LoginRequiredMixin, JSONResponseMixin, View):
             # Save the created objects.
             Sale.objects.bulk_create(sale_instances)
             status = 201
-        data = {'message': 'Transaction was successful'}
+        data = {
+            'status': 'success',
+            'message': 'Transaction was successful'
+        }
         return self.render_json_response(data, status)
