@@ -1,0 +1,34 @@
+<div class="table-responsive">
+  <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+    <thead>
+      <tr>
+        <th class="text-center">Date</th>
+        <th class="text-center">Type</th>
+        <th class="text-center">Item</th>
+        <th class="text-center">Quantity</th>
+        <th class="text-center">Delivered/Pull-out by</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for delivery in deliveries %}
+      <tr>
+        <td class="text-center">{{ delivery.created_date }}</td>
+        <td class="text-center {% if delivery.reason in deliver_inchoices %}text-success{% else %}text-danger{% endif %}">{{ delivery.get_reason_display }}</td>
+        <td class="text-center"><a href="{% url 'inventory:product' delivery.product_item_code %}">{{ delivery.product_name }}</a></td>
+        <td class="text-center">{{ delivery.quantity }}</td>
+        <td class="text-center">{{ delivery.created_by.username }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+<script>
+  /**
+   * Apply datatable.net plugin on the table.
+   */
+  $(document).ready(function() {
+    $('#dataTable').DataTable({
+      order: [],
+    });
+  });
+</script>

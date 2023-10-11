@@ -1,14 +1,19 @@
 import json
-from typing import Any
+from typing import Any, Dict
 
 from braces.views import JSONResponseMixin
 
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db import transaction
+from django.db.models import Max
+from django.db.models import OuterRef
 from django.db.models import Q
+from django.db.models import Subquery
+from django.db.models import Sum
 from django.views import View
 from django.views.generic import TemplateView
 
+from inventory.models import Delivery
 from inventory.models import Product
 from inventory.utils import compute_total
 from inventory.utils import get_checkout_detail
@@ -119,3 +124,108 @@ class SaleCustomCreateView(LoginRequiredMixin, JSONResponseMixin, View):
             'message': 'Transaction was successful'
         }
         return self.render_json_response(data, status)
+
+
+class SaleReportTemplateView(LoginRequiredMixin, TemplateView):
+    """
+    View used for rendering sales report page.
+    """
+    template_name = 'pos/sale.html'
+
+
+class SaleListTemplateView(LoginRequiredMixin, TemplateView):
+    """
+    View used for loading the list of sales.
+    """
+    template_name = 'pos/datatables/sales.html'
+
+    def get_context_data(self, **kwargs: Any) -> Dict[str, Any]:
+        context = super().get_context_data(**kwargs)
+        max_created_subquery = (
+            Sale.objects
+                .filter(receipt_number=OuterRef('receipt_number'))
+                .values('receipt_number')
+                .annotate(max_created=Max('created_date'))
+                .values('max_created')
+                .exclude(is_void=True)
+        )
+
+        sales = (
+            Sale.objects
+                .filter(created_date=Subquery(max_created_subquery))
+                .order_by('-created_date')
+                .exclude(is_void=True)
+        )
+        context['sales'] = sales
+        return context
+    
+
+class ProductSoldTemplateView(LoginRequiredMixin, TemplateView):
+    """
+    Renders the page for the products sold in specified receipt number.
+    """
+    template_name = 'pos/product.html'
+
+    def get_context_data(self, **kwargs: Any) -> Dict[str, Any]:
+        context = super().get_context_data(**kwargs)
+        context['receipt_number'] = self.kwargs['receipt_number']
+        return context
+
+
+class ProductSoldListTemplateView(LoginRequiredMixin, TemplateView):
+    """
+    Views to render the datatable for the products sold.
+    """
+    template_name = 'pos/datatables/items_sold.html'
+
+    def get_context_data(self, **kwargs: Any) -> Dict[str, Any]:
+        context = super().get_context_data(**kwargs)
+        items_sold = (
+            Sale.objects
+                .filter(receipt_number=self.kwargs['receipt_number'])
+                .exclude(is_void=True)
+        )
+        summary = items_sold.aggregate(
+            total_profit=Sum('profit'),
+            total_amount=Sum('total')
+        )
+        context['items_sold'] = items_sold
+        context['total_amount'] = summary['total_amount']
+        context['total_profit'] = summary['total_profit']
+        return context
+
+
+class SaleVoidJSONView(LoginRequiredMixin, JSONResponseMixin, View):
+    """
+    View used for voiding a sale.
+    """
+
+    def post(self, request, *args, **kwargs):
+        try:
+            sale = Sale.objects.get(id=self.kwargs['id'])
+        except Exception as e:
+             # Object not found
+             return self.render_json_response({'message': str(e)}, status=404)
+        with transaction.atomic():
+            # We will add the quantity back to the product.
+            product = Product.objects.get(id=sale.product_id)
+            product.quantity = product.quantity + sale.quantity
+            product.save()
+
+            # We will also add the report in the deliveries.
+            delivery_kwargs = {
+                'product_id': product.id,
+                'product_item_code': product.item_code,
+                'product_name': f'{product.name} ({product.variation})',
+                'quantity': sale.quantity,
+                'reason': Delivery.RETURNED,
+                'created_by': self.request.user,
+            }
+            Delivery.objects.create(**delivery_kwargs)
+            sale.is_void = True
+            sale.save()
+
+        json_data = {
+            'message': 'Void was successful'
+        }
+        return self.render_json_response(json_data, status=204)

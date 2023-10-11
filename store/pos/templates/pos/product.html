@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+{% block header %}
+  <a href="{% url 'pos:sale' %}" style="text-decoration:none">
+    <span>
+      <i class="fa fa-arrow-circle-left"></i>
+    </span>
+  </a>
+  Sales / Details
+{% endblock %}
+
+{% block content %} 
+  <div class="row">
+    <div class="col-xl-12 col-lg-12">
+      <div class="card shadow mb-4">
+        <div
+          class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+          <h6 class="m-0 font-weight-bold text-primary">Receipt Number: {{ receipt_number }}</h6>
+        </div>
+        <div id="idItemSoldTableContainer" class="card-body d-flex justify-content-center align-items-center">
+          <!-- This will be filled by axios -->
+        </div>
+      </div>
+    </div>
+  </div>
+  {% include 'pos/forms/void_sale.html' %}
+{% endblock %}
+
+{% block javascript %}
+<script>
+  $(document).ready(()=>{
+    // Call the function to fetch data and populate the DataTable
+    reloadComponent("{% url 'pos:list_sold' receipt_number %}", 'idItemSoldTableContainer', true);
+  });
+</script>
+{% endblock %}

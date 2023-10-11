@@ -26,6 +26,21 @@
     </a>
   </li>
 
+  <hr class="sidebar-divider">
+  <div class="sidebar-heading my-1">Reports</div>
+  <li class="nav-item">
+    <a class="nav-link" href="{% url 'pos:sale' %}">
+      <i class="fas fa-fw fa-book"></i>
+      <span>Sales</span>
+    </a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link" href="{% url 'inventory:delivery' %}">
+      <i class="fas fa-fw fa-truck"></i>
+      <span>Deliveries</span>
+    </a>
+  </li>
+
   <!-- Divider -->
   <hr class="sidebar-divider d-none d-md-block">
 

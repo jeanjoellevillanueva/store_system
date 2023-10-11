@@ -264,7 +264,7 @@ class VariationCustomDeleteView(LoginRequiredMixin, JSONResponseMixin, View):
              return self.render_json_response({'message': str(e)}, status=404)
         product.delete()
         json_data = {
-            'message': 'Successfully deleted.'
+            'message': 'Successfully deleted'
         }
         return self.render_json_response(json_data, status=204)
 
@@ -301,9 +301,12 @@ class DeliveryCustomCreateView(LoginRequiredMixin, JSONResponseMixin, View):
                     product.quantity = current_quantity + quantity_to_add
                 product.save()
                 delivery_kwargs = {
-                    'product': product,
+                    'product_id': product.id,
+                    'product_item_code': product.item_code,
+                    'product_name': f'{product.name} ({product.variation})',
                     'quantity': quantity_to_add,
                     'reason': form.cleaned_data['reason'],
+                    'created_by': self.request.user,
                 }
                 Delivery.objects.create(**delivery_kwargs)
                 json_data = {
@@ -313,3 +316,24 @@ class DeliveryCustomCreateView(LoginRequiredMixin, JSONResponseMixin, View):
                 return self.render_json_response(json_data, status=200)
         json_data = {'status': 'error', 'errors': form.errors}
         return self.render_json_response(json_data, status=400)
+
+
+class DeliveryReportTemplateView(LoginRequiredMixin, TemplateView):
+    """
+    Report page for the deliveries.
+    """
+    template_name = 'inventory/delivery.html'
+
+
+class DeliveryListTemplateView(LoginRequiredMixin, TemplateView):
+    """
+    View used for loading the list of deliveries.
+    """
+    template_name = 'inventory/datatables/deliveries.html'
+
+    def get_context_data(self, **kwargs: Any) -> Dict[str, Any]:
+        context = super().get_context_data(**kwargs)
+        context['deliveries'] = Delivery.objects.all().order_by('-created_date')
+        delivery_inchoices = [choice[0] for choice in Delivery.IN_CHOICES]
+        context['deliver_inchoices'] = delivery_inchoices
+        return context

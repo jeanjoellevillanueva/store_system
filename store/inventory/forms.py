@@ -53,7 +53,7 @@ class DeliveryAddForm(forms.ModelForm):
     Form used when adding stock of a product.
     """
     reason = forms.ChoiceField(
-        choices=Delivery.IN_CHOICES,
+        choices=Delivery.DEFAULT_CHOICES,
         widget=forms.Select(attrs={'class': 'form-control'}),
     )
 

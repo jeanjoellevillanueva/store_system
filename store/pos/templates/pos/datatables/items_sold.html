@@ -1,0 +1,66 @@
+<div class="table-responsive">
+  {% if items_sold %}
+  <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+    <thead>
+      <tr>
+        <th class="text-center">Product</th>
+        <th class="text-center">Capital</th>
+        <th class="text-center">Price</th>
+        <th class="text-center">Quantity</th>
+        <th class="text-center">Total</th>
+        <th class="text-center">Void</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for product in items_sold %}
+      <tr>
+        <td class="text-center">{{ product.product_name }}</td>
+        <td class="text-center">&#8369;{{ product.capital }}</td>
+        <td class="text-center">&#8369;{{ product.price }}</td>
+        <td class="text-center">{{ product.quantity }}</td>
+        <td class="text-center">&#8369;{{ product.total }}</td>
+        <td class="text-center">
+          <a
+            class="btn btn-danger delete-solditem"
+            data-toggle="modal"
+            data-target="#soldItemDeleteModal"
+            data-url="{% url 'pos:void' product.id %}"
+          >
+            <span class="icon text-white-50">
+              <i class="fas fa-trash"></i>
+            </span>
+          </a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+    <tfoot>
+      <tr>
+        <td colspan="6" class="text-center"><b>Summary</b></td>
+      </tr>
+      <tr>
+        <td colspan="5"><b>Total Amount:</b></td>
+        <td class="text-center"><b>&#8369;{{ total_amount }}</b></td>
+      </tr>
+      <tr>
+        <td colspan="5"><b>Profit:</b></td>
+        <td class="text-center"><b>&#8369;{{ total_profit }}</b></td>
+      </tr>
+    </tfoot>
+  </table>
+  {% else %}
+  <div class="d-flex justify-content-center align-items-center">
+    <h5>Receipt not found.</h5>
+  </div>
+  {% endif %}
+</div>
+<script>
+  /**
+   * Apply datatable.net plugin on the table.
+   */
+  $(document).ready(function() {
+    $('#dataTable').DataTable({
+      order: [],
+    });
+  });
+</script>

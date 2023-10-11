@@ -18,7 +18,7 @@
     <link href="{% static 'css/sb-admin-2.min.css' %}" rel="stylesheet">
     <style>
       .bg-image {
-        background: url('{% static "img/galinduh-login.jpeg" %}');
+        background: url('{% static "img/login-img.jpg" %}');
         background-position: center;
         background-size: cover;
       }
@@ -35,7 +35,7 @@
                 <div class="col-lg-6">
                   <div class="p-5" style="height: 70vh">
                     <div class="text-center">
-                      <h1 class="h4 text-gray-900 mb-4">Welcome to Galinduh!</h1>
+                      <h1 class="h4 text-gray-900 mb-4">Welcome to {{ PROJECT_NAME }}!</h1>
                     </div>
                     <form class="user" method="POST" action="{% url 'accounts:login' %}">
                       {% csrf_token %}

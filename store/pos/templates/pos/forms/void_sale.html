@@ -1,0 +1,56 @@
+<div class="modal fade" id="soldItemDeleteModal" tabindex="-1" role="dialog" aria-labelledby="soldItemDeleteModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="soldItemDeleteModalLabel">Void</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        Are you sure you want to void this transaction?
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+        <a href="#" id="deleteSoldItemConfirmButton" data-url="#" class="btn btn-danger">Void</a>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+  /**
+   * Script for deleting a soldItem.
+   */
+  $(document).ready(function() {
+    $('#idItemSoldTableContainer').on('click', '.delete-solditem', (event)=> {
+      let deleteUrl = event.currentTarget.dataset.url;
+      // Set the new action attribute for the form
+      $('#deleteSoldItemConfirmButton').attr('data-url', deleteUrl);
+    });
+
+    // When the button on the confirm modal is clicked this will fire a request using axios.
+    $('#deleteSoldItemConfirmButton').on('click', (event)=> {
+      let deleteSoldItemConfirmButton = $('#deleteSoldItemConfirmButton');
+      const header_data = {
+        headers: {'X-CSRFToken': '{{ csrf_token }}'},
+      };
+      let deleteUrl = event.currentTarget.dataset.url;
+      let spinner = `
+      <div class="spinner-border text-light" role="status" style="height: 1.4rem; width: 1.4rem">
+        <span class="sr-only">Loading...</span>
+      </div>`;
+      deleteSoldItemConfirmButton.html(spinner);
+      axios.post(deleteUrl, {}, header_data)
+        .then(response => {
+          reloadComponent("{% url 'pos:list_sold' receipt_number %}", 'idItemSoldTableContainer', true);
+          $('#soldItemDeleteModal').modal('hide');
+        })
+        .catch(error => {
+          console.error('Error:', error);
+        })
+        .finally(function () {
+          deleteSoldItemConfirmButton.html('Void');
+        });
+    });
+  });
+</script>

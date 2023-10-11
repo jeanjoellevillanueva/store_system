@@ -37,7 +37,7 @@ class Product(ModelMixin):
         product.save()
 
 
-class Delivery(models.Model):
+class Delivery(ModelMixin):
     """
     Represents the movement of the stock of products.
     """
@@ -49,6 +49,9 @@ class Delivery(models.Model):
     RETURNED = 'returned'
     PULL_OUT = 'pull_out'
     VOID = 'void'
+    DEFAULT_CHOICES = [
+        (DELIVER, 'Deliver'),
+    ]
     IN_CHOICES = [
         (DELIVER, 'Deliver'),
         (RETURNED, 'Returned Item'),
@@ -59,7 +62,8 @@ class Delivery(models.Model):
     ]
     DELIVER_CHOICES = IN_CHOICES + OUT_CHOICES
 
-    product = models.ForeignKey(Product, on_delete=models.DO_NOTHING)
+    product_id = models.CharField(max_length=255)
+    product_item_code = models.CharField(max_length=255)
+    product_name = models.CharField(max_length=255)
     quantity = models.PositiveIntegerField(default=1)
     reason = models.CharField(max_length=50, choices=DELIVER_CHOICES, default=DELIVER)
-    created_date = models.DateTimeField(auto_now_add=True)
