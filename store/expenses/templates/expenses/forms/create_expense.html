@@ -1,0 +1,162 @@
+{% load widget_tweaks %}
+<style>
+  label.invisible {
+    color: transparent;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+  }
+</style>
+<div class="modal fade" id="expenseModal" tabindex="-1" role="dialog" aria-labelledby="expenseModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <form id="variationForm" method="POST">
+        {% csrf_token %}
+        <div class="modal-header">
+          <h5 class="modal-title" id="expenseModalLabel">Add Expense</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="form-row" style="margin-bottom: 1rem;" id="idVariationQuantityFieldset0">
+            <div class="col-5">
+              <label for="idProductVariation">Variation:</label>
+              <input class="form-control" type="text" placeholder="Size or color.." name="variation_0" id="idProductVariation" required/>
+              <div id="id_variation_0_error"></div>
+            </div>
+            <div class="col-3">
+              <label for="idProductCapital">Capital:</label>
+              <input class="form-control" type="number" value="0" name="capital_0" id="idProductCapital" required>
+            </div>
+            <div class="col-3">
+              <label for="idProductPrice">Price:</label>
+              <input class="form-control" type="number" value="0" name="price_0" id="idProductPrice" required>
+            </div>
+            <div class="col-1">
+              <!-- Leave Empty -->
+            </div>
+          </div>
+          <div id="idVariationQuantityContainer">
+            <!-- Dynamic fields for colors and quantities will be added here -->
+          </div>
+          <a href="#" class="btn btn-success" id="addVariationFieldBtn" style="width: 100%;">Add Variation</a>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-danger" data-dismiss="modal">Close</button>
+          <button type="button" class="btn btn-primary" id="idVariationSave">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+<script>
+  /**
+   * Script for managing product variation fields.
+   */
+  $(document).ready(() => {
+    let counter = 1;
+    $('#addVariationFieldBtn').on('click', () => {
+      const VariationQuantityContainer = $("#idVariationQuantityContainer");
+
+      // Add Color field and quantity to the container.
+      const VariationQuantityFieldset = document.createElement("fieldset");
+      VariationQuantityFieldset.innerHTML = `
+        <div class="form-row" style="margin-bottom: 1rem;" id="idVariationQuantityFieldset${counter}">
+          <div class="col-5">
+            <label for="idProductVariation${counter}">Variation:</label>
+            <input class="form-control" type="text" placeholder="Size or color.." name="variation_${counter}" id="idProductVariation${counter}" required/>
+            <div id="id_variation_${counter}_error"></div>
+          </div>
+
+          <div class="col-3">
+              <label for="idProductCapital${counter}">Capital:</label>
+              <input class="form-control" type="number" value="0" name="capital_${counter}" id="idProductCapital${counter}" required>
+            </div>
+
+          <div class="col-3">
+            <label for="idProductPrice${counter}">Price:</label>
+            <input class="form-control" type="number" value="0" name="price_${counter}" id="idProductPrice${counter}" required>
+          </div>
+
+          <div class="col-1">
+            <label class="invisible">DeleteBtn</label>
+            <button type="button" class="btn btn-danger color-delete-btn" id="idVariationDeleteBtn${counter}" data-id="${counter}" style="width: 100%">-</button>
+          </div>
+        </div>
+      `;
+
+      VariationQuantityContainer.append(VariationQuantityFieldset);
+      counter++;
+    });
+
+    //
+    $('#variationForm').on('click', ' .color-delete-btn', (event) => {
+      let id = event.currentTarget.dataset.id;
+      $(`#idVariationQuantityFieldset${id}`).remove();
+    });
+  });
+</script>
+
+<script>
+  /**
+   * Script for submitting the form.
+   */
+  $(document).ready(() => {
+    let variationForm = $('#variationForm'); // Get the form element
+    let saveButton = $('#idVariationSave');
+    let expenseModal = $('#expenseModal');
+
+    /**
+     * Remove all error messages on the customer form.
+     */
+    function clearErrorMessages() {
+      $('[id^="id_"][id$="_error"]').empty();
+    }
+
+    function resetForm() {
+      variationForm[0].reset();
+      clearErrorMessages();
+    }
+
+    // Event handler for modal close and reset the fields.
+    expenseModal.on('hidden.bs.modal', () => {
+      resetForm();
+    });
+
+    /**
+     * Script for creating/updating product information.
+     */
+    saveButton.on('click', () => {
+      // Serialize the form data and convert it to JSON
+      let formData = new FormData(variationForm[0]);
+      let spinner = `
+      <div class="spinner-border text-light" role="status" style="height: 1.4rem; width: 1.4rem">
+        <span class="sr-only">Loading...</span>
+      </div>`;
+      saveButton.html(spinner);
+      axios.post("{# url 'inventory:create_variation' product.item_code #}", formData)
+        .then(function (response) {
+          expenseModal.modal('hide');
+          clearErrorMessages();
+          reloadComponent("{# url 'inventory:list_variation' product.item_code #}", 'idVariationsTableContainer', true);
+        })
+        .catch(function (error) {
+          console.log(error.response.data);
+          if (error.response && error.response.data) {
+            let errors = error.response.data.errors;
+            for (let field in errors) {
+              let errorMsgs = errors[field];
+              $(`#id_${field}_error`).html(`<div class="text-danger">${errorMsgs}</div>`);
+            }
+          }
+        })
+        .finally(function () {
+          saveButton.html('Save');
+        });
+    });
+  });
+</script>
