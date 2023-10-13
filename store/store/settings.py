@@ -4,19 +4,19 @@ from pathlib import Path
 from .extractors import get_allowed_host
 from .extractors import get_db_credentials
 from .extractors import get_debug_settings
+from .extractors import get_project_detail
 from .extractors import get_secret_key
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 SECRET_KEY = get_secret_key()
 DEBUG = get_debug_settings()
 ALLOWED_HOSTS = get_allowed_host()
-
+PROJECT_DETAIL = get_project_detail()
 
 # Application definition
 LOCAL_APPS = [
@@ -72,7 +72,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'store.wsgi.application'
 
-
 # Database
 DATABASES = {
     'default': {
@@ -83,7 +82,6 @@ DATABASES = {
         **get_db_credentials(),
     }
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
@@ -102,35 +100,31 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
 # Internationalization
 # https://docs.djangoproject.com/en/4.2/topics/i18n/
-
 LANGUAGE_CODE = 'en-us'
-
 TIME_ZONE = 'Asia/Manila'
-
 USE_I18N = True
-
 USE_TZ = True
-
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
-
 STATIC_URL = '/static/'
-STATIC_ROOT = '/var/www/jns'
+STATIC_ROOT = PROJECT_DETAIL['STATIC_ROOT']
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'static'),
 ]
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
-
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Login Settings.
 LOGIN_URL = 'accounts:login'
 LOGIN_REDIRECT_URL = 'pos:home'
 
-PROJECT_NAME = 'JNS Motoshop'
+# Project Details.
+PROJECT_NAME = PROJECT_DETAIL['NAME']
+FAVICON_LINK = PROJECT_DETAIL['FAVICON_LINK']
+LOGO_LINK = PROJECT_DETAIL['LOGO_LINK']
+LOGIN_IMAGE_LINK = PROJECT_DETAIL['LOGIN_IMAGE_LINK']

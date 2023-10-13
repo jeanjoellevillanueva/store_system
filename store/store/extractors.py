@@ -72,3 +72,18 @@ def get_allowed_host():
     """
     env_data = get_env_variables()
     return env_data['ALLOWED_HOST']
+
+
+def get_project_detail():
+    """
+    Returns the PROJECT NAME from env.json.
+    """
+    env_data = get_env_variables()
+    project_detail = {
+        'NAME': env_data['NAME'],
+        'FAVICON_LINK': env_data['FAVICON_LINK'],
+        'LOGO_LINK': env_data['LOGO_LINK'],
+        'LOGIN_IMAGE_LINK': env_data['LOGIN_IMAGE_LINK'],
+        'STATIC_ROOT': env_data['STATIC_ROOT'],
+    }
+    return project_detail
