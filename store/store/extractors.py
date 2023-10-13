@@ -76,7 +76,7 @@ def get_allowed_host():
 
 def get_project_detail():
     """
-    Returns the PROJECT NAME from env.json.
+    Returns the PROJECT DETAILS from env.json.
     """
     env_data = get_env_variables()
     project_detail = {
