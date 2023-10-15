@@ -1,6 +1,6 @@
 from django.urls import path
 
-from .views import ExpensesTemplateView
+from .views import ExpenseTemplateView
 
 
 app_name = 'expenses'
@@ -9,7 +9,7 @@ app_name = 'expenses'
 urlpatterns = [
     path(
         '',
-        ExpensesTemplateView.as_view(),
+        ExpenseTemplateView.as_view(),
         name='home'
     ),
 ]

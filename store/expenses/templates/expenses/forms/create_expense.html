@@ -1,15 +1,4 @@
 {% load widget_tweaks %}
-<style>
-  label.invisible {
-    color: transparent;
-    -webkit-touch-callout: none;
-    -webkit-user-select: none;
-    -khtml-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
-    user-select: none;
-  }
-</style>
 <div class="modal fade" id="expenseModal" tabindex="-1" role="dialog" aria-labelledby="expenseModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-lg" role="document">
     <div class="modal-content">
@@ -22,28 +11,12 @@
           </button>
         </div>
         <div class="modal-body">
-          <div class="form-row" style="margin-bottom: 1rem;" id="idVariationQuantityFieldset0">
-            <div class="col-5">
-              <label for="idProductVariation">Variation:</label>
-              <input class="form-control" type="text" placeholder="Size or color.." name="variation_0" id="idProductVariation" required/>
-              <div id="id_variation_0_error"></div>
-            </div>
-            <div class="col-3">
-              <label for="idProductCapital">Capital:</label>
-              <input class="form-control" type="number" value="0" name="capital_0" id="idProductCapital" required>
-            </div>
-            <div class="col-3">
-              <label for="idProductPrice">Price:</label>
-              <input class="form-control" type="number" value="0" name="price_0" id="idProductPrice" required>
-            </div>
-            <div class="col-1">
-              <!-- Leave Empty -->
-            </div>
+          {% for field in expense_form %}
+          <div class="form-row" style="margin-bottom: 1rem;">
+            <label for="{{ field.auto_id }}">{{ field.label }}:</label>
+            {{ field|add_class:"form-control" }}
           </div>
-          <div id="idVariationQuantityContainer">
-            <!-- Dynamic fields for colors and quantities will be added here -->
-          </div>
-          <a href="#" class="btn btn-success" id="addVariationFieldBtn" style="width: 100%;">Add Variation</a>
+          {% endfor %}
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-danger" data-dismiss="modal">Close</button>
@@ -160,3 +133,19 @@
     });
   });
 </script>
+<script>
+  /**
+   * Apply Daterangepicker.
+   */
+  $(function() {
+    $('#id_date').daterangepicker({
+      singleDatePicker: true,
+      showDropdowns: true,
+      minYear: 1980,
+      maxYear: parseInt(moment().format('YYYY'), 10)
+    }, function(start, end, label) {
+      var years = moment().diff(start, 'years');
+      alert("You are " + years + " years old!");
+    });
+  });
+  </script>
