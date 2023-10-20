@@ -1,0 +1,54 @@
+<div class="row">
+  <div class="col-12">
+    <div class="card shadow p-1 mb-4">
+      <div class="card-body">
+        <div class="row d-flex justify-content-between">
+          <form id="dateRangeForm" method="POST">
+            {% csrf_token %}
+            <div id="dateRangeFilter" style="background: #fff; cursor: pointer; padding: 5px 10px; border: 1px solid #ccc; width: 100%">
+              <i class="fa fa-calendar"></i>&nbsp;
+              <span></span> <i class="fa fa-caret-down"></i>
+            </div>
+            <input type="hidden" id="startDateInput" name="start_date" value="{{ start_date|date:'m/d/Y' }}">
+            <input type="hidden" id="endDateInput" name="end_date" value="{{ end_date|date:'m/d/Y' }}">
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="text/javascript">
+  /**
+   * Apply the daterangepicker on the date filter.
+   */
+  $(document).ready(function() {
+    var start = moment($('#startDateInput').val(), 'MM/DD/YYYY');
+    var end = moment($('#endDateInput').val(), 'MM/DD/YYYY');
+
+    function cb(start, end) {
+      $('#dateRangeFilter span').html(start.format('MMMM D, YYYY') + ' - ' + end.format('MMMM D, YYYY'));
+      $('#startDateInput').val(start.format('MM/DD/YYYY'));
+      $('#endDateInput').val(end.format('MM/DD/YYYY'));
+    }
+
+    $('#dateRangeFilter').daterangepicker({
+      startDate: start,
+      endDate: end,
+      ranges: {
+        'Today': [moment(), moment()],
+        'Yesterday': [moment().subtract(1, 'days'), moment().subtract(1, 'days')],
+        'Last 7 Days': [moment().subtract(6, 'days'), moment()],
+        'Last 30 Days': [moment().subtract(29, 'days'), moment()],
+        'This Month': [moment().startOf('month'), moment().endOf('month')],
+        'Last Month': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')]
+      }
+    }, cb);
+    cb(start, end);
+
+    // Handle form submission on date range change
+    $('#dateRangeFilter').on('apply.daterangepicker', function(ev, picker) {
+      $('#dateRangeForm').submit();
+    });
+  });
+</script>
