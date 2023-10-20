@@ -1,38 +1,48 @@
-def get_financial_bar_chart(source_name=None):
-    """
-    Returns the Sales, expenses and profit per month of the current year.
-    """
-    current_year = timezone.now().year
-    sales_data = []
-    expenses_data = []
-    profit_data = []
+from datetime import timedelta
+from decimal import Decimal
+from collections import defaultdict
 
-    for month in range(1, len(MONTHS) + 1):
-        start_date = timezone.datetime(current_year, month, 1)
-        end_date = start_date.replace(day=28) + timezone.timedelta(days=4)
-        end_date = end_date - timezone.timedelta(days=end_date.day)
-        sales = DailySale.total_sales(
-            start_date=start_date,
-            end_date=end_date,
-            source_name=source_name
-        )
-        expenses = DailyExpense.total_expenses(
-            start_date=start_date,
-            end_date=end_date,
-            source_name=source_name
-        )
-        profit = sales - expenses
+from django.db.models import Sum
 
-        sales_data.append(sales)
-        expenses_data.append(expenses)
-        profit_data.append(profit)
-    
-    sales_data = [decimal_to_float(sale) for sale in sales_data]
-    expenses_data = [decimal_to_float(expense) for expense in expenses_data]
-    profit_data = [decimal_to_float(profit) for profit in profit_data]
-    
-    chart_config = {
-        'labels': MONTHS,
+from pos.models import Sale
+
+
+def get_financial_bar_chart(start_date, end_date):
+    """
+    Retrieves and formats daily sales, expenses, and profit data for a
+    Chart.js bar chart.
+    """
+    # Initialize dictionaries to store daily data
+    daily_sales = defaultdict(float)
+    daily_expenses = defaultdict(float)
+    daily_profit = defaultdict(float)
+
+    # Query the database for relevant sales data within the date range
+    sales = (
+        Sale.objects
+            .filter(created_date__date__range=(start_date, end_date))
+            .values('created_date')
+            .annotate(
+                total_sales=Sum('total'),
+                total_expenses=Sum('capital'),
+                total_profit=Sum('profit')
+        )
+    )
+
+    for sale in sales:
+        date = sale['created_date'].strftime('%Y-%m-%d')
+        daily_sales[date] = float(sale['total_sales'])
+        daily_expenses[date] =  float(sale['total_expenses'])
+        daily_profit[date] =  float(sale['total_profit'])
+
+    # Generate data for Chart.js
+    date_range = [str(start_date + timedelta(days=i)) for i in range((end_date - start_date).days + 1)]
+    sales_data = [daily_sales[date] for date in date_range]
+    expenses_data = [daily_expenses[date] for date in date_range]
+    profit_data = [daily_profit[date] for date in date_range]
+
+    chart_data = {
+        'labels': date_range,
         'datasets': [
             {
                 'label': 'Sales',
@@ -57,4 +67,5 @@ def get_financial_bar_chart(source_name=None):
             },
         ]
     }
-    return chart_config
+
+    return chart_data
