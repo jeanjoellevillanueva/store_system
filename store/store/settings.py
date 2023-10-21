@@ -109,6 +109,7 @@ LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'Asia/Manila'
 USE_I18N = True
 USE_TZ = True
+DATE_FORMAT = '%m/%d/%Y'
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
@@ -131,3 +132,6 @@ PROJECT_NAME = PROJECT_DETAIL['NAME']
 FAVICON_LINK = PROJECT_DETAIL['FAVICON_LINK']
 LOGO_LINK = PROJECT_DETAIL['LOGO_LINK']
 LOGIN_IMAGE_LINK = PROJECT_DETAIL['LOGIN_IMAGE_LINK']
+
+# Computations
+PLATFORM_PERCENTAGE = 0.15
