@@ -38,7 +38,7 @@ class DashboardTemplateView(LoginRequiredMixin, TemplateView):
         total_expense = 0
         total_profit = 0
         for sale in sales:
-            total_sale += sale['price']
+            total_sale += (sale['price'] * sale['quantity'])
             total_profit += sale['profit']
         if expenses:
             total_expense = float(expenses.aggregate(total_amount=Sum('amount'))['total_amount'])
@@ -74,7 +74,7 @@ class DashboardTemplateView(LoginRequiredMixin, TemplateView):
         total_expense = 0
         total_profit = 0
         for sale in sales:
-            total_sale += sale['price']
+            total_sale += (sale['price'] * sale['quantity'])
             total_profit += sale['profit']
         if expenses:
             total_expense = float(expenses.aggregate(total_amount=Sum('amount'))['total_amount'])

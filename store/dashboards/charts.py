@@ -17,10 +17,12 @@ def get_financial_bar_chart(sales, expenses, start_date, end_date):
     daily_sales = {date: 0.00 for date in date_range}
     daily_expenses = {date: 0.00 for date in date_range}
     daily_profit = {date: 0.00 for date in date_range}
-
+    count=1
     for sale in sales:
         date = sale['created_date'].strftime(settings.DATE_FORMAT)
-        total_sale = sale['price']
+        print(count, date)
+        count += 1
+        total_sale = (sale['price'] * sale['quantity'])
         deduct = float(total_sale) * settings.PLATFORM_PERCENTAGE
         daily_sales[date] += float(total_sale)
         daily_profit[date] +=  float(sale['profit']) - deduct
