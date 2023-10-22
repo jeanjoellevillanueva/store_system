@@ -1,22 +1,14 @@
 {% load static %}
 <!-- Sidebar -->
-<ul class="navbar-nav bg-gradient-primary sidebar sidebar-dark accordion" id="accordionSidebar">
+<ul class="navbar-nav bg-gradient-primary sidebar sidebar-dark accordion toggled" id="accordionSidebar">
 
   <!-- Sidebar - Brand -->
-  <a class="sidebar-brand d-flex align-items-center justify-content-center" href="{% url 'pos:home' %}">
+  <a class="sidebar-brand d-flex align-items-center justify-content-center" href="{% url 'dashboards:home' %}">
     <div class="sidebar-brand-icon">
       <img src="{{ LOGO_LINK }}" class="" style="height: 3rem"/>
     </div>
     <div class="sidebar-brand-text mx-3">{{ PROJECT_NAME }}</div>
   </a>
-
-  <hr class="sidebar-divider my-0">
-  <li class="nav-item">
-    <a class="nav-link" href="{% url 'pos:home' %}">
-      <i class="fas fa-fw fa-cash-register"></i>
-      <span>POS</span>
-    </a>
-  </li>
 
   <hr class="sidebar-divider my-0">
   <li class="nav-item">
@@ -26,7 +18,16 @@
     </a>
   </li>
 
-  <hr class="sidebar-divider my-0">
+  <hr class="sidebar-divider">
+  <div class="sidebar-heading my-1">Management</div>
+
+  <li class="nav-item">
+    <a class="nav-link" href="{% url 'pos:home' %}">
+      <i class="fas fa-fw fa-cash-register"></i>
+      <span>POS</span>
+    </a>
+  </li>
+
   <li class="nav-item">
     <a class="nav-link" href="{% url 'inventory:home' %}">
       <i class="fas fa-fw fa-list-alt"></i>
@@ -34,13 +35,12 @@
     </a>
   </li>
 
-  <!-- <hr class="sidebar-divider my-0">
   <li class="nav-item">
     <a class="nav-link" href="{% url 'expenses:home' %}">
       <i class="fas fa-fw fa-wallet"></i>
       <span>Expenses</span>
     </a>
-  </li> -->
+  </li>
 
   <hr class="sidebar-divider">
   <div class="sidebar-heading my-1">Reports</div>
@@ -59,10 +59,5 @@
 
   <!-- Divider -->
   <hr class="sidebar-divider d-none d-md-block">
-
-  <!-- Sidebar Toggler -->
-  <div class="text-center d-none d-md-inline">
-    <button class="rounded-circle border-0" id="sidebarToggle"></button>
-  </div>
 </ul>
 <!-- End of Sidebar -->

@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib.auth import login
 from django.contrib.auth import logout
 from django.shortcuts import redirect
@@ -14,7 +15,7 @@ class LoginView(FormView):
 
     template_name = 'login.html'
     form_class = LoginForm
-    success_url = reverse_lazy('pos:home')
+    success_url = reverse_lazy(settings.LOGIN_REDIRECT_URL)
 
     def form_valid(self, form):
         user = form.get_user()

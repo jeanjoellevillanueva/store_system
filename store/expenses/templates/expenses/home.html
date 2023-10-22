@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block header %}Inventory{% endblock %}
+{% block header %}Expenses{% endblock %}
 
 {% block content %} 
   <div class="row">
@@ -15,20 +15,22 @@
             <span class="text">Add expense</span>
           </button>
         </div>
-        <div id="idProductTableContainer" class="card-body d-flex justify-content-center align-items-center">
+        <div id="idExpenseTableContainer" class="card-body d-flex justify-content-center align-items-center">
           <!-- This will be filled by axios -->
         </div>
       </div>
     </div>
   </div>
   {% include 'expenses/forms/create_expense.html' %}
+  {% include 'expenses/forms/update_expense.html' %}
+  {% include 'expenses/forms/delete_expense.html' %}
 {% endblock %}
 
 {% block javascript %}
 <script>
   $(document).ready(()=>{
     // Call the function to fetch data and populate the DataTable
-    //reloadComponent("{# url 'inventory:list_product' #}", 'idProductTableContainer', true);
+    reloadComponent("{% url 'expenses:list_expense' %}", 'idExpenseTableContainer', true);
   });
 </script>
 {% endblock %}

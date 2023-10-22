@@ -125,7 +125,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Login Settings.
 LOGIN_URL = 'accounts:login'
-LOGIN_REDIRECT_URL = 'pos:home'
+LOGIN_REDIRECT_URL = 'dashboards:home'
 
 # Project Details.
 PROJECT_NAME = PROJECT_DETAIL['NAME']
@@ -133,5 +133,12 @@ FAVICON_LINK = PROJECT_DETAIL['FAVICON_LINK']
 LOGO_LINK = PROJECT_DETAIL['LOGO_LINK']
 LOGIN_IMAGE_LINK = PROJECT_DETAIL['LOGIN_IMAGE_LINK']
 
-# Computations
+# Computations.
 PLATFORM_PERCENTAGE = 0.15
+
+# Color codes.
+PRIMARY_COLOR = '#0275d8'
+SUCCESS_COLOR = '#5cb85c'
+DANGER_COLOR = '#d9534f'
+WARNING_COLOR = '#f0ad4e'
+INFO_COLOR = '#5bc0de'

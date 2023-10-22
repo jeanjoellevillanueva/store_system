@@ -50,7 +50,24 @@ class Expense(ModelMixin):
         (OTHER, 'Other'),
     ]
     
-    date = models.DateField()
+    expense_date = models.DateField()
     category = models.CharField(max_length=20, choices=CATEGORY_CHOICES)
     name = models.CharField(max_length=255)
     amount = models.DecimalField(max_digits=10, decimal_places=2)
+
+    @classmethod
+    def get_expenses_by_date_range(cls, start_date, end_date):
+        """
+        Retrieve and return a list of expenses within the specified date range.
+
+        Params:
+            start_date - datetime object
+            end_date - datetime object
+        """
+
+        expenses = (
+            cls.objects
+                .filter(expense_date__range=(start_date, end_date))
+                .values('expense_date', 'amount')
+        )
+        return expenses

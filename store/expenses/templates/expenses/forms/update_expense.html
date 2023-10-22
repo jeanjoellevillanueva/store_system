@@ -1,17 +1,17 @@
 {% load widget_tweaks %}
-<div class="modal fade" id="expenseModal" tabindex="-1" role="dialog" aria-labelledby="expenseModalLabel" aria-hidden="true">
+<div class="modal fade" id="expenseUpdateModal" tabindex="-1" role="dialog" aria-labelledby="expenseUpdateModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-lg" role="document">
     <div class="modal-content">
-      <form id="createExpenseForm" method="POST">
+      <form id="expenseUpdateForm" method="POST">
         {% csrf_token %}
         <div class="modal-header">
-          <h5 class="modal-title" id="expenseModalLabel">Add Expense</h5>
+          <h5 class="modal-title" id="expenseUpdateModalLabel">Update Expense</h5>
           <button type="button" class="close" data-dismiss="modal" aria-label="Close">
             <span aria-hidden="true">&times;</span>
           </button>
         </div>
         <div class="modal-body">
-          {% for field in expense_form %}
+          {% for field in expense_update_form %}
           <div class="form-row" style="margin-bottom: 1rem;">
             <label for="{{ field.auto_id }}">{{ field.label }}:</label>
             {{ field|add_class:"form-control" }}
@@ -21,7 +21,7 @@
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-danger" data-dismiss="modal">Close</button>
-          <button type="button" class="btn btn-primary" id="idCreateExpenseSave">Save</button>
+          <button type="button" class="btn btn-primary" id="idUpdateExpenseSave">Save</button>
         </div>
       </form>
     </div>
@@ -33,41 +33,59 @@
    * Script for submitting the form.
    */
   $(document).ready(() => {
-    let createExpenseForm = $('#createExpenseForm');
-    let saveButton = $('#idCreateExpenseSave');
-    let expenseModal = $('#expenseModal');
+    let updateURL;
+    $('#idExpenseTableContainer').on('click', '.update-expense', (event) => {
+      let id = event.currentTarget.dataset.id;
+      let name = event.currentTarget.dataset.name;
+      let amount = event.currentTarget.dataset.amount;
+      let category = event.currentTarget.dataset.category;
+      let date = event.currentTarget.dataset.date;
+
+      updateURL = event.currentTarget.dataset.url;
+
+      // Set the values on the update form.
+      $('#id_name_update').val(name);
+      $('#id_amount_update').val(amount);
+      $('#id_category_update').val(category);
+      $('#id_expense_date_update').val(date);
+      $('#expenseUpdateModal').modal('show');
+    });
+
+    let expenseUpdateForm = $('#expenseUpdateForm');
+    let saveButton = $('#idUpdateExpenseSave');
+    let expenseUpdateModal = $('#expenseUpdateModal');
 
     /**
-     * Remove all error messages on the form.
+     * Remove all error messages on the customer form.
      */
     function clearErrorMessages() {
       $('[id^="id_"][id$="_error"]').empty();
     }
 
     function resetForm() {
-      createExpenseForm[0].reset();
+      expenseUpdateForm[0].reset();
       clearErrorMessages();
     }
 
     // Event handler for modal close and reset the fields.
-    expenseModal.on('hidden.bs.modal', () => {
+    expenseUpdateModal.on('hidden.bs.modal', () => {
       resetForm();
     });
 
     /**
-     * Script for creating expense.
+     * Script for creating/updating product information.
      */
     saveButton.on('click', () => {
       // Serialize the form data and convert it to JSON
-      let formData = new FormData(createExpenseForm[0]);
+      let formData = new FormData(expenseUpdateForm[0]);
       let spinner = `
       <div class="spinner-border text-light" role="status" style="height: 1.4rem; width: 1.4rem">
         <span class="sr-only">Loading...</span>
       </div>`;
       saveButton.html(spinner);
-      axios.post("{% url 'expenses:create_expense' %}", formData)
+      axios.post(updateURL, formData)
         .then(function (response) {
-          expenseModal.modal('hide');
+          expenseUpdateModal.modal('hide');
           clearErrorMessages();
           reloadComponent("{% url 'expenses:list_expense' %}", 'idExpenseTableContainer', true);
         })
@@ -77,7 +95,7 @@
             let errors = error.response.data.errors;
             for (let field in errors) {
               let errorMsgs = errors[field];
-              $(`#id_${field}_error`).html(`<div class="text-danger">${errorMsgs}</div>`);
+              $(`#id_${field}_update_error`).html(`<div class="text-danger">${errorMsgs}</div>`);
             }
           }
         })
@@ -92,7 +110,7 @@
    * Apply Daterangepicker.
    */
   $(function() {
-    $('#id_expense_date').daterangepicker({
+    $('#id_expense_date_update').daterangepicker({
       singleDatePicker: true,
       showDropdowns: true,
       minYear: 1980,

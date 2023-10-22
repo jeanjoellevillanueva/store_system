@@ -9,7 +9,7 @@
     <tbody>
       {% for sale in sales %}
       <tr>
-        <td class="text-center">{{ sale.created_date }}</td>
+        <td class="text-center">{{ sale.created_date|date:"m/d/Y" }}</td>
         <td class="text-center"><a href="{% url 'pos:sold' sale.receipt_number %}">{{ sale.receipt_number }}</a></td>
       </tr>
       {% endfor %}

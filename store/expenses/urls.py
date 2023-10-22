@@ -1,5 +1,9 @@
 from django.urls import path
 
+from .views import ExpenseCustomCreateView
+from .views import ExpenseCustomDeleteView
+from .views import ExpenseCustomUpdateView
+from .views import ExpenseListDatatableTemplateView
 from .views import ExpenseTemplateView
 
 
@@ -11,5 +15,25 @@ urlpatterns = [
         '',
         ExpenseTemplateView.as_view(),
         name='home'
+    ),
+    path(
+        'list/',
+        ExpenseListDatatableTemplateView.as_view(),
+        name='list_expense'
+    ),
+    path(
+        'create/',
+        ExpenseCustomCreateView.as_view(),
+        name='create_expense'
+    ),
+    path(
+        'update/<int:id>',
+        ExpenseCustomUpdateView.as_view(),
+        name='update_expense'
+    ),
+    path(
+        'delete/<int:id>',
+        ExpenseCustomDeleteView.as_view(),
+        name='delete_expense'
     ),
 ]
