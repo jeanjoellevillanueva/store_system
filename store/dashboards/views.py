@@ -35,11 +35,13 @@ class DashboardTemplateView(LoginRequiredMixin, TemplateView):
         bar_data = get_financial_bar_chart(sales, expenses, start_date, end_date)
 
         total_sale = 0
+        total_expense = 0
         total_profit = 0
         for sale in sales:
             total_sale += sale['price']
             total_profit += sale['profit']
-        total_expense = float(expenses.aggregate(total_amount=Sum('amount'))['total_amount'])
+        if expenses:
+            total_expense = float(expenses.aggregate(total_amount=Sum('amount'))['total_amount'])
 
         # Deduct platform fee
         deduction = float(total_sale) * settings.PLATFORM_PERCENTAGE
@@ -69,11 +71,13 @@ class DashboardTemplateView(LoginRequiredMixin, TemplateView):
         bar_data = get_financial_bar_chart(sales, expenses, start_date, end_date)
 
         total_sale = 0
+        total_expense = 0
         total_profit = 0
         for sale in sales:
             total_sale += sale['price']
             total_profit += sale['profit']
-        total_expense = float(expenses.aggregate(total_amount=Sum('amount'))['total_amount'])
+        if expenses:
+            total_expense = float(expenses.aggregate(total_amount=Sum('amount'))['total_amount'])
 
         # Deduct platform fee
         deduction = float(total_sale) * settings.PLATFORM_PERCENTAGE
