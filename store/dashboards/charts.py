@@ -1,43 +1,30 @@
 from datetime import timedelta
-from decimal import Decimal
-from collections import defaultdict
+
+import pandas as pd
 
 from django.conf import settings
-from django.db.models import Sum
-
-from pos.models import Sale
 
 
-def get_financial_bar_chart(start_date, end_date):
+def get_financial_bar_chart(sales, start_date, end_date):
     """
     Retrieves and formats daily sales, expenses, and profit data for a
     Chart.js bar chart.
     """
-    # Initialize dictionaries to store daily data
-    daily_sales = defaultdict(float)
-    daily_expenses = defaultdict(float)
-    daily_profit = defaultdict(float)
-
-    # Query the database for relevant sales data within the date range
-    sales = (
-        Sale.objects
-            .filter(created_date__date__range=(start_date, end_date))
-            .values('created_date')
-            .annotate(
-                total_sales=Sum('total'),
-                total_profit=Sum('profit')
-        )
-    )
+    date_range = [
+        (start_date + timedelta(days=i)).strftime(settings.DATE_FORMAT)
+        for i in range((end_date - start_date).days + 1)
+    ]
+    daily_sales = {date: 0.00 for date in date_range}
+    daily_profit = {date: 0.00 for date in date_range}
 
     for sale in sales:
         date = sale['created_date'].strftime(settings.DATE_FORMAT)
-        total_sales = sale['total_sales']
-        deduct = float(total_sales) * settings.PLATFORM_PERCENTAGE
-        daily_sales[date] += float(sale['total_sales'])
-        daily_profit[date] +=  float(sale['total_profit']) - deduct
+        total_sale = sale['price']
+        deduct = float(total_sale) * settings.PLATFORM_PERCENTAGE
+        daily_sales[date] += float(total_sale)
+        daily_profit[date] +=  float(sale['profit']) - deduct
 
     # Generate data for Chart.js
-    date_range = [(start_date + timedelta(days=i)).strftime(settings.DATE_FORMAT) for i in range((end_date - start_date).days + 1)]
     sales_data = [round(daily_sales[date], 2) for date in date_range]
     profit_data = [round(daily_profit[date], 2) for date in date_range]
     chart_data = {
@@ -50,13 +37,6 @@ def get_financial_bar_chart(start_date, end_date):
                 'borderWidth': 1,
                 'data': sales_data,
             },
-            # {
-            #     'label': 'Expenses',
-            #     'backgroundColor': 'rgba(255, 99, 132, 0.5)',
-            #     'borderColor': 'rgba(255, 99, 132, 1)',
-            #     'borderWidth': 1,
-            #     'data': expenses_data,
-            # },
             {
                 'label': 'Profit',
                 'backgroundColor': 'rgba(75, 192, 192, 0.5)',
@@ -68,3 +48,20 @@ def get_financial_bar_chart(start_date, end_date):
     }
 
     return chart_data
+
+
+def get_top_sold_products(sales, number_of_items=5):
+    """
+    Returns a list of top sold items.
+    """
+    df = pd.DataFrame(sales)
+    product_sales = df.groupby('product_name')['quantity'].sum().reset_index()
+    top_sold = product_sales.sort_values(by='quantity', ascending=False).head(number_of_items)
+    top_products = []
+    for _, row in top_sold.iterrows():
+        product_info = {
+            'name': row['product_name'],
+            'quantity': row['quantity']
+        }
+        top_products.append(product_info)
+    return top_products

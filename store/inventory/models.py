@@ -3,6 +3,10 @@ import uuid
 from mixins.models import ModelMixin
 
 from django.db import models
+from django.db.models import Sum
+from django.db.models import DecimalField
+from django.db.models import ExpressionWrapper
+from django.db.models import F
 
 
 class Product(ModelMixin):
@@ -35,7 +39,18 @@ class Product(ModelMixin):
         new_quantity = product.quantity - quantity_of_sale
         product.quantity = new_quantity
         product.save()
-
+    
+    @classmethod
+    def stock_value(cls):
+        """
+        Returns the total value of stocks in terms of capital spent.
+        """
+        total_value = (
+                cls.objects
+                    .annotate(product_value=ExpressionWrapper(F('quantity') * F('capital'), output_field=DecimalField()))
+                    .aggregate(total_value=Sum('product_value'))
+            )
+        return total_value['total_value']
 
 class Delivery(ModelMixin):
     """

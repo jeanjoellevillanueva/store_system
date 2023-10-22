@@ -48,3 +48,19 @@ class Sale(ModelMixin):
             # Check if the receipt number already exists
             if not cls.objects.filter(receipt_number=receipt_number).exists():
                 return receipt_number
+
+    @classmethod
+    def get_sales_by_date_range(cls, start_date, end_date):
+        """
+        Returns sales object by date range.
+
+        Params:
+        start_date - datetime object
+        end_date - datetime object
+        """
+        sales = (
+            cls.objects
+                .filter(created_date__date__range=(start_date, end_date))
+                .values('created_date', 'price', 'profit', 'quantity', 'product_name')
+        )
+        return sales
