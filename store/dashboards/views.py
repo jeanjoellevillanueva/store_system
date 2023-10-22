@@ -20,7 +20,8 @@ from .charts import get_top_sold_products
 
 class DashboardTemplateView(LoginRequiredMixin, TemplateView):
     """
-    TODO
+    Renders the dashboard for the entire Point of Sale (POS) system, providing an
+    analysis and overview of key business metrics and performance.
     """
     template_name = 'dashboards/dashboard.html'
 

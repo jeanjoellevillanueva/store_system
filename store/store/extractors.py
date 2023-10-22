@@ -85,5 +85,6 @@ def get_project_detail():
         'LOGO_LINK': env_data['LOGO_LINK'],
         'LOGIN_IMAGE_LINK': env_data['LOGIN_IMAGE_LINK'],
         'STATIC_ROOT': env_data['STATIC_ROOT'],
+        'PLATFORM_PERCENTAGE': env_data['PLATFORM_PERCENTAGE'],
     }
     return project_detail
