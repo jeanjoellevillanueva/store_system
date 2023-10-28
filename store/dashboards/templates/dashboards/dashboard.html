@@ -142,26 +142,32 @@
   /**
    * Generates the financial barchart.
    */
-  $(document).ready(()=>{
+  $(document).ready(() => {
     let barData = JSON.parse('{{ bar_data|safe }}');
     let totalSale = parseInt('{{ total_sale }}');
-  
-      let ctx = document.getElementById('barChart').getContext('2d');
-      let barChart = new Chart(ctx, {
-        type: 'bar',
-        data: barData,
-        options: {
-          maintainAspectRatio: false,
-          scales: {
-            y: {
-              beginAtZero: true
-            }
-          }
-        }
-      });
-    
+
+    let ctx = document.getElementById('barChart').getContext('2d');
+    function convertToDay(barData) {
+      let date = new Date(barData.labels[0])
+      const weekdays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+      let weekday = weekdays[date.getDay()];
+      return weekday
+    }
+    const chartOptions = {
+      tooltips: {
+        callbacks: {
+          title: convertToDay(barData)
+        },
+      },
+    };
+    let barChart = new Chart(ctx, {
+      type: 'bar',
+      data: barData,
+      options: chartOptions
+    });
   });
 </script>
+
 <script>
   /**
    * Set the height of the bar chart depending on the top products.

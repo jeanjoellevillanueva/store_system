@@ -1,7 +1,9 @@
 {% extends 'base.html' %}
 {% block header %}Sales{% endblock %}
 
-{% block content %} 
+{% block content %}
+  {% include 'mixins/forms/date_filter.html' %}
+
   <div class="row">
     <div class="col-xl-12 col-lg-12">
       <div class="card shadow mb-4">

@@ -24,6 +24,7 @@
             class="btn btn-danger delete-solditem"
             data-toggle="modal"
             data-target="#soldItemDeleteModal"
+            data-quantity="{{ product.quantity }}"
             data-url="{% url 'pos:void' product.id %}"
           >
             <span class="icon text-white-50">

@@ -8,7 +8,13 @@
         </button>
       </div>
       <div class="modal-body">
-        Are you sure you want to void this transaction?
+        <form id="voidSoldForm">
+          {% csrf_token %}
+          <div class="form-group">
+            <label for="idVoidQuantity">Quantity:</label>
+            <input type="number" name="void_quantity" class="form-control" id="idVoidQuantity">
+          </div>
+        </form>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
@@ -22,30 +28,34 @@
    * Script for deleting a soldItem.
    */
   $(document).ready(function() {
+    let voidSoldForm = $('#voidSoldForm');
     $('#idItemSoldTableContainer').on('click', '.delete-solditem', (event)=> {
       let deleteUrl = event.currentTarget.dataset.url;
+      let quantitySold = event.currentTarget.dataset.quantity;
       // Set the new action attribute for the form
       $('#deleteSoldItemConfirmButton').attr('data-url', deleteUrl);
+      $('#idVoidQuantity').val(quantitySold);
     });
 
     // When the button on the confirm modal is clicked this will fire a request using axios.
     $('#deleteSoldItemConfirmButton').on('click', (event)=> {
       let deleteSoldItemConfirmButton = $('#deleteSoldItemConfirmButton');
-      const header_data = {
-        headers: {'X-CSRFToken': '{{ csrf_token }}'},
-      };
       let deleteUrl = event.currentTarget.dataset.url;
       let spinner = `
       <div class="spinner-border text-light" role="status" style="height: 1.4rem; width: 1.4rem">
         <span class="sr-only">Loading...</span>
       </div>`;
+      let formData = new FormData(voidSoldForm[0]);
       deleteSoldItemConfirmButton.html(spinner);
-      axios.post(deleteUrl, {}, header_data)
+      axios.post(deleteUrl, formData)
         .then(response => {
           reloadComponent("{% url 'pos:list_sold' receipt_number %}", 'idItemSoldTableContainer', true);
           $('#soldItemDeleteModal').modal('hide');
         })
         .catch(error => {
+          if (error.response.data.message && error.response.status == 400) {
+            triggerAlert('Error', error.response.data.message);
+          }
           console.error('Error:', error);
         })
         .finally(function () {

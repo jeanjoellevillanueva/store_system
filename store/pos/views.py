@@ -1,8 +1,12 @@
 import json
+from datetime import date
+from datetime import datetime
+from datetime import timedelta
 from typing import Any, Dict
 
 from braces.views import JSONResponseMixin
 
+from django.conf import settings
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db import transaction
 from django.db.models import Max
@@ -44,7 +48,7 @@ class POSProductListTemplateView(LoginRequiredMixin, TemplateView):
             Q(item_code__icontains=searched_term) |
             Q(variation__icontains=searched_term)
         )
-        context['products'] = Product.objects.filter(filter_conditions)[:12]
+        context['products'] = Product.objects.filter(filter_conditions)[:settings.NUMBER_OF_ITEMS]
         return context
     
 
@@ -132,6 +136,23 @@ class SaleReportTemplateView(LoginRequiredMixin, TemplateView):
     """
     template_name = 'pos/sale.html'
 
+    def get_context_data(self, **kwargs: Any) -> Dict[str, Any]:
+        context = super().get_context_data(**kwargs)
+        current_date = date.today()
+        start_date = current_date - timedelta(days=7)
+        end_date = current_date
+        context['start_date'] = start_date
+        context['end_date'] = end_date
+        return context
+    
+    def post(self, request, **kwargs):
+        context = super().get_context_data(**kwargs)
+        start_date = datetime.strptime(self.request.POST['start_date'], settings.DATE_FORMAT)
+        end_date = datetime.strptime(self.request.POST['end_date'], settings.DATE_FORMAT)
+        context['start_date'] = start_date
+        context['end_date'] = end_date
+        return self.render_to_response(context)
+
 
 class SaleListTemplateView(LoginRequiredMixin, TemplateView):
     """
@@ -204,13 +225,38 @@ class SaleVoidJSONView(LoginRequiredMixin, JSONResponseMixin, View):
         try:
             sale = Sale.objects.get(id=self.kwargs['id'])
         except Exception as e:
-             # Object not found
-             return self.render_json_response({'message': str(e)}, status=404)
+            # Object not found
+            return self.render_json_response({'message': str(e)}, status=404)
+        try:
+            void_quantity = int(request.POST['void_quantity'])
+        except Exception as e:
+            return self.render_json_response(
+                {'message': 'Quantity must be a whole number.'},
+                status=400
+            )
+
+        # If void quantity is less than zero or greater than sale quantity,
+        # then raise an error.
+        if sale.quantity < void_quantity or void_quantity < 1:
+            return self.render_json_response(
+                {'message': 'Void quantity must be less than the sold quantity or must be greater than 0'}, status=400)
         with transaction.atomic():
             # We will add the quantity back to the product.
             product = Product.objects.get(id=sale.product_id)
-            product.quantity = product.quantity + sale.quantity
+            product.quantity = product.quantity + void_quantity
             product.save()
+
+            if sale.quantity == void_quantity:
+                sale.is_void = True
+            else:
+                sale.quantity = sale.quantity - void_quantity
+            # Recompute for the profit.
+            total_capital = (sale.quantity * sale.capital)
+            total_sales = (sale.quantity * sale.price)
+            profit = total_sales - total_capital
+            sale.total = total_sales
+            sale.profit = profit
+            sale.save()
 
             # We will also add the report in the deliveries.
             delivery_kwargs = {
@@ -222,8 +268,6 @@ class SaleVoidJSONView(LoginRequiredMixin, JSONResponseMixin, View):
                 'created_by': self.request.user,
             }
             Delivery.objects.create(**delivery_kwargs)
-            sale.is_void = True
-            sale.save()
 
         json_data = {
             'message': 'Void was successful'

@@ -1,4 +1,6 @@
+from datetime import date
 from datetime import datetime
+from datetime import timedelta
 from typing import Any
 from typing import Dict
 
@@ -325,6 +327,24 @@ class DeliveryReportTemplateView(LoginRequiredMixin, TemplateView):
     template_name = 'inventory/delivery.html'
 
 
+    def get_context_data(self, **kwargs: Any) -> Dict[str, Any]:
+        context = super().get_context_data(**kwargs)
+        current_date = date.today()
+        start_date = current_date - timedelta(days=7)
+        end_date = current_date
+        context['start_date'] = start_date
+        context['end_date'] = end_date
+        return context
+    
+    def post(self, request, **kwargs):
+        context = super().get_context_data(**kwargs)
+        start_date = datetime.strptime(self.request.POST['start_date'], settings.DATE_FORMAT)
+        end_date = datetime.strptime(self.request.POST['end_date'], settings.DATE_FORMAT)
+        context['start_date'] = start_date
+        context['end_date'] = end_date
+        return self.render_to_response(context)
+
+
 class DeliveryListTemplateView(LoginRequiredMixin, TemplateView):
     """
     View used for loading the list of deliveries.
@@ -333,7 +353,20 @@ class DeliveryListTemplateView(LoginRequiredMixin, TemplateView):
 
     def get_context_data(self, **kwargs: Any) -> Dict[str, Any]:
         context = super().get_context_data(**kwargs)
-        context['deliveries'] = Delivery.objects.all().order_by('-created_date')
+        date_filter = {'created_date__date__range': (datetime.today(), datetime.today())}
+        start_date = self.request.GET.get('start_date')
+        end_date = self.request.GET.get('end_date')
+        if start_date and end_date:
+            start_date = datetime.strptime(self.request.GET['start_date'], settings.DATE_FORMAT)
+            end_date = datetime.strptime(self.request.GET['end_date'], settings.DATE_FORMAT)
+            date_filter = {
+                'created_date__date__range': (start_date, end_date), 
+            }
+        context['deliveries'] = (
+            Delivery.objects
+                .filter(**date_filter)
+                .order_by('-created_date')
+        )
         delivery_inchoices = [choice[0] for choice in Delivery.IN_CHOICES]
         context['deliver_inchoices'] = delivery_inchoices
         return context

@@ -10,17 +10,17 @@ def get_financial_bar_chart(sales, expenses, start_date, end_date):
     Retrieves and formats daily sales, expenses, and profit data for a
     Chart.js bar chart.
     """
-    date_range = [
-        (start_date + timedelta(days=i)).strftime(settings.DATE_FORMAT)
-        for i in range((end_date - start_date).days + 1)
-    ]
+    date_range = []
+    for i in range((end_date - start_date).days + 1):
+        date_str = (start_date + timedelta(days=i)).strftime(settings.DATE_FORMAT)
+        date_range.append(date_str)
+
     daily_sales = {date: 0.00 for date in date_range}
     daily_expenses = {date: 0.00 for date in date_range}
     daily_profit = {date: 0.00 for date in date_range}
     count=1
     for sale in sales:
         date = sale['created_date'].strftime(settings.DATE_FORMAT)
-        print(count, date)
         count += 1
         total_sale = (sale['price'] * sale['quantity'])
         deduct = float(total_sale) * settings.PLATFORM_PERCENTAGE
