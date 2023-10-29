@@ -48,7 +48,12 @@ class POSProductListTemplateView(LoginRequiredMixin, TemplateView):
             Q(item_code__icontains=searched_term) |
             Q(variation__icontains=searched_term)
         )
-        context['products'] = Product.objects.filter(filter_conditions)[:settings.NUMBER_OF_ITEMS]
+        context['products'] = (
+            Product.objects
+                .filter(filter_conditions)
+                .order_by('-quantity')
+                [:settings.NUMBER_OF_ITEMS]
+        )
         return context
     
 

@@ -45,7 +45,8 @@ class DashboardTemplateView(LoginRequiredMixin, TemplateView):
 
         # Deduct platform fee
         deduction = float(total_sale) * settings.PLATFORM_PERCENTAGE
-        total_profit = float(total_profit) - deduction - total_expense
+        total_net_profit = float(total_profit)
+        total_gross_profit = float(total_profit) - deduction - total_expense
 
         # Context
         context['start_date'] = start_date
@@ -53,9 +54,11 @@ class DashboardTemplateView(LoginRequiredMixin, TemplateView):
 
         # Summary
         context['stock_value'] = Product.stock_value()
-        context['total_profit'] = round(total_profit, 2)
+        context['total_net_profit'] = round(total_net_profit, 2)
+        context['total_gross_profit'] = round(total_gross_profit, 2)
         context['total_sale'] = total_sale
         context['total_expense'] = round(total_expense, 2)
+        context['total_platform_fee'] = round(deduction, 2)
 
         # Chart
         context['bar_data'] = json.dumps(bar_data)
@@ -81,7 +84,8 @@ class DashboardTemplateView(LoginRequiredMixin, TemplateView):
 
         # Deduct platform fee
         deduction = float(total_sale) * settings.PLATFORM_PERCENTAGE
-        total_profit = float(total_profit) - deduction - total_expense
+        total_net_profit = float(total_profit)
+        total_gross_profit = float(total_profit) - deduction - total_expense
 
         # Context
         context['start_date'] = start_date
@@ -89,9 +93,11 @@ class DashboardTemplateView(LoginRequiredMixin, TemplateView):
 
         # Summary
         context['stock_value'] = Product.stock_value()
-        context['total_profit'] = round(total_profit, 2)
+        context['total_net_profit'] = round(total_net_profit, 2)
+        context['total_gross_profit'] = round(total_gross_profit, 2)
         context['total_sale'] = total_sale
         context['total_expense'] = round(total_expense, 2)
+        context['total_platform_fee'] = round(deduction, 2)
 
         # Chart
         context['bar_data'] = json.dumps(bar_data)
