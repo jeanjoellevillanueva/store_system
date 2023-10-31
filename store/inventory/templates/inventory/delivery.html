@@ -2,6 +2,8 @@
 {% block header %}Deliveries{% endblock %}
 
 {% block content %} 
+  {% include 'mixins/forms/date_filter.html' %}
+
   <div class="row">
     <div class="col-xl-12 col-lg-12">
       <div class="card shadow mb-4">
@@ -21,7 +23,7 @@
 <script>
   $(document).ready(()=>{
     // Call the function to fetch data and populate the DataTable
-    reloadComponent("{% url 'inventory:list_delivery' %}", 'idDeliveryTableContainer', true);
+    reloadComponent("{% url 'inventory:list_delivery' %}?start_date={{ start_date|date:'m/d/Y' }}&end_date={{ end_date|date:'m/d/Y' }}", 'idDeliveryTableContainer', true);
   });
 </script>
 {% endblock %}

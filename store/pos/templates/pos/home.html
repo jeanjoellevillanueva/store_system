@@ -12,11 +12,14 @@
     .product-box {
       border: 1px solid #ccc;
       padding: 1rem;
-      margin: 0;
+      margin: 5px;
       text-align: center;
+      border: 1px solid #6c757d;
       border-radius: 10px;
       background-color: #fff;
       box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
+      font-size: 0.75rem;
+      height: 90%;
     }
   </style>
   <style>
@@ -44,7 +47,7 @@
           <div class="row mx-0" style="margin-bottom: 1rem;">
             <input id="idProductSearch" type="text" class="form-control" placeholder="Search product"/>
           </div>
-          <div class="row row-cols-1 row-cols-md-6 mx-0" id="idProductListContainer">
+          <div class="row row-cols-1 row-cols-md-6 mx-0 justify-content-between" id="idProductListContainer">
             <!-- Fill this with product list -->
           </div>
         </div>

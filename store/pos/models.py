@@ -61,7 +61,7 @@ class Sale(ModelMixin):
         sales = (
             cls.objects
                 .filter(created_date__date__range=(start_date, end_date))
-                .values('created_date', 'price', 'profit', 'quantity', 'product_name')
+                .values('created_date', 'price', 'profit', 'quantity', 'product_name', 'product_id')
                 .exclude(is_void=True)
         )
         return sales
