@@ -5,6 +5,7 @@ from datetime import timedelta
 from typing import Any, Dict
 
 from braces.views import JSONResponseMixin
+import pandas as pd
 
 from django.conf import settings
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -146,16 +147,30 @@ class SaleReportTemplateView(LoginRequiredMixin, TemplateView):
         current_date = date.today()
         start_date = current_date - timedelta(days=7)
         end_date = current_date
+
+        sales_data = Sale.get_sales_by_date_range(start_date, end_date)
+        df = pd.DataFrame.from_records(sales_data)
+        product_quantities = df.groupby('product_name')['quantity'].sum().reset_index()
+        sales = product_quantities.sort_values(by=['quantity'], ascending=False)
+
         context['start_date'] = start_date
         context['end_date'] = end_date
+        context['sales_data'] = sales.to_dict('records')
         return context
-    
+
     def post(self, request, **kwargs):
         context = super().get_context_data(**kwargs)
         start_date = datetime.strptime(self.request.POST['start_date'], settings.DATE_FORMAT)
         end_date = datetime.strptime(self.request.POST['end_date'], settings.DATE_FORMAT)
+
+        sales_data = Sale.get_sales_by_date_range(start_date, end_date)
+        df = pd.DataFrame.from_records(sales_data)
+        product_quantities = df.groupby('product_name')['quantity'].sum().reset_index()
+        sales = product_quantities.sort_values(by=['quantity'], ascending=False)
+
         context['start_date'] = start_date
         context['end_date'] = end_date
+        context['sales_data'] = sales.to_dict('records')
         return self.render_to_response(context)
 
 
@@ -184,7 +199,7 @@ class SaleListTemplateView(LoginRequiredMixin, TemplateView):
         )
         context['sales'] = sales
         return context
-    
+
 
 class ProductSoldTemplateView(LoginRequiredMixin, TemplateView):
     """

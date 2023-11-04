@@ -5,14 +5,42 @@
   {% include 'mixins/forms/date_filter.html' %}
 
   <div class="row">
-    <div class="col-xl-12 col-lg-12">
+    <div class="col-xl-6 col-lg-6">
       <div class="card shadow mb-4">
         <div
           class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-          <h6 class="m-0 font-weight-bold text-primary">Sales</h6>
+          <h6 class="m-0 font-weight-bold text-primary">Sales By Receipt</h6>
         </div>
         <div id="idSaleTableContainer" class="card-body d-flex justify-content-center align-items-center">
           <!-- This will be filled by axios -->
+        </div>
+      </div>
+    </div>
+    <div class="col-xl-6 col-lg-6">
+      <div class="card shadow mb-4">
+        <div
+          class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+          <h6 class="m-0 font-weight-bold text-primary">Sales By Product</h6>
+        </div>
+        <div class="card-body d-flex justify-content-center align-items-center">
+          <div class="table-responsive">
+            <table class="table table-bordered" id="idSaleVariationTable" width="100%" cellspacing="0">
+              <thead>
+                <tr>
+                  <th class="text-center">Item</th>
+                  <th class="text-center">Quantity</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for sale in sales_data %}
+                <tr>
+                  <td class="text-center">{{ sale.product_name }}</td>
+                  <td class="text-center">{{ sale.quantity }}</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>
@@ -21,9 +49,19 @@
 
 {% block javascript %}
 <script>
+  /**
+   * Apply datatable.net plugin on the table.
+   */
+  $(document).ready(function() {
+    $('#idSaleVariationTable').DataTable({
+      order: [],
+    });
+  });
+</script>
+<script>
   $(document).ready(()=>{
     // Call the function to fetch data and populate the DataTable
-    reloadComponent("{% url 'pos:list_sale' %}", 'idSaleTableContainer', true);
+    reloadComponent("{% url 'pos:list_sale' %}?start_date={{ start_date }}&end_date={{ end_date }}", 'idSaleTableContainer', true);
   });
 </script>
 {% endblock %}

@@ -1,0 +1,28 @@
+<div class="table-responsive">
+  <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+    <thead>
+      <tr>
+        <th class="text-center">Date</th>
+        <th class="text-center">Receipt Number</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for sale in sales %}
+      <tr>
+        <td class="text-center">{{ sale.created_date|date:"m/d/Y" }}</td>
+        <td class="text-center"><a href="{% url 'pos:sold' sale.receipt_number %}">{{ sale.receipt_number }}</a></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+<script>
+  /**
+   * Apply datatable.net plugin on the table.
+   */
+  $(document).ready(function() {
+    $('#dataTable').DataTable({
+      order: [],
+    });
+  });
+</script>
