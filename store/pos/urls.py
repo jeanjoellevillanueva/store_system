@@ -7,7 +7,6 @@ from .views import SaleVoidJSONView
 from .views import ProductSoldListTemplateView
 from .views import ProductSoldTemplateView
 from .views import SaleCustomCreateView
-from .views import SaleListTemplateView
 from .views import SaleReportTemplateView
 
 
@@ -39,11 +38,6 @@ urlpatterns = [
         'sales/',
         SaleReportTemplateView.as_view(),
         name='sale'
-    ),
-    path(
-        'sales/list/',
-        SaleListTemplateView.as_view(),
-        name='list_sale'
     ),
     path(
         'sales/<str:receipt_number>/',

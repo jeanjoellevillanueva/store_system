@@ -11,8 +11,31 @@
           class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
           <h6 class="m-0 font-weight-bold text-primary">Deliveries</h6>
         </div>
-        <div id="idDeliveryTableContainer" class="card-body d-flex justify-content-center align-items-center">
-          <!-- This will be filled by axios -->
+        <div class="card-body d-flex justify-content-center align-items-center">
+          <div class="table-responsive">
+            <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+              <thead>
+                <tr>
+                  <th class="text-center">Date</th>
+                  <th class="text-center">Type</th>
+                  <th class="text-center">Item</th>
+                  <th class="text-center">Quantity</th>
+                  <th class="text-center">Delivered/Pull-out by</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for delivery in deliveries %}
+                <tr>
+                  <td class="text-center">{{ delivery.created_date|date:"m/d/Y" }}</td>
+                  <td class="text-center {% if delivery.reason in deliver_inchoices %}text-success{% else %}text-danger{% endif %}">=</td>
+                  <td class="text-center"><a href="{% url 'inventory:product' delivery.product_item_code %}">{{ delivery.product_name }}</a></td>
+                  <td class="text-center">{{ delivery.quantity }}</td>
+                  <td class="text-center">{{ delivery.created_by }}</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>
@@ -21,9 +44,13 @@
 
 {% block javascript %}
 <script>
-  $(document).ready(()=>{
-    // Call the function to fetch data and populate the DataTable
-    reloadComponent("{% url 'inventory:list_delivery' %}?start_date={{ start_date|date:'m/d/Y' }}&end_date={{ end_date|date:'m/d/Y' }}", 'idDeliveryTableContainer', true);
+  /**
+   * Apply datatable.net plugin on the table.
+   */
+  $(document).ready(function() {
+    $('#dataTable').DataTable({
+      order: [],
+    });
   });
 </script>
 {% endblock %}
