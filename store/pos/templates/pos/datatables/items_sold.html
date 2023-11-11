@@ -15,7 +15,11 @@
       {% for product in items_sold %}
       <tr>
         <td class="text-center">{{ product.product_name }}</td>
+        {% if user.is_staff %}
         <td class="text-center">&#8369;{{ product.capital }}</td>
+        {% else %}
+        <td class="text-center">-</td>
+        {% endif %}
         <td class="text-center">&#8369;{{ product.price }}</td>
         <td class="text-center">{{ product.quantity }}</td>
         <td class="text-center">&#8369;{{ product.total }}</td>
@@ -45,7 +49,11 @@
       </tr>
       <tr>
         <td colspan="5"><b>Profit:</b></td>
+        {% if user.is_staff %}
         <td class="text-center"><b>&#8369;{{ total_profit }}</b></td>
+        {% else %}
+        <td class="text-center"><b>-</b></td>
+        {% endif %}
       </tr>
     </tfoot>
   </table>

@@ -53,6 +53,7 @@
   $(document).ready(function() {
     $('#dataTable').DataTable({
       order: [],
+      pageLength: parseInt("{{ DATATABLES_LENGTH }}"),
     });
   });
 </script>

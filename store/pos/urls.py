@@ -6,6 +6,7 @@ from .views import POSTemplateView
 from .views import SaleVoidJSONView
 from .views import ProductSoldListTemplateView
 from .views import ProductSoldTemplateView
+from .views import RecentlySoldTemplateView
 from .views import SaleCustomCreateView
 from .views import SaleReportTemplateView
 
@@ -53,5 +54,10 @@ urlpatterns = [
         'sales/void/<str:id>/',
         SaleVoidJSONView.as_view(),
         name='void'
+    ),
+    path(
+        'sales/recent',
+        RecentlySoldTemplateView.as_view(),
+        name='recent'
     ),
 ]

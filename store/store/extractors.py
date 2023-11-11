@@ -87,5 +87,6 @@ def get_project_detail():
         'STATIC_ROOT': env_data['STATIC_ROOT'],
         'PLATFORM_PERCENTAGE': env_data['PLATFORM_PERCENTAGE'],
         'NUMBER_OF_ITEMS': env_data['NUMBER_OF_ITEMS'],
+        'DATATABLES_LENGTH': env_data['DATATABLES_LENGTH'],
     }
     return project_detail

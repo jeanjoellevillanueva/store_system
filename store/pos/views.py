@@ -2,7 +2,8 @@ import json
 from datetime import date
 from datetime import datetime
 from datetime import timedelta
-from typing import Any, Dict
+from typing import Any
+from typing import Dict
 
 from braces.views import JSONResponseMixin
 import pandas as pd
@@ -308,3 +309,16 @@ class SaleVoidJSONView(LoginRequiredMixin, JSONResponseMixin, View):
             'message': 'Void was successful'
         }
         return self.render_json_response(json_data, status=204)
+
+
+class RecentlySoldTemplateView(LoginRequiredMixin, TemplateView):
+    """
+    A view to render the recently sold items.
+    """
+
+    template_name = 'pos/datatables/recently_sold.html'
+
+    def get_context_data(self, **kwargs: Any) -> Dict[str, Any]:
+        context = super().get_context_data(**kwargs)
+        context['recent_sales'] = Sale.objects.filter(is_void=False).order_by('-id')[:5]
+        return context

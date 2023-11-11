@@ -23,7 +23,7 @@
               <tbody>
                 {% for sale in sales_per_receipt %}
                 <tr>
-                  <td class="text-center">{{ sale.created_date }}</td>
+                  <td class="text-center">{{ sale.created_date|date:"F j, Y g:i a" }}</td>
                   <td class="text-center"><a href="{% url 'pos:sold' sale.receipt_number %}">{{ sale.receipt_number }}</a></td>
                 </tr>
                 {% endfor %}
@@ -70,7 +70,7 @@
    * Apply datatable.net plugin on the table.
    */
   $(document).ready(function() {
-    let pageLength = window.innerWidth <= 768 ? 10 : 25;
+    let pageLength = window.innerWidth <= 768 ? 10 : parseInt("{{ DATATABLES_LENGTH }}");
     $('#idSaleVariationTable').DataTable({
       order: [],
       pageLength: pageLength,
