@@ -68,7 +68,7 @@ class DashboardTemplateView(LoginRequiredMixin, TemplateView):
     def post(self, request, **kwargs):
         context = super().get_context_data(**kwargs)
         start_date = datetime.strptime(self.request.POST['start_date'], settings.DATE_FORMAT)
-        end_date = datetime.strptime(self.request.POST['end_date'], settings.DATE_FORMAT)
+        end_date = datetime.strptime(self.request.POST['end_date'], settings.DATE_FORMAT)        
         sales = Sale.get_sales_by_date_range(start_date, end_date)
         expenses = Expense.get_expenses_by_date_range(start_date, end_date)
         bar_data = get_financial_bar_chart(sales, expenses, start_date, end_date)

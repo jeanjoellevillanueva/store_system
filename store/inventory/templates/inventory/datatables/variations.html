@@ -3,18 +3,26 @@
     <thead>
       <tr>
         <th class="text-center">Variation</th>
+        {% if user.is_staff %}
+        <th class="text-center">Capital</th>
+        {% endif %}
         <th class="text-center">Price</th>
         <th class="text-center">Quantity</th>
         <th class="text-center">Delivery</th>
+        {% if user.is_staff %}
         <th class="text-center">Action</th>
+        {% endif %}
       </tr>
     </thead>
     <tbody>
       {% for variation in variations %}
       <tr>
         <td>{{ variation.variation }}</td>
+        {% if user.is_staff %}
+        <td>{{ variation.capital }}</td>
+        {% endif %}
         <td>{{ variation.price }}</td>
-        <td>{% if not variation.quantity %}<span class="text-danger">Out of stock</span>{% else %}{{ variation.quantity }}{% endif %}</td>
+        <td>{% if not variation.quantity %}<span class="badge badge-pill badge-danger">0ut of stock</span>{% else %}{{ variation.quantity }}{% endif %}</td>
         <td class="text-center">
           <a
             class="btn btn-success add-delivery"
@@ -39,6 +47,7 @@
             </span>
           </a>
         </td>
+        {% if user.is_staff %}
         <td class="text-center">
           <a
             class="btn btn-warning update-variation"
@@ -64,6 +73,7 @@
             </span>
           </a>
         </td>
+        {% endif %}
       </tr>
       {% endfor %}
     </tbody>
@@ -76,7 +86,7 @@
   $(document).ready(function() {
     $('#dataTable').DataTable({
       order: [
-        [2, 'desc']
+        [3, 'asc']
       ],
     });
   });

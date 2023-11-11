@@ -2,6 +2,7 @@ from decimal import Decimal
 from datetime import timedelta
 
 import pandas as pd
+import pytz
 
 from django.conf import settings
 
@@ -22,8 +23,13 @@ def get_financial_bar_chart(sales, expenses, start_date, end_date):
     daily_expenses = {date: 0.00 for date in date_range}
     daily_profit = {date: 0.00 for date in date_range}
     count=1
+
     for sale in sales:
-        date = sale['created_date'].strftime(settings.DATE_FORMAT)
+        date = (
+            sale['created_date']
+                .astimezone()
+                .strftime(settings.DATE_FORMAT)
+        )
         count += 1
         total_sale = (sale['price'] * sale['quantity'])
         deduct = float(total_sale) * settings.PLATFORM_PERCENTAGE
@@ -31,7 +37,10 @@ def get_financial_bar_chart(sales, expenses, start_date, end_date):
         daily_profit[date] +=  float(sale['profit']) - deduct
     
     for expense in expenses:
-        date = expense['expense_date'].strftime(settings.DATE_FORMAT)
+        date = (
+            expense['expense_date']
+                .strftime(settings.DATE_FORMAT)
+        )
         daily_expenses[date] += float(expense['amount'])
         daily_profit[date] -= float(expense['amount'])
 

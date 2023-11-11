@@ -9,6 +9,7 @@ from braces.views import JSONResponseMixin
 from django.conf import settings
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db import transaction
+from django.db.models import F
 from django.http import Http404
 from django.views import View
 from django.views.generic import TemplateView
@@ -175,7 +176,7 @@ class VariationListDatatableTemplateView(LoginRequiredMixin, TemplateView):
 
     def get_context_data(self, **kwargs: Any) -> Dict[str, Any]:
         context =  super().get_context_data(**kwargs)
-        context['variations'] = Product.objects.filter(item_code=self.kwargs['item_code'])
+        context['variations'] = Product.objects.filter(item_code=self.kwargs['item_code']).order_by('quantity')
         return context
 
 
@@ -332,6 +333,26 @@ class DeliveryReportTemplateView(LoginRequiredMixin, TemplateView):
         current_date = date.today()
         start_date = current_date - timedelta(days=7)
         end_date = current_date
+
+        date_filter = {
+            'created_date__date__range': (start_date, end_date), 
+        }
+        context['deliveries'] = (
+            Delivery.objects
+                .filter(**date_filter)
+                .order_by('-created_date')
+                .values(
+                    'created_date',
+                    'reason',
+                    'product_name',
+                    'quantity',
+                    'created_by',
+                    'product_item_code'
+                )
+        )
+        delivery_inchoices = [choice[0] for choice in Delivery.IN_CHOICES]
+
+        context['deliver_inchoices'] = delivery_inchoices
         context['start_date'] = start_date
         context['end_date'] = end_date
         return context
@@ -340,6 +361,26 @@ class DeliveryReportTemplateView(LoginRequiredMixin, TemplateView):
         context = super().get_context_data(**kwargs)
         start_date = datetime.strptime(self.request.POST['start_date'], settings.DATE_FORMAT)
         end_date = datetime.strptime(self.request.POST['end_date'], settings.DATE_FORMAT)
+        
+        date_filter = {
+            'created_date__date__range': (start_date, end_date), 
+        }
+        context['deliveries'] = (
+            Delivery.objects
+                .filter(**date_filter)
+                .order_by('-created_date')
+                .values(
+                    'created_date',
+                    'reason',
+                    'product_name',
+                    'quantity',
+                    'created_by',
+                    'product_item_code'
+                )
+        )
+        delivery_inchoices = [choice[0] for choice in Delivery.IN_CHOICES]
+
+        context['deliver_inchoices'] = delivery_inchoices
         context['start_date'] = start_date
         context['end_date'] = end_date
         return self.render_to_response(context)

@@ -4,8 +4,10 @@
       <tr>
         <th class="text-center" style="width: 10%;">Item Code</th>
         <th class="text-center" style="width: 30%;">Product</th>
+        {% if user.is_staff %}
         <th class="text-center" style="width: 50%;">Description</th>
         <th class="text-center" style="width: 10%;">Action</th>
+        {% endif %}
       </tr>
     </thead>
     <tbody>
@@ -17,6 +19,7 @@
             {{ product.name }}
           </a>
         </td>
+        {% if user.is_staff %}
         <td>{{ product.description }}</td>
         <td class="text-center">
           <a 
@@ -30,6 +33,7 @@
             </span>
           </a>
         </td>
+        {% endif %}
       </tr>
       {% endfor %}
     </tbody>
@@ -42,6 +46,7 @@
   $(document).ready(function() {
     $('#dataTable').DataTable({
       order: [],
+      pageLength: parseInt("{{ DATATABLES_LENGTH }}"),
     });
   });
 </script>

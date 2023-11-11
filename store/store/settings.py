@@ -69,6 +69,9 @@ TEMPLATES = [
                 'django.contrib.messages.context_processors.messages',
                 'store.context_processors.project_info_context',
             ],
+            'builtins': [
+                'inventory.templatetags.tags',
+            ],
         },
     },
 ]
@@ -136,6 +139,7 @@ LOGIN_IMAGE_LINK = PROJECT_DETAIL['LOGIN_IMAGE_LINK']
 # Computations.
 PLATFORM_PERCENTAGE = PROJECT_DETAIL['PLATFORM_PERCENTAGE']
 NUMBER_OF_ITEMS = PROJECT_DETAIL['NUMBER_OF_ITEMS']
+DATATABLES_LENGTH = PROJECT_DETAIL['DATATABLES_LENGTH']
 
 # Color codes.
 PRIMARY_COLOR = '#0275d8'

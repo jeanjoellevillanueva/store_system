@@ -9,12 +9,14 @@
 {% endblock %}
 
 {% block button %}
+{% if user.is_staff %}
 <button data-toggle="modal" data-target="#variationModal" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm btn-icon-split">
   <span class="icon text-white-50">
     <i class="fas fa-cart-plus"></i>
   </span>
   <span class="text">Add variation</span>
 </button>
+{% endif %}
 {% endblock %}
 
 {% block content %}

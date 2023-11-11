@@ -2,7 +2,8 @@ import json
 from datetime import date
 from datetime import datetime
 from datetime import timedelta
-from typing import Any, Dict
+from typing import Any
+from typing import Dict
 
 from braces.views import JSONResponseMixin
 import pandas as pd
@@ -153,9 +154,30 @@ class SaleReportTemplateView(LoginRequiredMixin, TemplateView):
         product_quantities = df.groupby('product_name')['quantity'].sum().reset_index()
         sales = product_quantities.sort_values(by=['quantity'], ascending=False)
 
+        filter_kwargs = {
+            'receipt_number': OuterRef('receipt_number'),
+            'created_date__date__range': (start_date, end_date),
+        }
+        max_created_subquery = (
+            Sale.objects
+                .filter(**filter_kwargs)
+                .values('receipt_number')
+                .annotate(max_created=Max('created_date'))
+                .values('max_created')
+                .exclude(is_void=True)
+        )
+
+        sales_per_receipt = (
+            Sale.objects
+                .filter(created_date=Subquery(max_created_subquery))
+                .order_by('-created_date')
+                .exclude(is_void=True)
+        )
+
         context['start_date'] = start_date
         context['end_date'] = end_date
         context['sales_data'] = sales.to_dict('records')
+        context['sales_per_receipt'] = sales_per_receipt
         return context
 
     def post(self, request, **kwargs):
@@ -168,37 +190,31 @@ class SaleReportTemplateView(LoginRequiredMixin, TemplateView):
         product_quantities = df.groupby('product_name')['quantity'].sum().reset_index()
         sales = product_quantities.sort_values(by=['quantity'], ascending=False)
 
-        context['start_date'] = start_date
-        context['end_date'] = end_date
-        context['sales_data'] = sales.to_dict('records')
-        return self.render_to_response(context)
-
-
-class SaleListTemplateView(LoginRequiredMixin, TemplateView):
-    """
-    View used for loading the list of sales.
-    """
-    template_name = 'pos/datatables/sales.html'
-
-    def get_context_data(self, **kwargs: Any) -> Dict[str, Any]:
-        context = super().get_context_data(**kwargs)
+        filter_kwargs = {
+            'receipt_number': OuterRef('receipt_number'),
+            'created_date__date__range': (start_date, end_date),
+        }
         max_created_subquery = (
             Sale.objects
-                .filter(receipt_number=OuterRef('receipt_number'))
+                .filter(**filter_kwargs)
                 .values('receipt_number')
                 .annotate(max_created=Max('created_date'))
                 .values('max_created')
                 .exclude(is_void=True)
         )
 
-        sales = (
+        sales_per_receipt = (
             Sale.objects
                 .filter(created_date=Subquery(max_created_subquery))
                 .order_by('-created_date')
                 .exclude(is_void=True)
         )
-        context['sales'] = sales
-        return context
+
+        context['start_date'] = start_date
+        context['end_date'] = end_date
+        context['sales_data'] = sales.to_dict('records')
+        context['sales_per_receipt'] = sales_per_receipt
+        return self.render_to_response(context)
 
 
 class ProductSoldTemplateView(LoginRequiredMixin, TemplateView):
@@ -293,3 +309,16 @@ class SaleVoidJSONView(LoginRequiredMixin, JSONResponseMixin, View):
             'message': 'Void was successful'
         }
         return self.render_json_response(json_data, status=204)
+
+
+class RecentlySoldTemplateView(LoginRequiredMixin, TemplateView):
+    """
+    A view to render the recently sold items.
+    """
+
+    template_name = 'pos/datatables/recently_sold.html'
+
+    def get_context_data(self, **kwargs: Any) -> Dict[str, Any]:
+        context = super().get_context_data(**kwargs)
+        context['recent_sales'] = Sale.objects.filter(is_void=False).order_by('-id')[:5]
+        return context
