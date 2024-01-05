@@ -151,8 +151,11 @@ class SaleReportTemplateView(LoginRequiredMixin, TemplateView):
 
         sales_data = Sale.get_sales_by_date_range(start_date, end_date)
         df = pd.DataFrame.from_records(sales_data)
-        product_quantities = df.groupby('product_name')['quantity'].sum().reset_index()
-        sales = product_quantities.sort_values(by=['quantity'], ascending=False)
+        if not df.empty:
+            product_quantities = df.groupby('product_name')['quantity'].sum().reset_index()
+            sales = product_quantities.sort_values(by=['quantity'], ascending=False)
+        else:
+            sales = pd.DataFrame()
 
         filter_kwargs = {
             'receipt_number': OuterRef('receipt_number'),
@@ -187,8 +190,11 @@ class SaleReportTemplateView(LoginRequiredMixin, TemplateView):
 
         sales_data = Sale.get_sales_by_date_range(start_date, end_date)
         df = pd.DataFrame.from_records(sales_data)
-        product_quantities = df.groupby('product_name')['quantity'].sum().reset_index()
-        sales = product_quantities.sort_values(by=['quantity'], ascending=False)
+        if not df.empty:
+            product_quantities = df.groupby('product_name')['quantity'].sum().reset_index()
+            sales = product_quantities.sort_values(by=['quantity'], ascending=False)
+        else:
+            sales = pd.DataFrame()
 
         filter_kwargs = {
             'receipt_number': OuterRef('receipt_number'),
