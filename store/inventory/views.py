@@ -346,7 +346,7 @@ class DeliveryReportTemplateView(LoginRequiredMixin, TemplateView):
                     'reason',
                     'product_name',
                     'quantity',
-                    'created_by',
+                    'created_by__username',
                     'product_item_code'
                 )
         )
@@ -374,7 +374,7 @@ class DeliveryReportTemplateView(LoginRequiredMixin, TemplateView):
                     'reason',
                     'product_name',
                     'quantity',
-                    'created_by',
+                    'created_by__username',
                     'product_item_code'
                 )
         )
