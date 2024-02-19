@@ -5,6 +5,8 @@ from datetime import timedelta
 from typing import Any
 from typing import Dict
 
+import pandas as pd
+
 from django.conf import settings
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Sum
@@ -43,6 +45,15 @@ class DashboardTemplateView(LoginRequiredMixin, TemplateView):
         if expenses:
             total_expense = float(expenses.aggregate(total_amount=Sum('amount'))['total_amount'])
 
+        df_receipt = pd.DataFrame.from_records(sales)
+        if not df_receipt.empty:
+            df_receipt.drop_duplicates(
+                subset=['receipt_number'], keep='first', inplace=True)
+            df_receipt = df_receipt[['receipt_number']]
+            number_of_items = len(df_receipt)
+        else:
+            number_of_items = 0
+
         # Deduct platform fee
         deduction = float(total_sale) * settings.PLATFORM_PERCENTAGE
         total_net_profit = float(total_profit)
@@ -59,6 +70,7 @@ class DashboardTemplateView(LoginRequiredMixin, TemplateView):
         context['total_sale'] = total_sale
         context['total_expense'] = round(total_expense, 2)
         context['total_platform_fee'] = round(deduction, 2)
+        context['number_of_items'] = number_of_items
 
         # Chart
         context['bar_data'] = json.dumps(bar_data)
@@ -82,6 +94,15 @@ class DashboardTemplateView(LoginRequiredMixin, TemplateView):
         if expenses:
             total_expense = float(expenses.aggregate(total_amount=Sum('amount'))['total_amount'])
 
+        df_receipt = pd.DataFrame.from_records(sales)
+        if not df_receipt.empty:
+            df_receipt.drop_duplicates(
+                subset=['receipt_number'], keep='first', inplace=True)
+            df_receipt = df_receipt[['receipt_number']]
+            number_of_items = len(df_receipt)
+        else:
+            number_of_items = 0
+
         # Deduct platform fee
         deduction = float(total_sale) * settings.PLATFORM_PERCENTAGE
         total_net_profit = float(total_profit)
@@ -98,6 +119,7 @@ class DashboardTemplateView(LoginRequiredMixin, TemplateView):
         context['total_sale'] = total_sale
         context['total_expense'] = round(total_expense, 2)
         context['total_platform_fee'] = round(deduction, 2)
+        context['number_of_items'] = number_of_items
 
         # Chart
         context['bar_data'] = json.dumps(bar_data)

@@ -11,10 +11,7 @@ import pandas as pd
 from django.conf import settings
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db import transaction
-from django.db.models import Max
-from django.db.models import OuterRef
 from django.db.models import Q
-from django.db.models import Subquery
 from django.db.models import Sum
 from django.views import View
 from django.views.generic import TemplateView
@@ -157,30 +154,20 @@ class SaleReportTemplateView(LoginRequiredMixin, TemplateView):
         else:
             sales = pd.DataFrame()
 
-        filter_kwargs = {
-            'receipt_number': OuterRef('receipt_number'),
-            'created_date__date__range': (start_date, end_date),
-        }
-        max_created_subquery = (
-            Sale.objects
-                .filter(**filter_kwargs)
-                .values('receipt_number')
-                .annotate(max_created=Max('created_date'))
-                .values('max_created')
-                .exclude(is_void=True)
-        )
-
-        sales_per_receipt = (
-            Sale.objects
-                .filter(created_date=Subquery(max_created_subquery))
-                .order_by('-created_date')
-                .exclude(is_void=True)
-        )
+        df_receipt = pd.DataFrame.from_records(sales_data)
+        if not df_receipt.empty:
+            df_receipt.drop_duplicates(
+                subset=['receipt_number'], keep='first', inplace=True)
+            df_receipt.drop(
+                columns=['price', 'profit', 'quantity', 'product_name', 'product_id'], inplace=True)
+            sales_per_receipt = df_receipt.sort_values(by=['created_date'], ascending=False)
+        else:
+            sales_per_receipt = pd.DataFrame()
 
         context['start_date'] = start_date
         context['end_date'] = end_date
         context['sales_data'] = sales.to_dict('records')
-        context['sales_per_receipt'] = sales_per_receipt
+        context['sales_per_receipt'] = sales_per_receipt.to_dict('records')
         return context
 
     def post(self, request, **kwargs):
@@ -196,30 +183,20 @@ class SaleReportTemplateView(LoginRequiredMixin, TemplateView):
         else:
             sales = pd.DataFrame()
 
-        filter_kwargs = {
-            'receipt_number': OuterRef('receipt_number'),
-            'created_date__date__range': (start_date, end_date),
-        }
-        max_created_subquery = (
-            Sale.objects
-                .filter(**filter_kwargs)
-                .values('receipt_number')
-                .annotate(max_created=Max('created_date'))
-                .values('max_created')
-                .exclude(is_void=True)
-        )
-
-        sales_per_receipt = (
-            Sale.objects
-                .filter(created_date=Subquery(max_created_subquery))
-                .order_by('-created_date')
-                .exclude(is_void=True)
-        )
+        df_receipt = pd.DataFrame.from_records(sales_data)
+        if not df_receipt.empty:
+            df_receipt.drop_duplicates(
+                subset=['receipt_number'], keep='first', inplace=True)
+            df_receipt.drop(
+                columns=['price', 'profit', 'quantity', 'product_name', 'product_id'], inplace=True)
+            sales_per_receipt = df_receipt.sort_values(by=['created_date'], ascending=False)
+        else:
+            sales_per_receipt = pd.DataFrame()
 
         context['start_date'] = start_date
         context['end_date'] = end_date
         context['sales_data'] = sales.to_dict('records')
-        context['sales_per_receipt'] = sales_per_receipt
+        context['sales_per_receipt'] = sales_per_receipt.to_dict('records')
         return self.render_to_response(context)
 
 
