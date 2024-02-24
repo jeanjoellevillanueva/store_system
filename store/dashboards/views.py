@@ -71,6 +71,7 @@ class DashboardTemplateView(LoginRequiredMixin, TemplateView):
         context['total_expense'] = round(total_expense, 2)
         context['total_platform_fee'] = round(deduction, 2)
         context['number_of_items'] = number_of_items
+        context['item_sold'] = len(sales)
 
         # Chart
         context['bar_data'] = json.dumps(bar_data)
@@ -120,6 +121,7 @@ class DashboardTemplateView(LoginRequiredMixin, TemplateView):
         context['total_expense'] = round(total_expense, 2)
         context['total_platform_fee'] = round(deduction, 2)
         context['number_of_items'] = number_of_items
+        context['item_sold'] = len(sales)
 
         # Chart
         context['bar_data'] = json.dumps(bar_data)

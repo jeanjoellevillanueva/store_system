@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+{% load tags %}
+{% block header %}Out of stock{% endblock %}
+
+{% block content %}
+  <div class="row">
+    <div class="col-xl-12 col-lg-12">
+      <div class="card shadow mb-4">
+        <div
+          class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+          <h6 class="m-0 font-weight-bold text-primary">Out of stock</h6>
+          <a href="{% url 'inventory:out_of_stock_export' %}" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm btn-icon-split">
+            <span class="icon text-white-50">
+              <i class="fas fa-cart-plus"></i>
+            </span>
+            <span class="text">Download</span>
+          </a>
+        </div>
+        <div class="card-body d-flex justify-content-center align-items-center">
+          <div class="table-responsive">
+            <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+              <thead>
+                <tr>
+                  <th class="text-center">Item</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for product in products %}
+                <tr>
+                  <td class="text-center">{{ product.name }} ({{ product.variation }})</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}
+
+{% block javascript %}
+<script>
+  /**
+   * Apply datatable.net plugin on the table.
+   */
+  $(document).ready(function() {
+    const pageLength = parseInt("{{ DATATABLES_LENGTH }}");
+    $('#dataTable').DataTable({
+      order: [],
+      pageLength: pageLength,
+    });
+  });
+</script>
+{% endblock %}
