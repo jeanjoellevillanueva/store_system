@@ -4,6 +4,8 @@ from .views import DeliveryCustomCreateView
 from .views import DeliveryListTemplateView
 from .views import DeliveryReportTemplateView
 from .views import InventoryTemplateView
+from .views import OutOfStockPrintView
+from .views import OutOfStockTemplateView
 from .views import ProductCustomCreateView
 from .views import ProductCustomUpdateView
 from .views import ProductListDatatableTemplateView
@@ -78,4 +80,14 @@ urlpatterns = [
         DeliveryCustomCreateView.as_view(),
         name='add_delivery'
     ),
+    path(
+        'out-of-stock/',
+        OutOfStockTemplateView.as_view(),
+        name='out_of_stock'
+    ),
+    path(
+        'out-of-stock/export/',
+        OutOfStockPrintView.as_view(),
+        name='out_of_stock_export'
+    )
 ]

@@ -1,16 +1,18 @@
+import io
 from datetime import date
 from datetime import datetime
 from datetime import timedelta
 from typing import Any
 from typing import Dict
 
+import pandas as pd
 from braces.views import JSONResponseMixin
 
 from django.conf import settings
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db import transaction
-from django.db.models import F
 from django.http import Http404
+from django.http import HttpResponse
 from django.views import View
 from django.views.generic import TemplateView
 
@@ -411,3 +413,41 @@ class DeliveryListTemplateView(LoginRequiredMixin, TemplateView):
         delivery_inchoices = [choice[0] for choice in Delivery.IN_CHOICES]
         context['deliver_inchoices'] = delivery_inchoices
         return context
+
+
+class OutOfStockTemplateView(LoginRequiredMixin, TemplateView):
+    """
+    View used for loading the list of items that are out of stock.
+    """
+    template_name = 'inventory/out_of_stock.html'
+
+    def get_context_data(self, **kwargs: Any) -> Dict[str, Any]:
+        context = super().get_context_data(**kwargs)
+        context['products'] = Product.objects.filter(quantity=0).order_by('name')
+        return context
+
+
+class OutOfStockPrintView(View):
+    """
+    View for exporting out of stock items.
+    """
+
+    def get(self, request):
+        data = (
+            Product.objects
+                .filter(quantity=0)
+                .order_by('name')
+                .values('name', 'variation')
+        )
+        df = pd.DataFrame(list(data))
+        output = io.BytesIO()
+        writer = pd.ExcelWriter(output, engine='xlsxwriter')
+        df.to_excel(writer, index=False, sheet_name='Sheet1')
+        writer.close()
+        output.seek(0)
+        response = HttpResponse(
+            output,
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        )
+        response['Content-Disposition'] = 'attachment; filename=out-of-stock.xlsx'
+        return response
