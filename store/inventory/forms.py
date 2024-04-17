@@ -11,6 +11,7 @@ class ProductForm(forms.ModelForm):
     class Meta:
         model = Product
         exclude = [
+            'sku',
             'capital',
             'price',
             'variation',

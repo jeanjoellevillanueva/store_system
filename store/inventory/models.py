@@ -24,6 +24,7 @@ class Product(ModelMixin):
     capital = models.DecimalField(max_digits=10, decimal_places=2)
     price = models.DecimalField(max_digits=10, decimal_places=2)
     variation = models.CharField(max_length=255)
+    sku = models.CharField(blank=True, max_length=255, default='')
     quantity = models.PositiveIntegerField(default=0)
 
     def __str__(self):
