@@ -23,7 +23,12 @@
         </div>
         <div class="modal-body">
           <div class="form-row" style="margin-bottom: 1rem;" id="idVariationQuantityFieldset0">
-            <div class="col-5">
+            <div class="col-2">
+              <label for="idProductSKU">SKU:</label>
+              <input class="form-control" type="text" placeholder="BLK.." name="sku_0" id="idProductSKU" required/>
+              <div id="id_sku_0_error"></div>
+            </div>
+            <div class="col-3">
               <label for="idProductVariation">Variation:</label>
               <input class="form-control" type="text" placeholder="Size or color.." name="variation_0" id="idProductVariation" required/>
               <div id="id_variation_0_error"></div>
@@ -66,7 +71,13 @@
       const VariationQuantityFieldset = document.createElement("fieldset");
       VariationQuantityFieldset.innerHTML = `
         <div class="form-row" style="margin-bottom: 1rem;" id="idVariationQuantityFieldset${counter}">
-          <div class="col-5">
+          <div class="col-2">
+            <label for="idProductSKU${counter}">SKU:</label>
+            <input class="form-control" type="text" placeholder="BLK.." name="sku_${counter}" id="idProductSKU${counter}" required/>
+            <div id="id_sku_${counter}_error"></div>
+          </div>
+
+          <div class="col-3">
             <label for="idProductVariation${counter}">Variation:</label>
             <input class="form-control" type="text" placeholder="Size or color.." name="variation_${counter}" id="idProductVariation${counter}" required/>
             <div id="id_variation_${counter}_error"></div>
@@ -84,7 +95,9 @@
 
           <div class="col-1">
             <label class="invisible">DeleteBtn</label>
-            <button type="button" class="btn btn-danger color-delete-btn" id="idVariationDeleteBtn${counter}" data-id="${counter}" style="width: 100%">-</button>
+            <button type="button" class="btn btn-danger color-delete-btn" id="idVariationDeleteBtn${counter}" data-id="${counter}" style="width: 100%">
+              <i class="fas fa-trash-alt"></i>
+            </button>
           </div>
         </div>
       `;

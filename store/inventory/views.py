@@ -91,6 +91,7 @@ class ProductCustomCreateView(LoginRequiredMixin, JSONResponseMixin, View):
                 for product_variation in variations:
                     product = form.save(commit=False)
                     product.pk = None  # Reset the primary key to create a new instance.
+                    product.sku = product_variation['sku']
                     product.variation = product_variation['variation']
                     product.price = product_variation['price']
                     product.capital = product_variation['capital']
@@ -216,6 +217,7 @@ class VariationCustomCreateView(LoginRequiredMixin, JSONResponseMixin, View):
                     description=sample_product.description,
                 )
                 product.pk = None  # Reset the primary key to create a new instance.
+                product.sku = product_variation['sku']
                 product.variation = product_variation['variation']
                 product.price = product_variation['price']
                 product.capital = product_variation['capital']
