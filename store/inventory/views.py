@@ -16,6 +16,8 @@ from django.http import HttpResponse
 from django.views import View
 from django.views.generic import TemplateView
 
+from accounts.mapping import get_user_mapping
+
 from .forms import DeliveryAddForm
 from .forms import DeliverySubtractForm
 from .forms import ProductForm
@@ -243,6 +245,7 @@ class VariationCustomUpdateView(LoginRequiredMixin, JSONResponseMixin, View):
                     product = Product.objects.get(id=self.kwargs['id'])
                 except Product.DoesNotExist:
                     raise Http404('Product does not exist')
+                product.sku = form.cleaned_data['sku']
                 product.variation = form.cleaned_data['variation']
                 product.price = form.cleaned_data['price']
                 product.capital = form.cleaned_data['capital']
@@ -341,7 +344,7 @@ class DeliveryReportTemplateView(LoginRequiredMixin, TemplateView):
         date_filter = {
             'created_date__date__range': (start_date, end_date), 
         }
-        context['deliveries'] = (
+        queryset = (
             Delivery.objects
                 .filter(**date_filter)
                 .order_by('-created_date')
@@ -354,6 +357,10 @@ class DeliveryReportTemplateView(LoginRequiredMixin, TemplateView):
                     'product_item_code'
                 )
         )
+        user_mapping = get_user_mapping()
+        df_delivery = pd.DataFrame.from_records(queryset)
+        df_delivery['created_by'] = df_delivery['created_by'].map(user_mapping)
+        context['deliveries'] = df_delivery.to_dict('records')
         delivery_inchoices = [choice[0] for choice in Delivery.IN_CHOICES]
 
         context['deliver_inchoices'] = delivery_inchoices

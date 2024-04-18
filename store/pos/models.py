@@ -62,7 +62,7 @@ class Sale(ModelMixin):
             cls.objects
                 .filter(created_date__date__range=(start_date, end_date))
                 .order_by('created_date')
-                .values('created_date', 'price', 'profit', 'quantity', 'product_name', 'product_id', 'receipt_number')
+                .values('created_date', 'price', 'profit', 'quantity', 'product_name', 'product_id', 'receipt_number', 'created_by')
                 .exclude(is_void=True)
         )
         return sales

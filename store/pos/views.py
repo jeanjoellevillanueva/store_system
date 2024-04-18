@@ -6,6 +6,7 @@ from typing import Any
 from typing import Dict
 
 from braces.views import JSONResponseMixin
+import numpy as np
 import pandas as pd
 
 from django.conf import settings
@@ -16,6 +17,7 @@ from django.db.models import Sum
 from django.views import View
 from django.views.generic import TemplateView
 
+from accounts.mapping import get_user_mapping
 from inventory.models import Delivery
 from inventory.models import Product
 from inventory.utils import compute_total
@@ -122,6 +124,7 @@ class SaleCustomCreateView(LoginRequiredMixin, JSONResponseMixin, View):
                     discount=discount,
                     total=total,
                     profit=profit,
+                    created_by=request.user
                 )
                 sale_instances.append(sale_instance)
             # Save the created objects.
@@ -160,10 +163,12 @@ class SaleReportTemplateView(LoginRequiredMixin, TemplateView):
                 subset=['receipt_number'], keep='first', inplace=True)
             df_receipt.drop(
                 columns=['price', 'profit', 'quantity', 'product_name', 'product_id'], inplace=True)
+            user_mapping = get_user_mapping()
+            df_receipt['created_by'] = df_receipt['created_by'].map(user_mapping)
+            df_receipt.replace({np.nan: None}, inplace=True)
             sales_per_receipt = df_receipt.sort_values(by=['created_date'], ascending=False)
         else:
             sales_per_receipt = pd.DataFrame()
-
         context['start_date'] = start_date
         context['end_date'] = end_date
         context['sales_data'] = sales.to_dict('records')

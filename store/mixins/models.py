@@ -8,9 +8,11 @@ class ModelMixin(models.Model):
     """
 
     created_by = models.ForeignKey(
-        User, on_delete=models.SET_NULL,
+        User,
+        on_delete=models.SET_NULL,
         related_name='%(class)s_created',
-        null=True, blank=True
+        null=True,
+        blank=True
     )
     updated_by = models.ForeignKey(
         User,

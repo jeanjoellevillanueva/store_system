@@ -46,6 +46,7 @@
     let updateURL;
     $('#idVariationsTableContainer').on('click', '.update-variation', (event) => {
       let id = event.currentTarget.dataset.id;
+      let sku = event.currentTarget.dataset.sku;
       let variation = event.currentTarget.dataset.variation;
       let price = event.currentTarget.dataset.price;
       let capital = event.currentTarget.dataset.capital;
@@ -54,6 +55,7 @@
       updateURL = event.currentTarget.dataset.url;
 
       $('#id_id_update').val(id);
+      $('#id_sku_update').val(sku);
       $('#id_variation_update').val(variation);
       $('#id_price_update').val(price);
       $('#id_capital_update').val(capital);
