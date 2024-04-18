@@ -21,13 +21,15 @@
             <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
               <thead>
                 <tr>
-                  <th class="text-center">Item</th>
+                  <th class="text-center">Item Code/SKU</th>
+                  <th class="text-center">Variation</th>
                 </tr>
               </thead>
               <tbody>
                 {% for product in products %}
                 <tr>
-                  <td class="text-center">{{ product.name }} ({{ product.variation }})</td>
+                  <td class="text-center">{{ product.name }}_{{ product.sku }}</td>
+                  <td class="text-center">{{ product.variation }}</td>
                 </tr>
                 {% endfor %}
               </tbody>

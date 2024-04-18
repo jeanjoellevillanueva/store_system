@@ -43,6 +43,7 @@ class VariationUpdateForm(forms.ModelForm):
     class Meta:
         model = Product
         fields = [
+            'sku',
             'variation',
             'capital',
             'price',        
