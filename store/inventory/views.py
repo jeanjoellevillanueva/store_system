@@ -5,6 +5,7 @@ from datetime import timedelta
 from typing import Any
 from typing import Dict
 
+import numpy as np
 import pandas as pd
 from braces.views import JSONResponseMixin
 
@@ -469,10 +470,16 @@ class ExportToShipView(View):
     A view that will combine to ship orders into one file.
     """
 
-    def post(self, request, *args, **kwargs):
-        import pdb; pdb.set_trace()
-        data = combine_to_ship_orders()
+    def get(self, request, *args, **kwargs):
+        from .reports import get_product_stock
+        filenames = ["shopee.xlsx", "tiktok.xlsx"]
+        data = combine_to_ship_orders(filenames)
+        name_list = [product.split("_")[0] for product in data.keys()]
+        products = get_product_stock(name_list)
         df = pd.DataFrame.from_dict(data, orient='index', columns=['Value'])
+        df['stock'] = df.index.map(products)
+        df.replace(np.nan, 0, inplace=True)
+        df['stock'].astype('int')
         buffer = io.BytesIO()
         df.to_excel(buffer)
         buffer.seek(0)

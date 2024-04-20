@@ -1,4 +1,12 @@
+import os
+
 import pandas as pd
+
+from django.conf import settings
+from django.db.models import Sum
+from django.db.models import Count
+
+from .models import Product
 
 
 def extract_orders_from_xlsx(filename='shopee.xlsx'):
@@ -13,7 +21,8 @@ def extract_orders_from_xlsx(filename='shopee.xlsx'):
         raise ValueError('File not supported.')
     QUANTITY_COL = 'Quantity'
     ORDER_STATUS_COL = 'Order Status'
-    file_path = f'files/{filename}'
+    file_path = os.path.join(settings.BASE_DIR, 'inventory')
+    file_path = f'{file_path}/{filename}'
     df = pd.read_excel(file_path)
     col_list = [ORDER_STATUS_COL, SKU_COL, QUANTITY_COL]
     df = df[col_list]
@@ -28,6 +37,18 @@ def extract_orders_from_xlsx(filename='shopee.xlsx'):
         order_info[dict_key] = dict_value
     return order_info
 
+
+def get_product_stock(name_list):
+    """getting the inventory stock"""
+    products = Product.objects.filter(item_code__in=name_list).values('item_code', 'sku', 'quantity')
+    inventory_info = {}
+    for product in products:
+        inventory_name = product['item_code']
+        inventory_sku = product['sku']
+        inventory_quantity = product['quantity']
+        inventory_info[f'{inventory_name}_{inventory_sku}'] = inventory_quantity
+    return inventory_info
+        
 
 def combine_to_ship_orders(filenames:list):
     SKU = 'SKU'
