@@ -3,6 +3,7 @@ from django.urls import path
 from .views import DeliveryCustomCreateView
 from .views import DeliveryListTemplateView
 from .views import DeliveryReportTemplateView
+from .views import ExportToShipView
 from .views import InventoryTemplateView
 from .views import OutOfStockPrintView
 from .views import OutOfStockTemplateView
@@ -86,8 +87,13 @@ urlpatterns = [
         name='out_of_stock'
     ),
     path(
-        'out-of-stock/export/',
+        'export/to-ship/',
+        ExportToShipView.as_view(),
+        name='to_ship_export'
+    ),
+    path(
+        'export/out-of-stock/',
         OutOfStockPrintView.as_view(),
         name='out_of_stock_export'
-    )
+    ),
 ]

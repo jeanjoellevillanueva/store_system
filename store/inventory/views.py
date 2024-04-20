@@ -11,6 +11,7 @@ from braces.views import JSONResponseMixin
 from django.conf import settings
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db import transaction
+from django.http import FileResponse
 from django.http import Http404
 from django.http import HttpResponse
 from django.views import View
@@ -25,6 +26,7 @@ from .forms import ProductUpdateForm
 from .forms import VariationUpdateForm
 from .models import Delivery
 from .models import Product
+from .reports import combine_to_ship_orders
 from .utils import parse_variation
 
 
@@ -459,4 +461,24 @@ class OutOfStockPrintView(View):
             content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
         )
         response['Content-Disposition'] = 'attachment; filename=out-of-stock.xlsx'
+        return response
+
+
+class ExportToShipView(View):
+    """
+    A view that will combine to ship orders into one file.
+    """
+
+    def post(self, request, *args, **kwargs):
+        import pdb; pdb.set_trace()
+        data = combine_to_ship_orders()
+        df = pd.DataFrame.from_dict(data, orient='index', columns=['Value'])
+        buffer = io.BytesIO()
+        df.to_excel(buffer)
+        buffer.seek(0)
+        response = FileResponse(
+            buffer,
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        )
+        response['Content-Disposition'] = f'attachment; filename="output.xlsx"'
         return response
