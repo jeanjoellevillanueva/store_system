@@ -1,0 +1,119 @@
+{% extends 'base.html' %}
+{% load tags %}
+{% block header %}Generate Report{% endblock %}
+
+{% block css %}
+<style>
+  .dropzone {
+    width: 100%;
+    height: 200px;
+    border: 2px dashed #C0C0C0;
+    border-radius: 10px;
+    text-align: center;
+    justify-content: center;
+    font-size: 16px;
+    color: #C0C0C0;
+    cursor: pointer;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+  <div class="row">
+    <div class="col-xl-12 col-lg-12">
+      <div class="card shadow mb-4">
+        <div
+          class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+          <h6 class="m-0 font-weight-bold text-primary">To Ship</h6>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <ul id="file-list"></ul>
+          </div>
+          <div class="row mb-2">
+            <div class="dropzone">
+              Drag and drop files here or click to upload
+            </div>
+          </div>
+          <div class="row">
+            <button id="generateToShipBtn" class="btn btn-primary w-100">Generate</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}
+
+{% block javascript %}
+<script>
+  /**
+   * Script for the file upload.
+   */
+  $(document).ready(function() {
+    const formData = new FormData();
+    const dropZone = $('.dropzone');
+    const fileList = $('#file-list');
+
+    function preventDefaults(e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+
+    function highlight() {
+      dropZone.addClass('bg-secondary');
+    }
+
+    function unhighlight() {
+      dropZone.removeClass('bg-secondary');
+    }
+
+    function handleDrop(e) {
+      const dt = e.originalEvent.dataTransfer;
+      const files = dt.files;
+      Array.from(files).forEach((file, index) => {
+        previewFile(file, index);
+      });
+    }
+
+    function previewFile(file, index) {
+      const li = $('<li></li>').text(file.name);
+      fileList.append(li);
+      formData.append('file', file);
+    }
+
+    function uploadFile() {
+      const url = '{% url "inventory:to_ship_upload" %}';
+      const header_data = {
+        headers: {
+          'X-CSRFToken': '{{ csrf_token }}',
+          'Content-Type': 'multipart/form-data',
+        },
+      };
+      axios.post(url, formData, header_data)
+        .then(response => {
+          if (response.data.status === 'success') {
+            alert('File(s) uploaded successfully!');
+            window.open("{% url 'inventory:to_ship_export' %}", '_blank');
+          } else {
+            alert('Error uploading file(s): ' + JSON.stringify(response.data.message));
+          }
+        })
+        .catch(error => {
+          console.error('Error:', error);
+        })
+    }
+    dropZone.on('dragenter dragover', preventDefaults);
+    dropZone.on('dragleave drop', preventDefaults);
+    dropZone.on('dragenter dragover', highlight);
+    dropZone.on('dragleave drop', unhighlight);
+    dropZone.on('drop', handleDrop);
+
+    $('#generateToShipBtn').on('click', () => {
+      for (let file of formData.entries()) {
+        console.log(file[0], file[1]);
+      }
+      uploadFile();
+    });
+  });
+</script>
+{% endblock %}

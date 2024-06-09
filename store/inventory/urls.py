@@ -11,6 +11,8 @@ from .views import ProductCustomCreateView
 from .views import ProductCustomUpdateView
 from .views import ProductListDatatableTemplateView
 from .views import ProductTemplateView
+from .views import ToShipTemplateView
+from .views import UploadToShipView
 from .views import VariationCustomCreateView
 from .views import VariationCustomDeleteView
 from .views import VariationCustomUpdateView
@@ -85,6 +87,16 @@ urlpatterns = [
         'out-of-stock/',
         OutOfStockTemplateView.as_view(),
         name='out_of_stock'
+    ),
+    path(
+        'to-ship/',
+        ToShipTemplateView.as_view(),
+        name='to_ship'
+    ),
+    path(
+        'upload/to-ship/',
+        UploadToShipView.as_view(),
+        name='to_ship_upload'
     ),
     path(
         'export/to-ship/',
