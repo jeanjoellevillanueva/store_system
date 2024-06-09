@@ -1,16 +1,20 @@
 import io
+import os
 from datetime import date
 from datetime import datetime
 from datetime import timedelta
+from pathlib import Path
 from typing import Any
 from typing import Dict
 
+import numpy as np
 import pandas as pd
 from braces.views import JSONResponseMixin
 
 from django.conf import settings
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db import transaction
+from django.http import FileResponse
 from django.http import Http404
 from django.http import HttpResponse
 from django.views import View
@@ -25,6 +29,8 @@ from .forms import ProductUpdateForm
 from .forms import VariationUpdateForm
 from .models import Delivery
 from .models import Product
+from .reports import combine_to_ship_orders
+from .reports import get_product_stock
 from .utils import parse_variation
 
 
@@ -436,6 +442,55 @@ class OutOfStockTemplateView(LoginRequiredMixin, TemplateView):
         return context
 
 
+class ToShipTemplateView(LoginRequiredMixin, TemplateView):
+    """
+    View used to load the page on To Ship report generation.
+    """
+    template_name = 'inventory/to_ship.html'
+
+    def get_context_data(self, **kwargs: Any) -> Dict[str, Any]:
+        context = super().get_context_data(**kwargs)
+        context['products'] = Product.objects.filter(quantity=0).order_by('name')
+        return context
+
+
+class UploadToShipView(LoginRequiredMixin, JSONResponseMixin, View):
+    """
+    View used to upload files for To Ship generation.
+    """
+
+    def post(self, request, **kwargs: Any) -> Dict[str, Any]:
+        files = request.FILES.getlist('file')
+        SUPPORTED_FILES = ['tiktok.xlsx', 'shopee.xlsx']
+        unsupported_files = []
+        supported_files = []
+        for file in files:
+            filename = file.name
+            if filename not in SUPPORTED_FILES:
+                unsupported_files.append(filename)
+                continue
+            self.handle_uploaded_file(file)
+            supported_files.append(filename)
+        if not unsupported_files:
+            json_data = {
+                'status': 'success',
+                'message': 'Successful generating to ship report.'
+            }
+            return self.render_json_response(json_data, status=200)
+        json_data = {
+            'status': 'error',
+            'message': f'Unsupported files uploaded. {", ".join(unsupported_files)}'
+        }
+        return self.render_json_response(json_data, status=400)
+
+    def handle_uploaded_file(self, file):
+        file_path = os.path.join(settings.BASE_DIR, 'inventory', 'files', f'{file.name}')
+        destination = open(file_path, 'wb+')
+        for chunk in file.chunks():
+            destination.write(chunk)
+        destination.close()
+
+
 class OutOfStockPrintView(View):
     """
     View for exporting out of stock items.
@@ -459,4 +514,36 @@ class OutOfStockPrintView(View):
             content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
         )
         response['Content-Disposition'] = 'attachment; filename=out-of-stock.xlsx'
+        return response
+
+
+class ExportToShipView(View):
+    """
+    A view that will combine to ship orders into one file.
+    """
+
+    def get(self, request, *args, **kwargs):
+        file_path = os.path.join(settings.BASE_DIR, 'inventory', 'files')
+        directory = Path(file_path)
+        filenames = [f.name for f in directory.iterdir() if f.is_file()]
+        data = combine_to_ship_orders(filenames)
+        name_list = [product.split("_")[0] for product in data.keys()]
+        products = get_product_stock(name_list)
+        df = pd.DataFrame.from_dict(data, orient='index', columns=['Value'])
+        df['stock'] = df.index.map(products)
+        df.replace(np.nan, 0, inplace=True)
+        df['stock'].astype('int')
+        buffer = io.BytesIO()
+        df.to_excel(buffer)
+        buffer.seek(0)
+        response = FileResponse(
+            buffer,
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        )
+        date_in_str = date.today().strftime(settings.DATE_FORMAT)
+        filename = f'to-ship-output-{date_in_str}.xlsx'
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        for filename in filenames:
+            path = os.path.join(file_path, filename)
+            os.remove(path)
         return response
