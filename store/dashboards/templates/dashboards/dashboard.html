@@ -13,7 +13,17 @@
 {% endblock %}
 
 {% block content %}
-  {% include 'mixins/forms/date_filter.html' %}
+  <div class="row">
+    <div class="col-12">
+      <div class="card shadow p-1 mb-4">
+        <div class="card-body">
+          <div class="row d-flex justify-content-between">
+            {% include 'mixins/forms/date_filter.html' %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <div class="row">
 

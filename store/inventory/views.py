@@ -322,6 +322,7 @@ class DeliveryCustomCreateView(LoginRequiredMixin, JSONResponseMixin, View):
                     'product_name': f'{product.name} ({product.variation})',
                     'quantity': quantity_to_add,
                     'reason': form.cleaned_data['reason'],
+                    'running_stock': product.quantity,
                     'created_by': self.request.user,
                 }
                 Delivery.objects.create(**delivery_kwargs)
@@ -340,16 +341,8 @@ class DeliveryReportTemplateView(LoginRequiredMixin, TemplateView):
     """
     template_name = 'inventory/delivery.html'
 
-
-    def get_context_data(self, **kwargs: Any) -> Dict[str, Any]:
-        context = super().get_context_data(**kwargs)
-        current_date = date.today()
-        start_date = current_date - timedelta(days=7)
-        end_date = current_date
-
-        date_filter = {
-            'created_date__date__range': (start_date, end_date), 
-        }
+    def get_deliveries(self, start_date, end_date):
+        date_filter = {'created_date__date__range': (start_date, end_date)}
         queryset = (
             Delivery.objects
                 .filter(**date_filter)
@@ -360,46 +353,45 @@ class DeliveryReportTemplateView(LoginRequiredMixin, TemplateView):
                     'product_name',
                     'quantity',
                     'created_by',
-                    'product_item_code'
+                    'running_stock',
+                    'product_item_code',
                 )
         )
-        user_mapping = get_user_mapping()
         df_delivery = pd.DataFrame.from_records(queryset)
-        df_delivery['created_by'] = df_delivery['created_by'].map(user_mapping)
-        context['deliveries'] = df_delivery.to_dict('records')
-        delivery_inchoices = [choice[0] for choice in Delivery.IN_CHOICES]
+        user_mapping = get_user_mapping()
+        try:
+            df_delivery['created_by'] = df_delivery['created_by'].map(user_mapping)
+        except KeyError:
+            pass
+        return df_delivery.to_dict('records')
 
-        context['deliver_inchoices'] = delivery_inchoices
-        context['start_date'] = start_date
-        context['end_date'] = end_date
-        return context
-    
-    def post(self, request, **kwargs):
+    def get_initial_dates(self):
+        current_date = date.today()
+        start_date = current_date - timedelta(days=7)
+        end_date = current_date
+        return start_date, end_date
+
+    def get_context_data(self, **kwargs: Any) -> Dict[str, Any]:
         context = super().get_context_data(**kwargs)
-        start_date = datetime.strptime(self.request.POST['start_date'], settings.DATE_FORMAT)
-        end_date = datetime.strptime(self.request.POST['end_date'], settings.DATE_FORMAT)
-        
-        date_filter = {
-            'created_date__date__range': (start_date, end_date), 
-        }
-        context['deliveries'] = (
-            Delivery.objects
-                .filter(**date_filter)
-                .order_by('-created_date')
-                .values(
-                    'created_date',
-                    'reason',
-                    'product_name',
-                    'quantity',
-                    'created_by',
-                    'product_item_code'
-                )
-        )
-        delivery_inchoices = [choice[0] for choice in Delivery.IN_CHOICES]
+        start_date, end_date = self.get_initial_dates()
+        context.update({
+            'deliveries': self.get_deliveries(start_date, end_date),
+            'deliver_inchoices': [choice[0] for choice in Delivery.IN_CHOICES],
+            'start_date': start_date,
+            'end_date': end_date,
+        })
+        return context
 
-        context['deliver_inchoices'] = delivery_inchoices
-        context['start_date'] = start_date
-        context['end_date'] = end_date
+    def post(self, request, **kwargs):
+        context = self.get_context_data(**kwargs)
+        start_date = datetime.strptime(request.POST['start_date'], settings.DATE_FORMAT)
+        end_date = datetime.strptime(request.POST['end_date'], settings.DATE_FORMAT)
+        context.update({
+            'deliveries': self.get_deliveries(start_date, end_date),
+            'deliver_inchoices': [choice[0] for choice in Delivery.IN_CHOICES],
+            'start_date': start_date,
+            'end_date': end_date,
+        })
         return self.render_to_response(context)
 
 

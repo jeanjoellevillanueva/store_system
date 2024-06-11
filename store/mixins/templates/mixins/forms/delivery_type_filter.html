@@ -1,0 +1,17 @@
+<form id="typeForm" method="POST">
+  {% csrf_token %}
+  <select>
+    <option>Returned Item</option>
+  </select>
+</form>
+
+<script type="text/javascript">
+  /**
+   * Apply the daterangepicker on the date filter.
+   */
+  $(document).ready(function() {
+    $('#dateRangeFilter').on('apply.daterangepicker', function(ev, picker) {
+      $('#dateRangeForm').submit();
+    });
+  });
+</script>

@@ -1,22 +1,12 @@
-<div class="row">
-  <div class="col-12">
-    <div class="card shadow p-1 mb-4">
-      <div class="card-body">
-        <div class="row d-flex justify-content-between">
-          <form id="dateRangeForm" method="POST">
-            {% csrf_token %}
-            <div id="dateRangeFilter" style="background: #fff; cursor: pointer; padding: 5px 10px; border: 1px solid #ccc; width: 100%">
-              <i class="fa fa-calendar"></i>&nbsp;
-              <span></span> <i class="fa fa-caret-down"></i>
-            </div>
-            <input type="hidden" id="startDateInput" name="start_date" value="{{ start_date|date:'m/d/Y' }}">
-            <input type="hidden" id="endDateInput" name="end_date" value="{{ end_date|date:'m/d/Y' }}">
-          </form>
-        </div>
-      </div>
-    </div>
+<form id="dateRangeForm" method="POST">
+  {% csrf_token %}
+  <div id="dateRangeFilter" style="background: #fff; cursor: pointer; padding: 5px 10px; border: 1px solid #ccc; width: 100%">
+    <i class="fa fa-calendar"></i>&nbsp;
+    <span></span> <i class="fa fa-caret-down"></i>
   </div>
-</div>
+  <input type="hidden" id="startDateInput" name="start_date" value="{{ start_date|date:'m/d/Y' }}">
+  <input type="hidden" id="endDateInput" name="end_date" value="{{ end_date|date:'m/d/Y' }}">
+</form>
 
 <script type="text/javascript">
   /**

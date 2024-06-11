@@ -82,4 +82,5 @@ class Delivery(ModelMixin):
     product_item_code = models.CharField(max_length=255)
     product_name = models.CharField(max_length=255)
     quantity = models.PositiveIntegerField(default=1)
+    running_stock = models.PositiveIntegerField(default=0)
     reason = models.CharField(max_length=50, choices=DELIVER_CHOICES, default=DELIVER)

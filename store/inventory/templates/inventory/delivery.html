@@ -3,7 +3,7 @@
 {% block header %}Deliveries{% endblock %}
 
 {% block content %} 
-  {% include 'mixins/forms/date_filter.html' %}
+  
 
   <div class="row">
     <div class="col-xl-12 col-lg-12">
@@ -21,7 +21,18 @@
                   <th class="text-center">Type</th>
                   <th class="text-center">Item</th>
                   <th class="text-center">Quantity</th>
+                  <th class="text-center">Running Stock</th>
                   <th class="text-center">Delivered/Pull-out by</th>
+                </tr>
+              </thead>
+              <thead>
+                <tr>
+                  <th class="text-center">{% include 'mixins/forms/date_filter.html' %}</th>
+                  <th class="text-center"></th>
+                  <th class="text-center"></th>
+                  <th class="text-center"></th>
+                  <th class="text-center"></th>
+                  <th class="text-center"></th>
                 </tr>
               </thead>
               <tbody>
@@ -31,6 +42,7 @@
                   <td class="text-center {% if delivery.reason in deliver_inchoices %}text-success{% else %}text-danger{% endif %}">{{ delivery.reason|reason_display }}</td>
                   <td class="text-center"><a href="{% url 'inventory:product' delivery.product_item_code %}">{{ delivery.product_name }}</a></td>
                   <td class="text-center">{{ delivery.quantity }}</td>
+                  <td class="text-center">{{ delivery.running_stock }}</td>
                   <td class="text-center">{{ delivery.created_by }}</td>
                 </tr>
                 {% endfor %}
