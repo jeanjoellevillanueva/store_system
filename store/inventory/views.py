@@ -13,10 +13,15 @@ from braces.views import JSONResponseMixin
 
 from django.conf import settings
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.models import User
 from django.db import transaction
+from django.db.models import CharField
+from django.db.models.functions import Cast
 from django.http import FileResponse
 from django.http import Http404
 from django.http import HttpResponse
+from django.shortcuts import redirect
+from django.urls import reverse
 from django.views import View
 from django.views.generic import TemplateView
 
@@ -341,11 +346,22 @@ class DeliveryReportTemplateView(LoginRequiredMixin, TemplateView):
     """
     template_name = 'inventory/delivery.html'
 
-    def get_deliveries(self, start_date, end_date):
-        date_filter = {'created_date__date__range': (start_date, end_date)}
+    def get_deliveries(self, filters):
+        model_filter = {
+            'created_date__date__range': (
+                filters['start_date'],
+                filters['end_date']
+            ),
+        }
+        if filters.get('reason'):
+            model_filter['reason'] = filters.get('reason')
+        if filters.get('product_id'):
+            model_filter['product_id'] = filters.get('product_id')
+        if filters.get('created_by'):
+            model_filter['created_by'] = filters.get('created_by')
         queryset = (
             Delivery.objects
-                .filter(**date_filter)
+                .filter(**model_filter)
                 .order_by('-created_date')
                 .values(
                     'created_date',
@@ -364,33 +380,86 @@ class DeliveryReportTemplateView(LoginRequiredMixin, TemplateView):
         except KeyError:
             pass
         return df_delivery.to_dict('records')
+    
+    def get_filters(self, request):
+        filters = self.request.session['filters']
+        delivery_filter = request.POST.get('delivery_filter')
+        product_filter = request.POST.get('product_filter')
+        user_filter = request.POST.get('user_filter')
+        if request.POST.get('start_date') and request.POST.get('end_date'):
+            start_date = datetime.strptime(request.POST.get('start_date'), settings.DATE_FORMAT)
+            end_date = datetime.strptime(request.POST.get('end_date'), settings.DATE_FORMAT)
+        elif filters.get('start_date') and filters.get('end_date'):
+            start_date = datetime.strptime(filters.get('start_date'), '%Y-%m-%d')
+            end_date = datetime.strptime(filters.get('end_date'), '%Y-%m-%d')
+        else:
+            start_date, end_date = self.get_initial_dates()
+        if delivery_filter:
+            filters['reason'] = delivery_filter
+        if product_filter:
+            filters['product_id'] = product_filter
+        if user_filter:
+            filters['created_by'] = int(user_filter)
+        if start_date:
+            filters['start_date'] = start_date.strftime('%Y-%m-%d')
+        if end_date:
+            filters['end_date'] = end_date.strftime('%Y-%m-%d')
+        self.request.session['filters'] = filters
+        return filters
 
     def get_initial_dates(self):
         current_date = date.today()
         start_date = current_date - timedelta(days=7)
         end_date = current_date
         return start_date, end_date
+    
+    def get(self, request, *args, **kwargs):
+        if self.request.GET.get('clear') and bool(self.request.GET.get('clear')):
+            self.request.session['filters'] = {}
+            return redirect(reverse('inventory:delivery'))
+        return super().get(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs: Any) -> Dict[str, Any]:
         context = super().get_context_data(**kwargs)
-        start_date, end_date = self.get_initial_dates()
+        if self.request.session.get('filters'):
+            filters = self.request.session['filters']
+        else:
+            start_date, end_date = self.get_initial_dates()
+            filters = {'start_date': start_date, 'end_date': end_date}
+            filters['start_date'] = start_date.strftime('%Y-%m-%d')
+            filters['end_date'] = end_date.strftime('%Y-%m-%d')
         context.update({
-            'deliveries': self.get_deliveries(start_date, end_date),
+            'deliveries': self.get_deliveries(filters),
             'deliver_inchoices': [choice[0] for choice in Delivery.IN_CHOICES],
-            'start_date': start_date,
-            'end_date': end_date,
+            'start_date': datetime.strptime(filters['start_date'], '%Y-%m-%d'),
+            'end_date': datetime.strptime(filters['end_date'], '%Y-%m-%d'),
+            'delivery_types': Delivery.DELIVER_CHOICES,
+            'users': User.objects.values('id', 'username'),
+            'products': (
+                Product.objects
+                    .annotate(id_str=Cast('id', CharField()))
+                    .values('id_str', 'variation', 'name').order_by('name')
+            ),
+            'filters': filters,
         })
         return context
 
     def post(self, request, **kwargs):
         context = self.get_context_data(**kwargs)
-        start_date = datetime.strptime(request.POST['start_date'], settings.DATE_FORMAT)
-        end_date = datetime.strptime(request.POST['end_date'], settings.DATE_FORMAT)
+        filters = self.get_filters(request)
         context.update({
-            'deliveries': self.get_deliveries(start_date, end_date),
+            'deliveries': self.get_deliveries(filters),
             'deliver_inchoices': [choice[0] for choice in Delivery.IN_CHOICES],
-            'start_date': start_date,
-            'end_date': end_date,
+            'start_date': datetime.strptime(filters['start_date'], '%Y-%m-%d'),
+            'end_date': datetime.strptime(filters['end_date'], '%Y-%m-%d'),
+            'delivery_types': Delivery.DELIVER_CHOICES,
+            'users': User.objects.values('id', 'username'),
+            'products': (
+                Product.objects
+                    .annotate(id_str=Cast('id', CharField()))
+                    .values('id_str', 'variation', 'name').order_by('name')
+            ),
+            'filters': filters,
         })
         return self.render_to_response(context)
 

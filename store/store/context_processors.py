@@ -8,5 +8,6 @@ def project_info_context(request):
         'LOGO_LINK': settings.LOGO_LINK,
         'LOGIN_IMAGE_LINK': settings.LOGIN_IMAGE_LINK,
         'PROJECT_NAME': settings.PROJECT_NAME,
+        'DEFAULT_SELECT': 'Select an option',
     }
     return context
