@@ -30,6 +30,7 @@
     </a>
   </li>
 
+  {% if user.is_staff %}
   <li class="nav-item">
     <a class="nav-link" href="{% url 'inventory:home' %}">
       <i class="fas fa-fw fa-list-alt"></i>
@@ -37,7 +38,6 @@
     </a>
   </li>
 
-  {% if user.is_staff %}
   <li class="nav-item">
     <a class="nav-link" href="{% url 'expenses:home' %}">
       <i class="fas fa-fw fa-wallet"></i>
@@ -54,6 +54,7 @@
       <span>Sales</span>
     </a>
   </li>
+  {% if user.is_staff %}
   <li class="nav-item">
     <a class="nav-link" href="{% url 'inventory:delivery' %}">
       <i class="fas fa-fw fa-truck"></i>
@@ -66,6 +67,7 @@
       <span>Out of stock</span>
     </a>
   </li>
+  {% endif %}
 
   <!-- Divider -->
   <hr class="sidebar-divider d-none d-md-block">
