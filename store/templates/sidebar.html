@@ -3,7 +3,14 @@
 <ul class="navbar-nav bg-gradient-primary sidebar sidebar-dark accordion toggled" id="accordionSidebar">
 
   <!-- Sidebar - Brand -->
-  <a class="sidebar-brand d-flex align-items-center justify-content-center" href="{% url 'dashboards:home' %}">
+  <a 
+    class="sidebar-brand d-flex align-items-center justify-content-center"
+    {% if user.is_staff %}
+    href="{% url 'dashboards:home' %}"
+    {% else %}
+    href="{% url 'pos:home' %}"
+    {% endif %}
+  >
     <div class="sidebar-brand-icon">
       <img src="{{ LOGO_LINK }}" class="" style="height: 3rem"/>
     </div>
@@ -66,6 +73,7 @@
       <span>Out of stock</span>
     </a>
   </li>
+  {% if user.is_staff %}
   <li class="nav-item">
     <a
       class="nav-link collapsed"
@@ -85,6 +93,7 @@
       </div>
     </div>
   </li>
+  {% endif %}
   <!-- Divider -->
   <hr class="sidebar-divider d-none d-md-block">
 </ul>
