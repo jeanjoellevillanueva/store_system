@@ -21,6 +21,7 @@ PROJECT_DETAIL = get_project_detail()
 # Application definition
 LOCAL_APPS = [
     'accounts',
+    'attendance',
     'dashboards',
     'expenses',
     'inventory',
