@@ -4,9 +4,9 @@
 {% block content %}
   <div class="row">
     <div class="col-xl-12 col-lg-12">
-      <div class="card shadow mb-4 d-flex justify-content-center align-items-center pt-5">
+      <div class="card shadow mb-4 d-flex justify-content-center align-items-center pt-5 pb-5">
         <div>
-          <p id="date-time"></p>
+          <p id="current-time">00:00:00</p>
         </div>
         <div>
           <select id="idTaskSel" class="form-select form-select-lg mb-3" aria-label=".form-select-lg example">
@@ -27,6 +27,7 @@
 
 {% block javascript %}
 <script>
+
 
 $(document).ready(function() {
     let clockInTime = null;
@@ -51,55 +52,65 @@ $(document).ready(function() {
     function stopTimer() {
         if (timerInterval) {
             clearInterval(timerInterval);
+            timerInterval = null; // Clear the interval reference
         }
     }
 
-    $('#clock-in').click(function() {
-        clockInTime = moment();
-        startTimer();
-        $('#clock-in').attr('disabled', true);
-        $('#clock-out').attr('disabled', false);
+    let taskSel = $('#idTaskSel');
+    let timein = $('#idTimeInBtn');
+
+    // Function to handle time-in and time-out logic
+    function handleTimeInOut() {
+        if (timein.hasClass('btn-success')) {
+            // Time-In Logic
+            alert("You are Timed-In");
+            taskSel.prop('disabled', true);
+            timein.removeClass('btn-success').addClass('btn-danger').html('Time-Out');
+            
+            // Start timer
+            clockInTime = moment();
+            startTimer();
+
+            // AJAX Logic
+            const header_data = {
+              headers: {'X-CSRFToken': '{{ csrf_token }}'},
+            };
+            axios.post("{% url 'attendance:create_attendance' %}", {}, header_data)
+            .then(function (response) {
+              console.log(response.data);
+            })
+
+            // AJAX End
+
+        } else if (timein.hasClass('btn-danger')) {
+            // Time-Out Logic
+            let confirmTimeOut = confirm("Are you sure you want to Time Out?");
+            if (confirmTimeOut) {
+                alert("You are Timed-Out");
+                taskSel.prop('disabled', false);
+                timein.removeClass('btn-danger').addClass('btn-success').html('Time-In');
+                
+                // Stop timer
+                stopTimer();
+                clockInTime = null; // Reset the clock-in time
+                $('#current-time').text('00:00:00'); // Reset the displayed time
+            }
+        }
+    }
+
+    // Event handler for task selection change
+    taskSel.on('change', () => {
+        if (taskSel.val() === 'Open this to select task') {
+            timein.removeClass('btn-success').addClass('btn-secondary').html('Time-In');
+            timein.prop('disabled', true);
+        } else {
+            timein.removeClass('btn-secondary').removeClass('btn-danger').addClass('btn-success').html('Time-In');
+            timein.prop('disabled', false);
+        }
     });
 
-    $('#clock-out').click(function() {
-        stopTimer();
-        clockInTime = null;
-        $('#clock-in').attr('disabled', false);
-        $('#clock-out').attr('disabled', true);
-    });
+    // Attach click event handler to the time-in button
+    timein.on('click', handleTimeInOut);
 });
-
-  let taskSel = $('#idTaskSel');
-  let timein = $('#idTimeInBtn');
-
-  // Function to handle time-in and time-out logic
-  function handleTimeInOut() {
-    if (timein.hasClass('btn-success')) {
-      alert("You are Timed-In");
-      taskSel.prop('disabled', true);
-      timein.removeClass('btn-success').addClass('btn-danger').html('Time-Out');
-    } else if (timein.hasClass('btn-danger')) {
-      let confirmTimeOut = confirm("Are you sure you want to Time Out?");
-      if (confirmTimeOut) {
-        alert("You are Timed-Out");
-        taskSel.prop('disabled', false);
-        timein.removeClass('btn-danger').addClass('btn-success').html('Time-In');
-      }
-    }
-  }
-
-  // Event handler for task selection change
-  taskSel.on('change', () => {
-    if (taskSel.val() === 'Open this to select task') {
-      timein.removeClass('btn-success').addClass('btn-secondary').html('Time-In');
-      timein.prop('disabled', true);
-    } else {
-      timein.removeClass('btn-secondary').removeClass('btn-danger').addClass('btn-success').html('Time-In');
-      timein.prop('disabled', false);
-    }
-  });
-
-  // Attach click event handler to the timein button
-  timein.on('click', handleTimeInOut);
 </script>
 {% endblock %}
