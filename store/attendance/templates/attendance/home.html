@@ -9,15 +9,23 @@
           <p id="current-time">00:00:00</p>
         </div>
         <div>
-          <select id="idTaskSel" class="form-select form-select-lg mb-3" aria-label=".form-select-lg example">
+          <select id="idTaskSel" class="form-select form-select-lg mb-3" aria-label=".form-select-lg example" {% if attendance %}disabled{% endif %}>
+            {% if attendance %}
+            <option selected>{{ attendance.get_task_display }}</option>
+            {% else %}
             <option selected>Open this to select task</option>
-            <option value="1">One</option>
-            <option value="2">Two</option>
-            <option value="3">Three</option>
+            {% endif %}
+            {% for task in task_choices %}
+            <option value="{{ task.0 }}">{{ task.1 }}</option>
+            {% endfor %}
           </select>
         </div>
         <div>
+          {% if not attendance %}
           <button id="idTimeInBtn" type="button" class="btn btn-secondary">Time-In</button>
+          {% else %}
+          <button id="idTimeInBtn" type="button" class="btn btn-danger">Time-Out</button>
+          {% endif %}
         </div>
           
       </div>
@@ -27,7 +35,6 @@
 
 {% block javascript %}
 <script>
-
 
 $(document).ready(function() {
     let clockInTime = null;
@@ -70,12 +77,13 @@ $(document).ready(function() {
             // Start timer
             clockInTime = moment();
             startTimer();
-
+            
+            let selectedTask = taskSel.val();
             // AJAX Logic
             const header_data = {
               headers: {'X-CSRFToken': '{{ csrf_token }}'},
             };
-            axios.post("{% url 'attendance:create_attendance' %}", {}, header_data)
+            axios.post("{% url 'attendance:create_attendance' %}", {'task': selectedTask}, header_data)
             .then(function (response) {
               console.log(response.data);
             })
@@ -94,6 +102,16 @@ $(document).ready(function() {
                 stopTimer();
                 clockInTime = null; // Reset the clock-in time
                 $('#current-time').text('00:00:00'); // Reset the displayed time
+
+                // AJAX Logic for Time-Out
+                const header_data = {
+                headers: {'X-CSRFToken': '{{ csrf_token }}'},
+                };
+                axios.post("{% url 'attendance:update_attendance' %}", {}, header_data)
+                  .then(function (response) {
+                    console.log(response.data);
+                  })
+                // AJAX End
             }
         }
     }
