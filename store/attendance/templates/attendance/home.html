@@ -2,32 +2,40 @@
 {% block header %}Attendance{% endblock %}
 
 {% block content %}
-  <div class="row">
-    <div class="col-xl-12 col-lg-12">
-      <div class="card shadow mb-4 d-flex justify-content-center align-items-center pt-5 pb-5">
-        <div>
-          <p id="current-time">00:00:00</p>
+  <div class="container d-flex justify-content-center align-items-center vh-200" style="margin-top:8%">
+    <div class="col-xl-5 col-lg-12">
+      <div class="card shadow mb-4">  
+        <div class="card-header py-2 justify-content-between bg-primary">
+          <i class="text-white fas fa-calendar"></i>
         </div>
-        <div>
-          <select id="idTaskSel" class="form-select form-select-lg mb-3" aria-label=".form-select-lg example" {% if attendance %}disabled{% endif %}>
-            {% if attendance %}
-            <option selected>{{ attendance.get_task_display }}</option>
-            {% else %}
-            <option selected>Open this to select task</option>
-            {% endif %}
-            {% for task in task_choices %}
-            <option value="{{ task.0 }}">{{ task.1 }}</option>
-            {% endfor %}
-          </select>
+          <div class="card-body flex-row justify-content-center align-items-center">
+            <div class="row d-flex justify-content-center align-items-center">
+              <h4>Time-In: {{ attendance.time_in }}</h4>
+              <h4>Time-Out: {{ attendance.time_out }}</h4>
+              <!--<h2 id="current-time">00:00:00</h2>-->
+            </div>
+            <div class="d-flex justify-content-center align-items-center">
+              <select id="idTaskSel" class="form-select form-select-lg mb-3" aria-label=".form-select-lg example" {% if attendance %}disabled{% endif %}>
+                {% if attendance %}
+                <option class="form-control" selected>{{ attendance.get_task_display }}</option>
+                {% else %}
+                <option class="form-control" selected>Open this to select task</option>
+                {% endif %}
+                {% for task in task_choices %}
+                <option class="form-control" value="{{ task.0 }}">{{ task.1 }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="d-flex justify-content-center align-items-center">
+              {% if attendance.time_in and attendance.time_out %}
+              <button id="idTimeInBtn" type="button" class="btn btn-danger" disabled>Already timed-out</button>
+              {% elif not attendance %}
+              <button id="idTimeInBtn" type="button" class="btn btn-secondary">Time-In</button>
+              {% else %}
+              <button id="idTimeInBtn" type="button" class="btn btn-danger">Time-Out</button>
+              {% endif %}
+            </div>
         </div>
-        <div>
-          {% if not attendance %}
-          <button id="idTimeInBtn" type="button" class="btn btn-secondary">Time-In</button>
-          {% else %}
-          <button id="idTimeInBtn" type="button" class="btn btn-danger">Time-Out</button>
-          {% endif %}
-        </div>
-          
       </div>
     </div>
   </div>
@@ -95,9 +103,8 @@ $(document).ready(function() {
             let confirmTimeOut = confirm("Are you sure you want to Time Out?");
             if (confirmTimeOut) {
                 alert("You are Timed-Out");
-                taskSel.prop('disabled', false);
-                timein.removeClass('btn-danger').addClass('btn-success').html('Time-In');
-                
+                taskSel.prop('disabled', true);
+                timein.html('Already Timed-out').prop('disabled', true);  
                 // Stop timer
                 stopTimer();
                 clockInTime = null; // Reset the clock-in time

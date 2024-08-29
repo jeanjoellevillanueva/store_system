@@ -5,6 +5,7 @@ from datetime import datetime, date
 from braces.views import JSONResponseMixin
 
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.core.exceptions import ObjectDoesNotExist
 from django.utils import timezone
 from django.views import View
 from django.views.generic import TemplateView
@@ -22,11 +23,15 @@ class AttendanceTemplateView(LoginRequiredMixin, TemplateView):
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
         context['task_choices'] = Attendance.TASK_CHOICES
-        context['attendance'] = Attendance.objects.filter(
-            employee=self.request.user,
-            time_in__date=date.today(),
-            time_out__isnull=True
-        ).last()
+        try:
+            context['attendance'] = Attendance.objects.get(
+                employee=self.request.user,
+                time_in__date=date.today(),
+                # time_out__isnull=True
+            )
+        except ObjectDoesNotExist:
+            context['attendance'] = None
+
         return context
 
 
