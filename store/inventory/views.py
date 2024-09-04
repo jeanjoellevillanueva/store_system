@@ -28,8 +28,8 @@ from django.views import View
 from django.views.generic import TemplateView
 
 from accounts.mapping import get_user_mapping
-
 from dashboards.charts import get_top_sold_products
+from pos.models import Sale
 from .forms import DeliveryAddForm
 from .forms import DeliverySubtractForm
 from .forms import ProductForm
@@ -40,7 +40,7 @@ from .models import Product
 from .reports import combine_to_ship_orders
 from .reports import get_product_stock
 from .utils import parse_variation
-from pos.models import Sale
+
 
 class InventoryTemplateView(LoginRequiredMixin, TemplateView):
     """
