@@ -252,6 +252,19 @@
 
 <script>
   /**
+   * Generates the top products List
+   */
+  $(document).ready(()=>{
+    reloadComponent("{% url 'inventory:topitems_product' %}", 'idTopProductsContainer', true);
+    $('#idTopProductsContainer').on('click', '.page-link', (event)=>{
+      let page = event.currentTarget.dataset.page;
+      reloadComponent(`{% url 'inventory:topitems_product' %}?page=${page}`, 'idTopProductsContainer', true);
+    });
+  });
+</script>
+
+<script>
+  /**
    * Set the height of the bar chart depending on the top products.
    */
   $(document).ready(function() {

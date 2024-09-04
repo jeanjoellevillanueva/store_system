@@ -11,6 +11,7 @@ from .views import ProductCustomCreateView
 from .views import ProductCustomUpdateView
 from .views import ProductListDatatableTemplateView
 from .views import ProductTemplateView
+from .views import TopItemsDatatableTemplateView
 from .views import ToShipTemplateView
 from .views import UploadToShipView
 from .views import VariationCustomCreateView
@@ -107,5 +108,10 @@ urlpatterns = [
         'export/out-of-stock/',
         OutOfStockPrintView.as_view(),
         name='out_of_stock_export'
+    ),
+    path(
+        'datatables/topitems/',
+        TopItemsDatatableTemplateView.as_view(),
+        name='topitems_product'
     ),
 ]

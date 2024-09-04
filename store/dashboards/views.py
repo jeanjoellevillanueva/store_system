@@ -54,6 +54,10 @@ class DashboardTemplateView(LoginRequiredMixin, TemplateView):
         else:
             number_of_items = 0
 
+        # Getting DateString and Convert to Date
+        self.request.session['start_date'] = start_date.strftime("%m/%d/%Y")
+        self.request.session['end_date'] = end_date.strftime("%m/%d/%Y")
+
         # Deduct platform fee
         deduction = float(total_sale) * settings.PLATFORM_PERCENTAGE
         total_net_profit = float(total_profit)
@@ -108,6 +112,10 @@ class DashboardTemplateView(LoginRequiredMixin, TemplateView):
         deduction = float(total_sale) * settings.PLATFORM_PERCENTAGE
         total_net_profit = float(total_profit)
         total_gross_profit = float(total_profit) - deduction - total_expense
+
+        # Getting DateString and Convert to Date
+        self.request.session['start_date'] = start_date.strftime("%m/%d/%Y")
+        self.request.session['end_date'] = end_date.strftime("%m/%d/%Y")
 
         # Context
         context['start_date'] = start_date
