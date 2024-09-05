@@ -72,6 +72,10 @@ class DashboardTemplateView(LoginRequiredMixin, TemplateView):
         context['total_platform_fee'] = round(deduction, 2)
         context['number_of_items'] = number_of_items
         context['item_sold'] = len(sales)
+        total_stock = Product.objects.aggregate(total=Sum('quantity'))
+        total_stock = total_stock['total']
+        context['total_stock'] = total_stock
+
 
         # Chart
         context['bar_data'] = json.dumps(bar_data)
@@ -122,6 +126,9 @@ class DashboardTemplateView(LoginRequiredMixin, TemplateView):
         context['total_platform_fee'] = round(deduction, 2)
         context['number_of_items'] = number_of_items
         context['item_sold'] = len(sales)
+        total_stock = Product.objects.aggregate(total=Sum('quantity'))
+        total_stock = total_stock['total']
+        context['total_stock'] = total_stock
 
         # Chart
         context['bar_data'] = json.dumps(bar_data)
