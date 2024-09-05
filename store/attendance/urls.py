@@ -23,6 +23,4 @@ urlpatterns = [
         AttendanceCustomUpdateView.as_view(), 
         name='update_attendance'
     ),
-    
-
 ]

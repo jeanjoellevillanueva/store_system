@@ -48,6 +48,7 @@ $(document).ready(function() {
     let clockInTime = null;
     let timerInterval = null;
 
+
     function updateClock() {
         if (clockInTime) {
             const now = moment();
@@ -57,12 +58,14 @@ $(document).ready(function() {
         }
     }
 
+
     function startTimer() {
         if (timerInterval) {
             clearInterval(timerInterval);
         }
         timerInterval = setInterval(updateClock, 1000);
     }
+
 
     function stopTimer() {
         if (timerInterval) {
@@ -73,6 +76,7 @@ $(document).ready(function() {
 
     let taskSel = $('#idTaskSel');
     let timein = $('#idTimeInBtn');
+
 
     // Function to handle time-in and time-out logic
     function handleTimeInOut() {
@@ -122,6 +126,7 @@ $(document).ready(function() {
             }
         }
     }
+
 
     // Event handler for task selection change
     taskSel.on('change', () => {

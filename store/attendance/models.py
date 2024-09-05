@@ -20,7 +20,3 @@ class Attendance(models.Model):
     task = models.CharField(max_length=255, default='', choices=TASK_CHOICES)
     time_in = models.DateTimeField(auto_now_add=True)
     time_out = models.DateTimeField(null=True, blank=True)
-
-
-
-
