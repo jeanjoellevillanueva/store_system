@@ -14,6 +14,7 @@ from braces.views import JSONResponseMixin
 from django.conf import settings
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import User
+from django.core.paginator import Paginator
 from django.db import transaction
 from django.db.models import CharField
 from django.db.models.functions import Cast
@@ -21,12 +22,14 @@ from django.http import FileResponse
 from django.http import Http404
 from django.http import HttpResponse
 from django.shortcuts import redirect
+from django.shortcuts import render
 from django.urls import reverse
 from django.views import View
 from django.views.generic import TemplateView
 
 from accounts.mapping import get_user_mapping
-
+from dashboards.charts import get_top_sold_products
+from pos.models import Sale
 from .forms import DeliveryAddForm
 from .forms import DeliverySubtractForm
 from .forms import ProductForm
@@ -608,3 +611,45 @@ class ExportToShipView(View):
             path = os.path.join(file_path, filename)
             os.remove(path)
         return response
+
+
+class TopItemsDatatableTemplateView(LoginRequiredMixin, TemplateView):
+    """
+    Render the datatable for the top-items products.
+    """
+
+    template_name = 'inventory/datatables/topitems.html'
+
+    def get_context_data(self, **kwargs: Any) -> Dict[str, Any]:
+        
+        # storing date from session 
+        start_date = self.request.session.get('start_date')
+        end_date = self.request.session.get('end_date')
+        current_date = date.today()
+
+        if start_date and end_date:
+            start_date = datetime.strptime(start_date, '%m/%d/%Y')
+            end_date = datetime.strptime(end_date, '%m/%d/%Y')
+        else:
+            start_date = current_date - timedelta(days=7)
+            end_date = current_date
+
+        sales = Sale.get_sales_by_date_range(start_date, end_date)
+        context =  super().get_context_data(**kwargs)
+        context['products'] = Product.objects.values(
+            'item_code',
+            'name',
+            'description'
+        ).order_by('name').distinct()
+        
+        top_sold_products = get_top_sold_products(sales,50)
+        paginator = Paginator(top_sold_products, 10)
+        page = int(self.request.GET.get('page', 1))
+        last_page = paginator.page_range[-1]
+        context['page'] = page
+        context['total_pages'] = paginator.num_pages
+        context['page_range'] = paginator.page_range
+        context['page_obj'] = paginator.get_page(page)
+        context['last_page'] = last_page    
+        return context
+    
