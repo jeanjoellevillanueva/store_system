@@ -17,6 +17,7 @@ from inventory.models import Product
 from pos.models import Sale
 
 from .charts import get_financial_bar_chart
+from .charts import get_month_financial_bar_chart
 from .charts import get_top_sold_products
 
 
@@ -35,6 +36,7 @@ class DashboardTemplateView(LoginRequiredMixin, TemplateView):
         sales = Sale.get_sales_by_date_range(start_date, end_date)
         expenses = Expense.get_expenses_by_date_range(start_date, end_date)
         bar_data = get_financial_bar_chart(sales, expenses, start_date, end_date)
+        bar_month_data = get_month_financial_bar_chart(sales, expenses, start_date, end_date)
 
         total_sale = 0
         total_expense = 0
@@ -63,6 +65,8 @@ class DashboardTemplateView(LoginRequiredMixin, TemplateView):
         context['start_date'] = start_date
         context['end_date'] = end_date
 
+        context['date_start'] = start_date.isoformat()
+        context['date_end'] = end_date.isoformat()
         # Summary
         context['stock_value'] = Product.stock_value()
         context['total_net_profit'] = round(total_net_profit, 2)
@@ -76,20 +80,20 @@ class DashboardTemplateView(LoginRequiredMixin, TemplateView):
         total_stock = total_stock['total']
         context['total_stock'] = total_stock
 
-
         # Chart
         context['bar_data'] = json.dumps(bar_data)
+        context['bar_month_data'] = json.dumps(bar_month_data)
         context['top_sold_products'] = get_top_sold_products(sales)
         return context
     
     def post(self, request, **kwargs):
         context = super().get_context_data(**kwargs)
         start_date = datetime.strptime(self.request.POST['start_date'], settings.DATE_FORMAT)
-        end_date = datetime.strptime(self.request.POST['end_date'], settings.DATE_FORMAT)        
+        end_date = datetime.strptime(self.request.POST['end_date'], settings.DATE_FORMAT)
         sales = Sale.get_sales_by_date_range(start_date, end_date)
         expenses = Expense.get_expenses_by_date_range(start_date, end_date)
         bar_data = get_financial_bar_chart(sales, expenses, start_date, end_date)
-
+        bar_month_data = get_month_financial_bar_chart(sales, expenses, start_date, end_date)
         total_sale = 0
         total_expense = 0
         total_profit = 0
@@ -117,6 +121,9 @@ class DashboardTemplateView(LoginRequiredMixin, TemplateView):
         context['start_date'] = start_date
         context['end_date'] = end_date
 
+        context['date_start'] = start_date.isoformat()
+        context['date_end'] = end_date.isoformat()
+
         # Summary
         context['stock_value'] = Product.stock_value()
         context['total_net_profit'] = round(total_net_profit, 2)
@@ -132,5 +139,6 @@ class DashboardTemplateView(LoginRequiredMixin, TemplateView):
 
         # Chart
         context['bar_data'] = json.dumps(bar_data)
+        context['bar_month_data'] = json.dumps(bar_month_data)
         context['top_sold_products'] = get_top_sold_products(sales)
-        return self.render_to_response(context)
+        return self.render_to_response(context)   
