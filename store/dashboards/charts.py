@@ -2,11 +2,11 @@ from decimal import Decimal
 from datetime import timedelta
 
 import pandas as pd
-import pytz
 
 from django.conf import settings
 
 from inventory.models import Product
+from pos.models import Sale
 
 
 def get_financial_bar_chart(sales, expenses, start_date, end_date):
@@ -14,21 +14,34 @@ def get_financial_bar_chart(sales, expenses, start_date, end_date):
     Retrieves and formats daily sales, expenses, and profit data for a
     Chart.js bar chart.
     """
+
     date_range = []
     for i in range((end_date - start_date).days + 1):
-        date_str = (start_date + timedelta(days=i)).strftime(settings.DATE_FORMAT)
+        date_str = (
+            start_date + timedelta(days=i)).strftime(settings.DATE_FORMAT)
         date_range.append(date_str)
 
     daily_sales = {date: 0.00 for date in date_range}
+    daily_orders = {date: 0.00 for date in date_range}
     daily_expenses = {date: 0.00 for date in date_range}
     daily_profit = {date: 0.00 for date in date_range}
     count=1
+    
+    sorted_receipts = Sale.objects.filter(
+        created_date__date__range=(
+        start_date, end_date)).values(
+        'receipt_number', 'created_date').distinct(
+        'receipt_number')
+    
+    for receipt in sorted_receipts:
+        date = (receipt['created_date'].astimezone().strftime(settings.DATE_FORMAT))
+        daily_orders[date] += 1
 
     for sale in sales:
         date = (
             sale['created_date']
-                .astimezone()
-                .strftime(settings.DATE_FORMAT)
+            .astimezone()
+            .strftime(settings.DATE_FORMAT)
         )
         count += 1
         total_sale = (sale['price'] * sale['quantity'])
@@ -37,15 +50,13 @@ def get_financial_bar_chart(sales, expenses, start_date, end_date):
         daily_profit[date] +=  float(sale['profit']) - deduct
     
     for expense in expenses:
-        date = (
-            expense['expense_date']
-                .strftime(settings.DATE_FORMAT)
-        )
+        date = (expense['expense_date'].strftime(settings.DATE_FORMAT))
         daily_expenses[date] += float(expense['amount'])
         daily_profit[date] -= float(expense['amount'])
 
     # Generate data for Chart.js
     sales_data = [round(daily_sales[date], 2) for date in date_range]
+    orders_data = [round(daily_orders[date], 2) for date in date_range]
     expenses_data = [round(daily_expenses[date], 2) for date in date_range]
     profit_data = [round(daily_profit[date], 2) for date in date_range]
     chart_data = {
@@ -55,6 +66,7 @@ def get_financial_bar_chart(sales, expenses, start_date, end_date):
                 'label': 'Sales',
                 'backgroundColor': settings.PRIMARY_COLOR,
                 'data': sales_data,
+                'orders_data': orders_data,
             },
             {
                 'label': 'Expenses',
@@ -107,3 +119,84 @@ def get_top_sold_products(sales, number_of_items=10):
         }
         top_products.append(product_info)
     return top_products
+
+
+def get_month_financial_bar_chart(sales, expenses, start_date, end_date):
+    """
+    Retrieves and formats monthly sales, expenses, and profit data for a
+    Chart.js bar chart.
+    """  
+    # Helper function to format month-year
+    def format_month_year(date):
+        return date.strftime('%Y-%m')
+    
+    date_range = []
+    current_date = start_date.replace(day=1)
+    
+    while current_date <= end_date:
+        date_str = format_month_year(current_date)
+        date_range.append(date_str)
+        next_month = current_date.month % 12 + 1
+        next_year = current_date.year if next_month > 1 else current_date.year + 1
+        current_date = current_date.replace(year=next_year, month=next_month, day=1)
+
+    monthly_sales = {date: 0.00 for date in date_range}
+    monthly_orders= {date: 0.00 for date in date_range}
+    monthly_expenses = {date: 0.00 for date in date_range}
+    monthly_profit = {date: 0.00 for date in date_range}
+
+    sorted_receipts = Sale.objects.order_by('created_date')
+    sorted_receipts = Sale.objects.filter(
+        created_date__date__range=(
+        start_date, end_date)).values(
+        'receipt_number', 'created_date').distinct(
+        'receipt_number')
+    monthly_receipt = [{
+        **receipt, 
+        'month': receipt['created_date'].astimezone().strftime('%Y-%m')
+    } for receipt in sorted_receipts]
+
+    for receipt in monthly_receipt:
+        month = receipt['month']
+        monthly_orders[month] += 1
+
+    for sale in sales:
+        date = format_month_year(sale['created_date'].astimezone())
+        total_sale = sale['price'] * sale['quantity']
+        deduct = float(total_sale) * settings.PLATFORM_PERCENTAGE
+        monthly_sales[date] += float(total_sale)
+        monthly_profit[date] += float(sale['profit']) - deduct
+    
+    for expense in expenses:
+        date = format_month_year(expense['expense_date'])
+        monthly_expenses[date] += float(expense['amount'])
+        monthly_profit[date] -= float(expense['amount'])
+    
+    # Generate data for Chart.js
+    sales_data = [round(monthly_sales[date], 2) for date in date_range]
+    orders_data = [round(monthly_orders[date], 2) for date in date_range]
+    expenses_data = [round(monthly_expenses[date], 2) for date in date_range]
+    profit_data = [round(monthly_profit[date], 2) for date in date_range]
+    chart_month_data = {
+        'labels': date_range,
+        'datasets': [
+            {
+                'label': 'Sales',
+                'backgroundColor': settings.PRIMARY_COLOR,
+                'data': sales_data,
+                'orders_data': orders_data,
+            },
+            {
+                'label': 'Expenses',
+                'backgroundColor': settings.DANGER_COLOR,
+                'data': expenses_data,
+            },
+            {
+                'label': 'Profit',
+                'backgroundColor': settings.SUCCESS_COLOR,
+                'data': profit_data,
+            },
+
+        ]
+    }
+    return chart_month_data
