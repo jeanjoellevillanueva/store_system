@@ -84,7 +84,6 @@ class DashboardTemplateView(LoginRequiredMixin, TemplateView):
         total_stock = total_stock['total']
         context['total_stock'] = total_stock
 
-
         # Chart
         context['bar_data'] = json.dumps(bar_data)
         context['bar_month_data'] = json.dumps(bar_month_data)
@@ -150,4 +149,4 @@ class DashboardTemplateView(LoginRequiredMixin, TemplateView):
         context['bar_data'] = json.dumps(bar_data)
         context['bar_month_data'] = json.dumps(bar_month_data)
         context['top_sold_products'] = get_top_sold_products(sales)
-        return self.render_to_response(context)   
+        return self.render_to_response(context)

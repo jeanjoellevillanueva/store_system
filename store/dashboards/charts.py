@@ -1,9 +1,7 @@
 from decimal import Decimal
 from datetime import timedelta
 
-import calendar
 import pandas as pd
-import pytz
 
 from django.conf import settings
 
@@ -29,12 +27,12 @@ def get_financial_bar_chart(sales, expenses, start_date, end_date):
     daily_profit = {date: 0.00 for date in date_range}
     count=1
     
-    sorted_receipts = Sale.objects.order_by('created_date')
     sorted_receipts = Sale.objects.filter(
         created_date__date__range=(
         start_date, end_date)).values(
         'receipt_number', 'created_date').distinct(
         'receipt_number')
+    
     for receipt in sorted_receipts:
         date = (receipt['created_date'].astimezone().strftime(settings.DATE_FORMAT))
         daily_orders[date] += 1
