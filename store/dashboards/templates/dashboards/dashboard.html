@@ -273,24 +273,16 @@
         },
         tooltips: {
           callbacks: {
-            footer: function(tooltipItem, data) {
-              if (data && data.datasets && data.datasets.length > 0) {
-                let datasetIndex = tooltipItem[0].datasetIndex;
-                let datasetLabel = data.datasets[datasetIndex].label;
-                let dataIndex = tooltipItem[0].index;
-                let receiptDatasetIndex = data.datasets.findIndex(dataset => dataset.label === 'Orders');
-                let receipt_count = data.datasets[receiptDatasetIndex].data[dataIndex];
-              if (datasetLabel === 'Sales') {
-                  return `No. of order(s): ${receipt_count}`;
-                } else {
-                  return null;
-                }
-              } else {
-                console.log('No datasets found');
+            afterLabel: function(tooltipItems, data) {
+              try {
+                const order = data.datasets[tooltipItems.datasetIndex].orders_data[tooltipItems.index];
+                return 'Order: ' + order;
+              } catch {
+                return ''
               }
             }
-          },
-        }
+          }
+        },
       }
     });    
   });

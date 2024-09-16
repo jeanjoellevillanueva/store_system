@@ -10,6 +10,7 @@ from django.conf import settings
 from inventory.models import Product
 from pos.models import Sale
 
+
 def get_financial_bar_chart(sales, expenses, start_date, end_date):
     """
     Retrieves and formats daily sales, expenses, and profit data for a
@@ -27,7 +28,7 @@ def get_financial_bar_chart(sales, expenses, start_date, end_date):
     daily_expenses = {date: 0.00 for date in date_range}
     daily_profit = {date: 0.00 for date in date_range}
     count=1
-
+    
     sorted_receipts = Sale.objects.order_by('created_date')
     sorted_receipts = Sale.objects.filter(
         created_date__date__range=(
@@ -67,14 +68,7 @@ def get_financial_bar_chart(sales, expenses, start_date, end_date):
                 'label': 'Sales',
                 'backgroundColor': settings.PRIMARY_COLOR,
                 'data': sales_data,
-            },
-            {
-                'label': 'Orders',
-                'backgroundColor': settings.PRIMARY_COLOR,
-                'data': orders_data,
-                'fill': False,
-                'display': False,
-                'hidden': True,
+                'orders_data': orders_data,
             },
             {
                 'label': 'Expenses',
@@ -192,14 +186,7 @@ def get_month_financial_bar_chart(sales, expenses, start_date, end_date):
                 'label': 'Sales',
                 'backgroundColor': settings.PRIMARY_COLOR,
                 'data': sales_data,
-            },
-            {
-                'label': 'Orders',
-                'backgroundColor': settings.PRIMARY_COLOR,
-                'data': orders_data,
-                'fill': False,
-                'display': False,
-                'hidden': True,
+                'orders_data': orders_data,
             },
             {
                 'label': 'Expenses',
