@@ -652,4 +652,28 @@ class TopItemsDatatableTemplateView(LoginRequiredMixin, TemplateView):
         context['page_obj'] = paginator.get_page(page)
         context['last_page'] = last_page    
         return context
-    
+
+
+class ExportToExcel(LoginRequiredMixin, View):
+    """
+    Stocks Export to Excel
+    """
+    def get(self, request, *args, **kwargs):
+        products_in_stock = Product.objects.filter(quantity__gt=0).values('name','variation' ,'price', 'quantity')
+        inventory_summary = pd.DataFrame.from_records(products_in_stock)
+
+        inventory_summary.rename(columns={'quantity': 'stock'}, inplace=True)
+        inventory_summary['total price'] = inventory_summary['price'] * inventory_summary['stock']
+
+        buffer = io.BytesIO()
+        inventory_summary.to_excel(buffer)
+        buffer.seek(0)
+        response = FileResponse(
+            buffer,
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        )
+        date_in_str = date.today().strftime(settings.DATE_FORMAT)
+        filename = f'inventory summary-{date_in_str}.xlsx'
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+
+        return response

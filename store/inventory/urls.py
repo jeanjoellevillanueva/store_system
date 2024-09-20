@@ -3,6 +3,7 @@ from django.urls import path
 from .views import DeliveryCustomCreateView
 from .views import DeliveryListTemplateView
 from .views import DeliveryReportTemplateView
+from .views import ExportToExcel
 from .views import ExportToShipView
 from .views import InventoryTemplateView
 from .views import OutOfStockPrintView
@@ -98,6 +99,11 @@ urlpatterns = [
         'upload/to-ship/',
         UploadToShipView.as_view(),
         name='to_ship_upload'
+    ),
+    path(
+        'export/to-excel/',
+        ExportToExcel.as_view(),
+        name='export_to_excel'
     ),
     path(
         'export/to-ship/',
