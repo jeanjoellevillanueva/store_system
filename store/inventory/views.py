@@ -589,7 +589,8 @@ class ExportToShipView(View):
     def get(self, request, *args, **kwargs):
         file_path = os.path.join(settings.BASE_DIR, 'inventory', 'files')
         directory = Path(file_path)
-        filenames = [f.name for f in directory.iterdir() if f.is_file()]
+        filenames = [f.name for f in directory.iterdir() if f.is_file() and f.name != '.gitkeep']
+        import pdb; pdb.set_trace()
         data = combine_to_ship_orders(filenames)
         name_list = [product.split("_")[0] for product in data.keys()]
         products = get_product_stock(name_list)
