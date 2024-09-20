@@ -104,7 +104,7 @@ urlpatterns = [
         'export/to-excel/',
         ExportToExcel.as_view(),
         name='export_to_excel'
-    ), # WORKING ON RIGHT NOW
+    ),
     path(
         'export/to-ship/',
         ExportToShipView.as_view(),
