@@ -1,0 +1,68 @@
+<div class="card-body d-flex justify-content-center" id="idBarChart">
+  {% if total_sale %}
+  <canvas id="barChart"></canvas>
+  {% else %}
+    No sale is recorded.
+  {% endif %}
+</div>
+
+<script>
+    /**
+     * Generates the financial barchart.
+     */
+    $(document).ready(() => {
+      let barData = 0;
+      let msPerDay = 1000*60*60*24;
+      let totalSale = parseInt('{{ total_sale }}');
+      let start_date =  Date.parse('{{ start_date }}');
+      let end_date = Date.parse('{{ end_date }}');
+      let total_days = (end_date / msPerDay) - (start_date / msPerDay);
+      debugger;
+      if (total_days < 364) {
+        barData = JSON.parse('{{ bar_data|safe }}');
+      } else {
+        barData = JSON.parse('{{ bar_month_data|safe }}');
+      }
+      let ctx = document.getElementById('barChart').getContext('2d');
+      let barChart = new Chart(ctx, {
+        type: 'bar',
+        data: barData,
+        options: {
+          maintainAspectRatio: false,
+          scales: {
+            y: {
+              beginAtZero: true
+            },
+          },
+          tooltips: {
+            callbacks: {
+              afterLabel: function(tooltipItems, data) {
+                try {
+                  const order = data.datasets[tooltipItems.datasetIndex].orders_data[tooltipItems.index];
+                  return 'Order: ' + order;
+                } catch {
+                  return ''
+                }
+              }
+            }
+          },
+        }
+      });
+    });
+</script>
+
+<script>
+  /**
+   * Set the height of the bar chart depending on the top products.
+   */
+  $(document).ready(function() {
+    function setBarChartHeight() {
+      let topProductsHeight = $('#idTopProductsContainer').height();
+      $('#idBarChartContainer').height(topProductsHeight);
+    }
+    // Call the function on page load and window resize
+    setBarChartHeight();
+    $(window).resize(setBarChartHeight);
+  });
+</script>
+
