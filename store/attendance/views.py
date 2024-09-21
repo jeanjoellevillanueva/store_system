@@ -20,19 +20,19 @@ class AttendanceTemplateView(LoginRequiredMixin, TemplateView):
 
     template_name = 'attendance/home.html'
 
-    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
-        context = super().get_context_data(**kwargs)
-        context['task_choices'] = Attendance.TASK_CHOICES
-        try:
-            context['attendance'] = Attendance.objects.get(
-                employee=self.request.user,
-                time_in__date=date.today(),
-                # time_out__isnull=True
-            )
-        except ObjectDoesNotExist:
-            context['attendance'] = None
+    # def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
+    #     context = super().get_context_data(**kwargs)
+    #     context['task_choices'] = Attendance.TASK_CHOICES
+    #     try:
+    #         context['attendance'] = Attendance.objects.get(
+    #             employee=self.request.user,
+    #             time_in__date=date.today(),
+    #             # time_out__isnull=True
+    #         )
+    #     except ObjectDoesNotExist:
+    #         context['attendance'] = None
 
-        return context
+    #     return context
 
 
 class AttendanceCustomCreateView(LoginRequiredMixin, JSONResponseMixin, View):

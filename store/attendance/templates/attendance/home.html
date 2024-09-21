@@ -1,47 +1,94 @@
 {% extends 'base.html' %}
-{% block header %}Attendance{% endblock %}
 
 {% block content %}
-  <div class="container d-flex justify-content-center align-items-center vh-200" style="margin-top:8%">
-    <div class="col-xl-5 col-lg-12">
-      <div class="card shadow mb-4">  
-        <div class="card-header py-2 justify-content-between bg-primary">
-          <i class="text-white fas fa-calendar"></i>
-        </div>
-          <div class="card-body flex-row justify-content-center align-items-center">
-            <div class="row d-flex justify-content-center align-items-center">
-              <h4>Time-In: {{ attendance.time_in }}</h4>
-              <h4>Time-Out: {{ attendance.time_out }}</h4>
-              <!--<h2 id="current-time">00:00:00</h2>-->
-            </div>
-            <div class="d-flex justify-content-center align-items-center">
-              <select id="idTaskSel" class="form-select form-select-lg mb-3" aria-label=".form-select-lg example" {% if attendance %}disabled{% endif %}>
-                {% if attendance %}
-                <option class="form-control" selected>{{ attendance.get_task_display }}</option>
-                {% else %}
-                <option class="form-control" selected>Open this to select task</option>
-                {% endif %}
-                {% for task in task_choices %}
-                <option class="form-control" value="{{ task.0 }}">{{ task.1 }}</option>
-                {% endfor %}
-              </select>
-            </div>
-            <div class="d-flex justify-content-center align-items-center">
-              {% if attendance.time_in and attendance.time_out %}
-              <button id="idTimeInBtn" type="button" class="btn btn-danger" disabled>Already timed-out</button>
-              {% elif not attendance %}
-              <button id="idTimeInBtn" type="button" class="btn btn-secondary">Time-In</button>
-              {% else %}
-              <button id="idTimeInBtn" type="button" class="btn btn-danger">Time-Out</button>
-              {% endif %}
-            </div>
-        </div>
+<div class="row">
+  <div class="col-xl-8 col-lg-8">
+    <div class="card shadow mb-4">
+      <div
+        class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+        <h6 class="m-0 font-weight-bold text-primary">Calendar</h6>
+      </div>
+      <div class="card-body">
+        <div id="idCalendar"></div>
       </div>
     </div>
   </div>
+  <div class="col-xl-4 col-lg-4">
+    <div class="card shadow mb-4">
+      <div
+        class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+        <h6 class="m-0 font-weight-bold text-primary">Attendance</h6>
+      </div>
+      <div class="card-body">
+          <div class="row d-flex justify-content-center align-items-center">
+            <h4>Time-In: {{ attendance.time_in }}</h4>
+            <h4>Time-Out: {{ attendance.time_out }}</h4>
+          </div>
+          <div class="d-flex justify-content-center align-items-center">
+            <select id="idTaskSel" class="form-select form-select-lg mb-3" aria-label=".form-select-lg example" {% if attendance %}disabled{% endif %}>
+              {% if attendance %}
+              <option class="form-control" selected>{{ attendance.get_task_display }}</option>
+              {% else %}
+              <option class="form-control" selected>Open this to select task</option>
+              {% endif %}
+              {% for task in task_choices %}
+              <option class="form-control" value="{{ task.0 }}">{{ task.1 }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="d-flex justify-content-center align-items-center">
+            {% if attendance.time_in and attendance.time_out %}
+            <button id="idTimeInBtn" type="button" class="btn btn-danger" disabled>Already timed-out</button>
+            {% elif not attendance %}
+            <button id="idTimeInBtn" type="button" class="btn btn-secondary">Time-In</button>
+            {% else %}
+            <button id="idTimeInBtn" type="button" class="btn btn-danger">Time-Out</button>
+            {% endif %}
+          </div>
+      
+      </div>
+    </div>
+  </div>
+</div>
 {% endblock %}
 
 {% block javascript %}
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+      const calendarEl = document.getElementById('idCalendar');
+      const calendar = new FullCalendar.Calendar(calendarEl, {
+          headerToolbar: {
+              left: 'prev,next today',
+              center: 'title',
+              right: 'dayGridMonth,dayGridWeek,dayGridDay'
+          },
+          initialView: 'dayGridMonth',
+          events: [
+              { title: 'Event 1', start: '2024-09-21' },
+              
+              { title: 'Event 1', start: '2024-09-21' },
+              { title: 'Event 1', start: '2024-09-21' },
+              { title: 'Event 1', start: '2024-09-21' },
+              { title: 'Event 1', start: '2024-09-21' },
+              { title: 'Event 1', start: '2024-09-21' },
+              { title: 'Event 1', start: '2024-09-21' },
+              { title: 'Event 1', start: '2024-09-21' },
+              { title: 'Event 2', start: '2024-09-22' }
+          ]
+      });
+
+      calendar.render();
+
+      // Function to add a new event
+      document.getElementById('add-event').addEventListener('click', function() {
+          const newEvent = {
+              title: 'New Event',
+              start: '2024-09-23'
+          };
+          calendar.addEvent(newEvent);
+      });
+  });
+</script>
 <script>
 
 $(document).ready(function() {
