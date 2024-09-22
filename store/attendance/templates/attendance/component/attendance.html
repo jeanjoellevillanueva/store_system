@@ -1,0 +1,74 @@
+<div class="container py-4">
+  <div class="row d-flex justify-content-center align-items-center mb-4">
+    <h4 class="text-primary">{{ date_today|date:'F m, Y (l)' }}</h4>
+  </div>
+
+  {% if attendance.time_in %}
+  <div class="row d-flex justify-content-center align-items-center mb-2">
+    <h4 class="text-success">{{ attendance.time_in|date:'H:i:s A' }}</h4>
+  </div>
+  {% endif %}
+
+  {% if attendance.time_out %}
+  <div class="row d-flex justify-content-center align-items-center mb-4">
+    <h4 class="text-danger">{{ attendance.time_out|date:'H:i:s A' }}</h4>
+  </div>
+  {% endif %}
+
+  <!-- Task Selection -->
+  {% if not attendance.time_in and not attendance.time_out %}
+  <div class="d-flex justify-content-center align-items-center mb-3">
+    <select id="idTaskSelect" class="form-select form-select-sm"{% if attendance %}disabled{% endif %}>
+      <option value="" selected>{{ DEFAULT_SELECT }}</option>
+      {% for task in task_choices %}
+      <option value="{{ task.0 }}" {% if task_selected == task.0 %}selected{% endif %}>{{ task.1 }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  {% endif %}
+
+  <!-- Time-In Button -->
+  <div class="d-flex justify-content-center align-items-center">
+    {% if not attendance %}
+      <button id="idTimeInBtn" class="d-none d-sm-inline-block btn btn-sm btn-success shadow-sm btn-icon-split time-in" disabled>
+        <span class="icon text-white-50">
+          <i class="fas fa-clock"></i>
+        </span>
+        <span id="idTimeInBtnText" class="text">Time In</span>
+      </button>
+    {% elif attendance.time_in and not attendance.time_out %}
+      <button id="idTimeInBtn" class="d-none d-sm-inline-block btn btn-sm btn-danger shadow-sm btn-icon-split time-out">
+        <span class="icon text-white-50">
+          <i class="fas fa-clock"></i>
+        </span>
+        <span id="idTimeInBtnText" class="text">Time out</span>
+      </button>
+    {% endif %}
+  </div>
+</div>
+
+<script>
+  $(document).ready(() => {
+    const selectTask = $('#idTaskSelect');
+    const timeInBtn = $('#idTimeInBtn');
+
+    selectTask.on('change', () => {
+      if (selectTask.val() !== '') {
+        timeInBtn.attr('disabled', false);
+      } else {
+        timeInBtn.attr('disabled', true);
+      }
+    });
+
+    $('.time-in, .time-out').on('click', (e) => {
+      $('#idTimeInBtnText').html(`<div class="spinner-border" style="height: 1rem; width: 1rem;" role="status"><span class="sr-only">Loading...</span></div>`);
+      const url = $(e.currentTarget).hasClass('time-in') ? "{% url 'attendance:create_attendance' %}" : "{% url 'attendance:update_attendance' %}";
+      axios.post(url, {'task': selectTask.val()}, {headers: {'X-CSRFToken': '{{ csrf_token }}'}})
+        .then(() => {
+          reloadComponent("{% url 'calendars:component' %}", 'idCalendarContainer', false);
+          reloadComponent("{% url 'attendance:component' %}", 'idAttendanceContainer', false);
+        })
+        .catch(err => console.log(err.response.data));
+    });
+  });
+</script>
