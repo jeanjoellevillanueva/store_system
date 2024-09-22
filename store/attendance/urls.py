@@ -1,8 +1,9 @@
 from django.urls import path
 
-from .views import AttendanceTemplateView
+from .views import AttendanceComponentTemplateView
 from .views import AttendanceCustomCreateView
 from .views import AttendanceCustomUpdateView
+
 
 app_name = 'attendance'
 
@@ -10,8 +11,8 @@ app_name = 'attendance'
 urlpatterns = [
     path(
         '',
-        AttendanceTemplateView.as_view(),
-        name='home'
+        AttendanceComponentTemplateView.as_view(),
+        name='component',
     ),
     path(
         'create/',

@@ -2,48 +2,30 @@
 
 {% block content %}
 <div class="row">
-  <div class="col-xl-8 col-lg-8">
+  <div class="col-xl-9 col-lg-9">
     <div class="card shadow mb-4">
       <div
         class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
         <h6 class="m-0 font-weight-bold text-primary">Calendar</h6>
+        <select id="idEmployeeSelect" class="form-control select2" style="width: 20%;">
+          <option value="">{{ DEFAULT_SELECT }}</option>
+          {% for user in users %}
+          <option value="{{ user.id }}" {% if filters.created_by == user.id %}selected{% endif %}>{{ user.username }}</option>
+          {% endfor %}
+        </select>
       </div>
       <div class="card-body" id="idCalendarContainer">
         <!-- Load the calendar here -->
       </div>
     </div>
   </div>
-  <div class="col-xl-4 col-lg-4">
+  <div class="col-xl-3 col-lg-3">
     <div class="card shadow mb-4">
       <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
         <h6 class="m-0 font-weight-bold text-primary">Attendance</h6>
       </div>
-      <div class="card-body">
-        <div class="row d-flex justify-content-center align-items-center">
-          <h4>Time-In: {{ attendance.time_in }}</h4>
-          <h4>Time-Out: {{ attendance.time_out }}</h4>
-        </div>
-        <div class="d-flex justify-content-center align-items-center">
-          <select id="idTaskSel" class="form-select form-select-lg mb-3" aria-label=".form-select-lg example" {% if attendance %}disabled{% endif %}>
-            {% if attendance %}
-            <option class="form-control" selected>{{ attendance.get_task_display }}</option>
-            {% else %}
-            <option class="form-control" selected>Open this to select task</option>
-            {% endif %}
-            {% for task in task_choices %}
-            <option class="form-control" value="{{ task.0 }}">{{ task.1 }}</option>
-            {% endfor %}
-          </select>
-        </div>
-        <div class="d-flex justify-content-center align-items-center">
-          {% if attendance.time_in and attendance.time_out %}
-          <button id="idTimeInBtn" type="button" class="btn btn-danger" disabled>Already timed-out</button>
-          {% elif not attendance %}
-          <button id="idTimeInBtn" type="button" class="btn btn-secondary">Time-In</button>
-          {% else %}
-          <button id="idTimeInBtn" type="button" class="btn btn-danger">Time-Out</button>
-          {% endif %}
-        </div>
+      <div class="card-body" id="idAttendanceContainer">
+        <!-- Load the attendance here -->
       </div>
     </div>
   </div>
@@ -54,6 +36,12 @@
 <script>
   $(document).ready(() => {
     reloadComponent("{% url 'calendars:component' %}", 'idCalendarContainer', false);
+    reloadComponent("{% url 'attendance:component' %}", 'idAttendanceContainer', false);
+    $('.select2').select2();
+    $('.select2').on('change', () => {
+      const employee = $('#idEmployeeSelect').val();
+      reloadComponent(`{% url 'calendars:component' %}?employee=${employee}`, 'idCalendarContainer', false);
+    });
   });
 </script>
 {% endblock %}

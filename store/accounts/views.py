@@ -21,7 +21,7 @@ class LoginView(FormView):
         user = form.get_user()
         login(self.request, user)
         if not self.request.user.is_staff:
-            self.success_url = reverse_lazy('pos:home')
+            self.success_url = reverse_lazy('calendars:home')
         return super().form_valid(form)
 
 
