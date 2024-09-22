@@ -4,6 +4,7 @@ from .views import AttendanceComponentTemplateView
 from .views import AttendanceCustomCreateView
 from .views import AttendanceCustomUpdateView
 from .views import AttendanceTimeoutView
+from .views import OvertimeCustomCreateView
 
 
 app_name = 'attendance'
@@ -29,5 +30,10 @@ urlpatterns = [
         'timeout/',
         AttendanceTimeoutView.as_view(), 
         name='timeout_attendance'
+    ),
+    path(
+        'overtime/create/',
+        OvertimeCustomCreateView.as_view(), 
+        name='create_overtime'
     ),
 ]

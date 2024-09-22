@@ -43,3 +43,15 @@ class Attendance(models.Model):
         task_list = task_string.split(',')
         task_display = [dict(cls.TASK_CHOICES).get(task, task) for task in task_list]
         return '/'.join(task_display)
+
+
+class Overtime(models.Model):
+    """
+    Represents an employee's overtime hours worked.
+    """
+
+    employee = models.ForeignKey(User, on_delete=models.CASCADE)
+    task = models.TextField(max_length=500)
+    date = models.DateTimeField()
+    hours = models.DecimalField(max_digits=5, decimal_places=2)
+    is_approved = models.BooleanField(default=False)

@@ -11,7 +11,9 @@ from django.views.generic import TemplateView
 
 from generics.models.utils import get_or_none
 
+from .forms import OvertimeForm
 from .models import Attendance
+from .models import Overtime
 
 
 class AttendanceComponentTemplateView(LoginRequiredMixin, TemplateView):
@@ -114,3 +116,32 @@ class AttendanceTimeoutView(LoginRequiredMixin, JSONResponseMixin, View):
             'message': 'Time-Out successfully.'
         }
         return self.render_json_response(json_data, status=200)
+
+
+class OvertimeCustomCreateView(LoginRequiredMixin, JSONResponseMixin, View):
+    """
+    Responsible in creating overtime objects.
+    """
+
+    def post(self, request, *args, **kwargs):
+        form = OvertimeForm(request.POST)
+        if form.is_valid():
+            overtime_data = {
+                'employee': self.request.user,
+                'date': form.cleaned_data['date'],
+                'hours': form.cleaned_data['hours'],
+                'task': ','.join(form.cleaned_data['tasks'])
+            }
+            Overtime.objects.create(**overtime_data)
+            json_data = {
+                'status': 'success',
+                'message': 'Overtime created successfully.',
+            }
+            return self.render_json_response(json_data, status=201)
+        else:
+            json_data = {
+                'status': 'error',
+                'message': 'Validation failed.',
+                'errors': form.errors
+            }
+            return self.render_json_response(json_data, status=400)
