@@ -1,11 +1,11 @@
 import json
 from typing import Any
-from datetime import datetime, date
 
 from braces.views import JSONResponseMixin
 
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import ValidationError
+from django.utils import timezone
 from django.views import View
 from django.views.generic import TemplateView
 
@@ -25,16 +25,16 @@ class AttendanceComponentTemplateView(LoginRequiredMixin, TemplateView):
         attendance = get_or_none(
             Attendance,
             employee=self.request.user,
-            time_in__date=datetime.now().date()
+            time_in__date=timezone.now().date()
         )
         if attendance:
             task_selected = attendance.task
         else:
             task_selected = ''
         context['attendance'] = attendance
-        context['task_selected'] = task_selected
+        context['task_selected'] = task_selected.split(',')
         context['task_choices'] = Attendance.TASK_CHOICES
-        context['date_today'] = datetime.now().date()
+        context['date_today'] = timezone.now().date()
         return context
 
 
@@ -49,18 +49,19 @@ class AttendanceCustomCreateView(LoginRequiredMixin, JSONResponseMixin, View):
         is_attendance = get_or_none(
             Attendance,
             employee=self.request.user,
-            time_in__date=datetime.now().date()
+            time_in__date=timezone.now().date()
         )
         if not data['task']:
             raise ValidationError('Please select a task.')
         if is_attendance:
             raise ValidationError('Attendance for today has already been created.')
 
+        tasks = ','.join(data['task'])
         # Otherwise, let's create an attendance for the user.
         attendance = Attendance.objects.create(
             employee=request.user,
-            task=data['task'],
-            time_in=datetime.now()
+            task=tasks,
+            time_in=timezone.now()
         )
         json_data = {
             'status': 'success',
@@ -77,15 +78,39 @@ class AttendanceCustomUpdateView(LoginRequiredMixin, JSONResponseMixin, View):
     def post(self, request, *args, **kwargs):
         body = self.request.body
         data = json.loads(body)
-        attendance=Attendance.objects.filter(
+        attendance = Attendance.objects.get(
             employee=self.request.user,
-            time_in__date=date.today(),
+            time_in__date=timezone.now().date(),
             time_out__isnull=True
-        ).last()
-        attendance.time_out=datetime.now()
+        )
+        if not data['task']:
+            raise ValidationError('Please select a task.')
+        tasks = ','.join(data['task'])
+        attendance.task = tasks
+        attendance.save()
+        json_data = {
+            'status': 'success',
+            'message': 'Updated successfully.'
+        }
+        return self.render_json_response(json_data, status=200)
+
+
+class AttendanceTimeoutView(LoginRequiredMixin, JSONResponseMixin, View):
+    """
+    View used when timing out of attendance.
+    """
+
+    def post(self, request, *args, **kwargs):
+        body = self.request.body
+        attendance = Attendance.objects.get(
+            employee=self.request.user,
+            time_in__date=timezone.now().date(),
+            time_out__isnull=True
+        )
+        attendance.time_out=timezone.now()
         attendance.save()
         json_data = {
             'status': 'success',
             'message': 'Time-Out successfully.'
         }
-        return self.render_json_response(json_data, status=201)
+        return self.render_json_response(json_data, status=200)

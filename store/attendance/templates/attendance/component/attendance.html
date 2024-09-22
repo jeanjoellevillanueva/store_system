@@ -1,68 +1,71 @@
-<div class="container py-4">
-  <div class="row d-flex justify-content-center align-items-center mb-4">
-    <h4 class="text-primary">{{ date_today|date:'F m, Y (l)' }}</h4>
-  </div>
+<div class="row d-flex justify-content-center align-items-center">
+  <h4 class="text-primary">{{ date_today|date:'F d, Y (l)' }}</h4>
+  <h4 id="idClockContainer"></h4>
+</div>
 
-  {% if attendance.time_in %}
-  <div class="row d-flex justify-content-center align-items-center mb-2">
-    <h4 class="text-success">{{ attendance.time_in|date:'H:i:s A' }}</h4>
-  </div>
+{% if attendance.time_in %}
+<label for="idTimeInInput">Time in:</label>
+<input id="idTimeInInput" class="form-control text-success mb-2" value="{{ attendance.time_in|date:'h:i:s A' }}" readonly>
+{% endif %}
+
+{% if attendance.time_out %}
+<label for="idTimeOutInput">Time out:</label>
+<input id="idTimeOutInput" class="form-control text-danger mb-2" value="{{ attendance.time_out|date:'h:i:s A' }}" readonly>
+{% endif %}
+
+<div class="form-group">
+  <label for="idTaskSelect">Tasks:</label>
+  <select id="idTaskSelect" class="form-control select2" multiple="multiple" {% if attendance.time_in and attendance.time_out %}disabled{% endif %}>
+    {% for task in task_choices %}
+      <option value="{{ task.0 }}" {% if task.0 in task_selected %}selected{% endif %}>{{ task.1 }}</option>
+    {% endfor %}
+  </select>
+</div>
+
+<div class="d-flex justify-content-{% if not attendance %}center{% else %}between{% endif %} align-items-center">
+  {% if not attendance %}
+    <button id="idTimeInBtn" class="d-none d-sm-inline-block btn btn-sm btn-success shadow-sm btn-icon-split time-in" disabled>
+      <span class="icon text-white-50">
+        <i class="fas fa-clock"></i>
+      </span>
+      <span id="idTimeInBtnText" class="text">Time In</span>
+    </button>
+  {% elif attendance.time_in and not attendance.time_out %}
+    <button id="idTaskUpdateBtn" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm btn-icon-split">
+      <span class="icon text-white-50">
+        <i class="fas fa-tasks"></i>
+      </span>
+      <span id="idTaskUpdateBtnText" class="text">Update task</span>
+    </button>
+    <button id="idTimeInBtn" class="d-none d-sm-inline-block btn btn-sm btn-danger shadow-sm btn-icon-split time-out">
+      <span class="icon text-white-50">
+        <i class="fas fa-clock"></i>
+      </span>
+      <span id="idTimeInBtnText" class="text">Time out</span>
+    </button>
   {% endif %}
-
-  {% if attendance.time_out %}
-  <div class="row d-flex justify-content-center align-items-center mb-4">
-    <h4 class="text-danger">{{ attendance.time_out|date:'H:i:s A' }}</h4>
-  </div>
-  {% endif %}
-
-  <!-- Task Selection -->
-  {% if not attendance.time_in and not attendance.time_out %}
-  <div class="d-flex justify-content-center align-items-center mb-3">
-    <select id="idTaskSelect" class="form-select form-select-sm"{% if attendance %}disabled{% endif %}>
-      <option value="" selected>{{ DEFAULT_SELECT }}</option>
-      {% for task in task_choices %}
-      <option value="{{ task.0 }}" {% if task_selected == task.0 %}selected{% endif %}>{{ task.1 }}</option>
-      {% endfor %}
-    </select>
-  </div>
-  {% endif %}
-
-  <!-- Time-In Button -->
-  <div class="d-flex justify-content-center align-items-center">
-    {% if not attendance %}
-      <button id="idTimeInBtn" class="d-none d-sm-inline-block btn btn-sm btn-success shadow-sm btn-icon-split time-in" disabled>
-        <span class="icon text-white-50">
-          <i class="fas fa-clock"></i>
-        </span>
-        <span id="idTimeInBtnText" class="text">Time In</span>
-      </button>
-    {% elif attendance.time_in and not attendance.time_out %}
-      <button id="idTimeInBtn" class="d-none d-sm-inline-block btn btn-sm btn-danger shadow-sm btn-icon-split time-out">
-        <span class="icon text-white-50">
-          <i class="fas fa-clock"></i>
-        </span>
-        <span id="idTimeInBtnText" class="text">Time out</span>
-      </button>
-    {% endif %}
-  </div>
 </div>
 
 <script>
   $(document).ready(() => {
+    $('.select2').select2();
     const selectTask = $('#idTaskSelect');
     const timeInBtn = $('#idTimeInBtn');
 
     selectTask.on('change', () => {
-      if (selectTask.val() !== '') {
+      let selectedValues = selectTask.val();
+      if (selectedValues && selectedValues.length > 0) {
         timeInBtn.attr('disabled', false);
+        $('#idTaskUpdateBtn').attr('disabled', false);
       } else {
         timeInBtn.attr('disabled', true);
+        $('#idTaskUpdateBtn').attr('disabled', true);
       }
     });
 
     $('.time-in, .time-out').on('click', (e) => {
       $('#idTimeInBtnText').html(`<div class="spinner-border" style="height: 1rem; width: 1rem;" role="status"><span class="sr-only">Loading...</span></div>`);
-      const url = $(e.currentTarget).hasClass('time-in') ? "{% url 'attendance:create_attendance' %}" : "{% url 'attendance:update_attendance' %}";
+      const url = $(e.currentTarget).hasClass('time-in') ? "{% url 'attendance:create_attendance' %}" : "{% url 'attendance:timeout_attendance' %}";
       axios.post(url, {'task': selectTask.val()}, {headers: {'X-CSRFToken': '{{ csrf_token }}'}})
         .then(() => {
           reloadComponent("{% url 'calendars:component' %}", 'idCalendarContainer', false);
@@ -70,5 +73,22 @@
         })
         .catch(err => console.log(err.response.data));
     });
+
+    $('#idTaskUpdateBtn').on('click', () => {
+      $('#idTaskUpdateBtnText').html(`<div class="spinner-border" style="height: 1rem; width: 1rem;" role="status"><span class="sr-only">Loading...</span></div>`);
+      axios.post("{% url 'attendance:update_attendance' %}", {'task': selectTask.val()}, {headers: {'X-CSRFToken': '{{ csrf_token }}'}})
+        .then(() => {
+          reloadComponent("{% url 'calendars:component' %}", 'idCalendarContainer', false);
+          reloadComponent("{% url 'attendance:component' %}", 'idAttendanceContainer', false);
+        })
+        .catch(err => console.log(err.response.data));
+    });
+
+    function displayClock() {
+      let display = new Date().toLocaleTimeString();
+      $('#idClockContainer').html(display);
+      setTimeout(displayClock, 1000);
+    }
+    displayClock();
   });
 </script>
