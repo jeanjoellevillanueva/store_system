@@ -1,0 +1,18 @@
+<div id="idCalendar"></div>
+ 
+<script>
+  $(document).ready(() => {
+    const calendarElement = $('#idCalendar');
+    const calendar = new FullCalendar.Calendar(calendarElement[0], {
+      'headerToolbar': {
+        'left': 'prev,next today',
+        'center': 'title',
+        'right': 'dayGridMonth,dayGridWeek'
+      },
+      'initialView': 'dayGridMonth',
+      'dayMaxEvents': true,
+      'events': JSON.parse('{{ calendar_data|safe }}')
+    });
+    calendar.render();
+  });
+</script>

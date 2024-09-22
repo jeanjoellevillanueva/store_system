@@ -22,6 +22,7 @@ PROJECT_DETAIL = get_project_detail()
 LOCAL_APPS = [
     'accounts',
     'attendance',
+    'calendars',
     'dashboards',
     'expenses',
     'inventory',
