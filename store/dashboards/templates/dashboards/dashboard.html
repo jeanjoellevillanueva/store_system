@@ -49,6 +49,24 @@
           <div class="row no-gutters align-items-center">
             <div class="col mr-2">
               <div class="text-xs font-weight-bold text-secondary text-uppercase mb-1">
+                Total Stock
+              </div>
+              <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_stock | default:"0" | intcomma }}</div>
+            </div>
+            <div class="col-auto">
+              <i class="fa fa-inbox fa-2x text-gray-300"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-xl-2 col-md-2 mb-4">
+      <div class="card border-left-secondary shadow h-100 py-2">
+        <div class="card-body">
+          <div class="row no-gutters align-items-center">
+            <div class="col mr-2">
+              <div class="text-xs font-weight-bold text-secondary text-uppercase mb-1">
                 Cash in Stock
               </div>
               <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stock_value | default:"0" | intcomma }}</div>
@@ -157,7 +175,7 @@
           <div class="row no-gutters align-items-center">
             <div class="col mr-2">
               <div class="text-xs font-weight-bold text-secondary text-uppercase mb-1">
-                Item sold
+                Items sold
               </div>
               <div class="h5 mb-0 font-weight-bold text-gray-800">{{ item_sold | default:"0" | intcomma }}</div>
             </div>
@@ -229,9 +247,17 @@
    * Generates the financial barchart.
    */
   $(document).ready(() => {
-    let barData = JSON.parse('{{ bar_data|safe }}');
-    let totalSale = parseInt('{{ total_sale }}');
-
+    let barData = 0;
+    let totalSale = parseInt('{{ total_sale }}'); 
+    let start_date = Date.parse('{{ date_start }}') / (1000 * 60 * 60 * 24);
+    let end_date = Date.parse('{{ date_end }}') / (1000 * 60 * 60 * 24);
+    let total_days = end_date - start_date;
+    barData = JSON.parse('{{ bar_data|safe }}')
+    if (total_days < 364) {
+      barData = JSON.parse('{{ bar_data|safe }}');
+    } else {
+      barData = JSON.parse('{{ bar_month_data|safe }}');
+    }
     let ctx = document.getElementById('barChart').getContext('2d');
     let barChart = new Chart(ctx, {
       type: 'bar',
@@ -241,9 +267,34 @@
         scales: {
           y: {
             beginAtZero: true
+          },
+        },
+        tooltips: {
+          callbacks: {
+            afterLabel: function(tooltipItems, data) {
+              try {
+                const order = data.datasets[tooltipItems.datasetIndex].orders_data[tooltipItems.index];
+                return 'Order: ' + order;
+              } catch {
+                return ''
+              }
+            }
           }
-        }
+        },
       }
+    });
+  });
+</script>
+
+<script>
+  /**
+   * Generates the top products List
+   */
+  $(document).ready(()=>{
+    reloadComponent("{% url 'inventory:topitems_product' %}", 'idTopProductsContainer', true);
+    $('#idTopProductsContainer').on('click', '.page-link', (event)=>{
+      let page = event.currentTarget.dataset.page;
+      reloadComponent(`{% url 'inventory:topitems_product' %}?page=${page}`, 'idTopProductsContainer', true);
     });
   });
 </script>
@@ -257,7 +308,6 @@
       let topProductsHeight = $('#idTopProductsContainer').height();
       $('#idBarChartContainer').height(topProductsHeight);
     }
-
     // Call the function on page load and window resize
     setBarChartHeight();
     $(window).resize(setBarChartHeight);

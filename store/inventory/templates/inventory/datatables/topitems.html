@@ -1,0 +1,40 @@
+<div class="table-responsive asd">
+    <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+      <thead> 
+        <tr>
+          <th class="text-center" style="width: 20%;">Ranking</th>
+          <th class="text-center" style="width: 20%;">Name</th>
+          <th class="text-center" style="width: 20%;">Quantity</th>
+          <th class="text-center" style="width: 20%;">Est. Profit</th>
+          <th class="text-center" style="width: 20%;">Ave. Profit/Item</th>
+        </tr>      
+      </thead>
+      <tbody>
+        {% for product in page_obj.object_list %}
+        <tr>
+          <td class="text-center">{{ forloop.counter0|add:page_obj.start_index }}</td>
+          <td class="text-center">{{ product.name }}</td>
+          <td class="text-center">{{ product.quantity }}</td>
+          <td class="text-center">{{ product.computed_profit }}</td>
+          <td class="text-center">{{ product.ave_profit_per_pc }}</td>
+        </tr>
+
+        {% endfor %}
+      </tbody>
+    </table>
+    <nav aria-label="" class="d-flex justify-content-center">
+      <ul class="pagination">
+        <li class="page-item">
+          <button id="idPrevBtn" class="page-link" data-page="{{ page|add:-1}}" {% if page == 1 %}disabled{% endif %}>Prev</button>
+        </li>
+        {% for page_num in page_range %}
+        <li class="page-item">
+          <button class="page-link" data-page="{{ page_num }}">{{ page_num }}</button>
+        </li>
+        {% endfor %}
+        <li class="page-item">
+          <button id="idNextBtn" class="page-link" data-page="{{ page|add:1}}" {% if page == last_page %}disabled{% endif %}>Next</button>
+        </li>
+      </ul>
+    </nav>
+</div>
