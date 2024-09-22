@@ -7,12 +7,14 @@
       <div
         class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
         <h6 class="m-0 font-weight-bold text-primary">Calendar</h6>
+        {% if request.user.is_superuser %}
         <select id="idEmployeeSelect" class="form-control select2" style="width: 20%;">
           <option value="">{{ DEFAULT_SELECT }}</option>
           {% for user in users %}
           <option value="{{ user.id }}" {% if filters.created_by == user.id %}selected{% endif %}>{{ user.username }}</option>
           {% endfor %}
         </select>
+        {% endif %}
       </div>
       <div class="card-body" id="idCalendarContainer">
         <!-- Load the calendar here -->
@@ -38,7 +40,7 @@
     reloadComponent("{% url 'calendars:component' %}", 'idCalendarContainer', false);
     reloadComponent("{% url 'attendance:component' %}", 'idAttendanceContainer', false);
     $('.select2').select2();
-    $('.select2').on('change', () => {
+    $('#idEmployeeSelect').on('change', () => {
       const employee = $('#idEmployeeSelect').val();
       reloadComponent(`{% url 'calendars:component' %}?employee=${employee}`, 'idCalendarContainer', false);
     });

@@ -1,4 +1,5 @@
 import json
+import pytz
 from typing import Any
 
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -37,14 +38,18 @@ class CalendarComponentTemplateView(LoginRequiredMixin, TemplateView):
         attendances = (
             Attendance.objects
                 .filter(**filters)
-                .values_list('employee__username', 'task', 'time_in')
+                .order_by('id')
+                .values_list('employee__username', 'task', 'time_in', 'time_out')
         )
+        manila_tz = pytz.timezone('Asia/Manila')
         calendar_data = [
             {
-                'title': f'{dict(Attendance.TASK_CHOICES)[task]} - {employee}',
-                'start': time_in.strftime('%Y-%m-%d')
+                'title': f'{employee} - {Attendance.get_task_display(task)} '
+                        f'({time_in.astimezone(manila_tz).strftime("%I:%M:%S %p") if time_in else "N/A"} - '
+                        f'{time_out.astimezone(manila_tz).strftime("%I:%M:%S %p") if time_out else "N/A"})',
+                'start': time_in.strftime('%Y-%m-%d') if time_in else 'N/A'
             }
-            for employee, task, time_in in attendances
+            for employee, task, time_in, time_out in attendances
         ]
         context['calendar_data'] = json.dumps(calendar_data)
         return context
