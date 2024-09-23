@@ -47,7 +47,7 @@ class CalendarComponentTemplateView(LoginRequiredMixin, TemplateView):
                 'title': f'{employee} - {Attendance.get_task_display(task)} '
                         f'({time_in.astimezone(manila_tz).strftime("%I:%M:%S %p") if time_in else "N/A"} - '
                         f'{time_out.astimezone(manila_tz).strftime("%I:%M:%S %p") if time_out else "N/A"})',
-                'start': time_in.strftime('%Y-%m-%d') if time_in else 'N/A'
+                'start': time_in.astimezone(manila_tz).strftime('%Y-%m-%d') if time_in else 'N/A'
             }
             for employee, task, time_in, time_out in attendances
         ]
