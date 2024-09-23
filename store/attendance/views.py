@@ -52,7 +52,9 @@ class AttendanceCustomCreateView(LoginRequiredMixin, JSONResponseMixin, View):
         is_attendance = get_or_none(
             Attendance,
             employee=self.request.user,
-            time_in__date=timezone.now().date()
+            time_in__date=timezone.now().astimezone(
+                pytz.timezone('Asia/Manila')
+            ).date()
         )
         if not data['task']:
             raise ValidationError('Please select a task.')
@@ -83,7 +85,9 @@ class AttendanceCustomUpdateView(LoginRequiredMixin, JSONResponseMixin, View):
         data = json.loads(body)
         attendance = Attendance.objects.get(
             employee=self.request.user,
-            time_in__date=timezone.now().date(),
+            time_in__date=timezone.now().astimezone(
+                pytz.timezone('Asia/Manila')
+            ).date(),
             time_out__isnull=True
         )
         if not data['task']:
