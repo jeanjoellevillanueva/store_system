@@ -111,7 +111,9 @@ class AttendanceTimeoutView(LoginRequiredMixin, JSONResponseMixin, View):
         body = self.request.body
         attendance = Attendance.objects.get(
             employee=self.request.user,
-            time_in__date=timezone.now().date(),
+            time_in__date=timezone.now().astimezone(
+                pytz.timezone('Asia/Manila')
+            ).date(),
             time_out__isnull=True
         )
         attendance.time_out=timezone.now()
