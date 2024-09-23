@@ -3,6 +3,21 @@
 <script>
   $(document).ready(() => {
     const calendarElement = $('#idCalendar');
+    const eventDetailsEl = document.getElementById('event-details');
+    const hoverBox = $('<div>', {
+      id: 'idEventHoverBox',
+      css: {
+        position: 'absolute',
+        zIndex: 1,
+        backgroundColor: 'white',
+        border: '1px solid #ccc',
+        padding: '10px',
+        borderRadius: '10px',
+        boxShadow: '0 2px 5px rgba(0,0,0,0.2)',
+        display: 'none'
+      }
+    }).appendTo('body');
+
     const calendar = new FullCalendar.Calendar(calendarElement[0], {
       'headerToolbar': {
         'left': 'prev,next today',
@@ -11,7 +26,25 @@
       },
       'initialView': 'dayGridMonth',
       'dayMaxEvents': true,
-      'events': JSON.parse('{{ calendar_data|safe }}')
+      'events': JSON.parse('{{ calendar_data|safe }}'),
+      'eventMouseEnter': function(info) {
+        const { event, jsEvent } = info
+        const content = `
+          <p style="margin-bottom: 0;"><strong>${event.extendedProps.subtitle}</strong></p>
+          <p style="margin-bottom: 0;"><strong>Name:</strong> ${event.extendedProps.person}</p>
+          <p style="margin-bottom: 0;"><strong>Task:</strong> ${event.extendedProps.task}</p>
+          <p style="margin-bottom: 0;"><strong>Time:</strong> ${event.extendedProps.time}</p>
+        `;
+        hoverBox.html(content)
+          .css({
+            top: jsEvent.pageY + 10,
+            left: jsEvent.pageX + 10
+          })
+          .show();
+      },
+      'eventMouseLeave': function() {
+        hoverBox.hide();
+      }
     });
     calendar.render();
   });

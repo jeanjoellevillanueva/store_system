@@ -11,6 +11,8 @@ from attendance.forms import OvertimeForm
 from attendance.models import Attendance
 from attendance.models import Overtime
 
+from .calendars import get_calendar_data
+
 
 class CalendarTemplateView(LoginRequiredMixin, TemplateView):
     """
@@ -45,36 +47,6 @@ class CalendarComponentTemplateView(LoginRequiredMixin, TemplateView):
             filters['employee'] = self.request.user
         if employee_number:
             filters['employee__id'] = int(employee_number)
-        attendances = (
-            Attendance.objects
-                .filter(**filters)
-                .order_by('id')
-                .values_list('employee__username', 'task', 'time_in', 'time_out')
-        )
-        overtimes = (
-            Overtime.objects
-                .filter(**filters)
-                .order_by('id')
-                .values_list('employee__username', 'task', 'date', 'hours')
-        )
-        import pdb; pdb.set_trace()
-        manila_tz = pytz.timezone('Asia/Manila')
-        attendance_data = [
-            {
-                'title': f'{employee} - {Attendance.get_task_display(task)} '
-                        f'({time_in.astimezone(manila_tz).strftime("%I:%M:%S %p") if time_in else "N/A"} - '
-                        f'{time_out.astimezone(manila_tz).strftime("%I:%M:%S %p") if time_out else "N/A"})',
-                'start': time_in.strftime('%Y-%m-%d') if time_in else 'N/A'
-            }
-            for employee, task, time_in, time_out in attendances
-        ]
-        overtime_data = [
-            {
-                'title': f'{employee} - {Attendance.get_task_display(task)}(Overtime: {hours} hr)',
-                'start': date.strftime('%Y-%m-%d')
-            }
-            for employee, task, date, hours in overtimes
-        ]
-        calendar_data = attendance_data + overtime_data
+        calendar_data = get_calendar_data(filters)
         context['calendar_data'] = json.dumps(calendar_data)
         return context

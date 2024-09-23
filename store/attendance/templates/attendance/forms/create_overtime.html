@@ -94,11 +94,14 @@
    * Apply Daterangepicker.
    */
   $(function() {
-    $('#id_overtime_date').daterangepicker({
+    $('#id_date').daterangepicker({
       singleDatePicker: true,
       showDropdowns: true,
       minYear: 1980,
-      maxYear: parseInt(moment().format('YYYY'), 10)
+      maxYear: parseInt(moment().add(1, 'years').format('YYYY'), 10),
+      locale: {
+        format: 'MMMM D, YYYY'
+      }
     });
   });
 </script>
