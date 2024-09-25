@@ -8,6 +8,7 @@ from django.utils import timezone
 from django.views.generic import TemplateView
 
 from attendance.forms import OvertimeForm
+from attendance.forms import OvertimeUpdateForm
 from attendance.models import Attendance
 from attendance.models import Overtime
 
@@ -28,6 +29,7 @@ class CalendarTemplateView(LoginRequiredMixin, TemplateView):
                 'hours': 0
             }
         )
+        context['overtime_update_form'] = OvertimeUpdateForm(auto_id='id_%s_update')
         context['task_choices'] = Attendance.TASK_CHOICES
         context['users'] = User.objects.values('id', 'username')
         return context
@@ -49,4 +51,22 @@ class CalendarComponentTemplateView(LoginRequiredMixin, TemplateView):
             filters['employee__id'] = int(employee_number)
         calendar_data = get_calendar_data(filters)
         context['calendar_data'] = json.dumps(calendar_data)
+        return context
+    
+class CalendarUpdateView(LoginRequiredMixin, TemplateView):
+    """
+    Renders the home page for calendar.
+    """
+    template_name = 'calendars/home.html'
+
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
+        context = super().get_context_data(**kwargs)
+        context['updateovertime_form'] = OvertimeUpdateForm(
+            initial={
+                'date': timezone.now().date().strftime('%B %d, %Y'),
+                'hours': 2
+            }
+        )
+        context['task_choices'] = Attendance.TASK_CHOICES
+        context['users'] = User.objects.values('id', 'username')
         return context

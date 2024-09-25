@@ -1,5 +1,5 @@
 <div id="idCalendar"></div>
- 
+
 <script>
   $(document).ready(() => {
     const calendarElement = $('#idCalendar');
@@ -27,7 +27,7 @@
       'initialView': 'dayGridMonth',
       'dayMaxEvents': true,
       'events': JSON.parse('{{ calendar_data|safe }}'),
-      'eventMouseEnter': function(info) {
+      'eventMouseEnter': function (info) {
         const { event, jsEvent } = info
         const content = `
           <p style="margin-bottom: 0;"><strong>${event.extendedProps.subtitle}</strong></p>
@@ -42,8 +42,20 @@
           })
           .show();
       },
-      'eventMouseLeave': function() {
+      'eventMouseLeave': function () {
         hoverBox.hide();
+      },
+      eventClick: function (info) {
+        if (info.event.extendedProps.subtitle === 'Overtime') {
+          $('#updateovertimeModal').modal('show');
+          const { event, jsEvent } = info
+          const task = event.extendedProps.task;
+          const hours = event.extendedProps.time;
+          //const date = event.extendedProps.;
+          //$('#id_date_update').val(date);
+          $('#id_hours_update').val(parseFloat(hours));
+          $('#id_tasks_update').val(task);
+        }
       }
     });
     calendar.render();
