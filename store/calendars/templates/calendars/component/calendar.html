@@ -47,14 +47,23 @@
       },
       eventClick: function (info) {
         if (info.event.extendedProps.subtitle === 'Overtime') {
-          $('#updateovertimeModal').modal('show');
           const { event, jsEvent } = info
-          const task = event.extendedProps.task;
+          const task = event.extendedProps.task_value.split(",");
           const hours = event.extendedProps.time;
-          //const date = event.extendedProps.;
-          //$('#id_date_update').val(date);
+          const primary_key = event.extendedProps.id;
+          const date = new Date(info.event.start).
+            toLocaleDateString('en-US',
+            {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            });
+          // Set the values on the update form.
+          $('#idUpdateOvertimeInput').val(primary_key)
+          $('#id_date_update').val(date);
           $('#id_hours_update').val(parseFloat(hours));
-          $('#id_tasks_update').val(task);
+          $('#id_tasks_update').val(task).trigger('change'); 
+          $('#updateovertimeModal').modal('show');
         }
       }
     });

@@ -55,11 +55,7 @@ class OvertimeUpdateForm(forms.ModelForm):
 
     def clean(self):
         cleaned_data = super().clean()
-        date = cleaned_data.get('date')
         hours = cleaned_data.get('hours')
         if hours is not None and hours <= 0:
             self.add_error('hours', 'Hours must be a positive number.')
-        if date:
-            if Overtime.objects.filter(date=date).exists():
-                self.add_error('date', 'An overtime entry for this date already exists.')
         return cleaned_data

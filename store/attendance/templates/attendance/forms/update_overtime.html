@@ -2,7 +2,7 @@
 <div class="modal fade" id="updateovertimeModal" tabindex="-1" role="dialog" aria-labelledby="updateovertimeModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-lg" role="document">
     <div class="modal-content">
-      <form id="createOvertimeForm" method="POST">
+      <form id="updateOvertimeForm" method="POST">
         {% csrf_token %}
         <div class="modal-header">
           <h5 class="modal-title" id="updateovertimeModalLabel">Update Overtime</h5>
@@ -11,6 +11,7 @@
           </button>
         </div>
         <div class="modal-body">
+          <input name="primary_key" id="idUpdateOvertimeInput"/>
           {% for field in overtime_update_form %}
           <div class="form-row" style="margin-bottom: 1rem;">
             <label for="{{ field.auto_id }}">{{ field.label }}:</label>
@@ -29,12 +30,41 @@
 </div>
 
 <script>
+  $(document).ready(() => {
+    let updateButton = $('#idUpdateOvertime');
+    let updateovertimeModal = $('#updateovertimeModal');
+    let updateOvertimeForm = $('#updateOvertimeForm');
 
-  let updateButton = $('#idUpdateOvertime');
-
-
-  updateButton.on('click', () => {
-
+    updateButton.on('click', () => {
+      let updateURL = '{% url "attendance:update_overtime" %}';
+      let saveButton = $('#idUpdateOvertime');
+    
+      // Serialize the form data and convert it to JSON
+      let formData = new FormData(updateOvertimeForm[0]);
+      let spinner = `
+      <div class="spinner-border text-light" role="status" style="height: 1.4rem; width: 1.4rem">
+        <span class="sr-only">Loading...</span>
+      </div>`;
+      saveButton.html(spinner);
+      axios.post(updateURL, formData)
+        .then(function (response) {
+          overtimeUpdateModal.modal('hide');
+          // clearErrorMessages();
+          reloadComponent("{% url 'calendars:component' %}", 'idCalendarContainer', true);
+        })
+        .catch(function (error) {
+          console.log(error.response.data);
+          if (error.response && error.response.data) {
+            let errors = error.response.data.errors;
+            for (let field in errors) {
+              let errorMsgs = errors[field];
+              $(`#id_${field}_update_error`).html(`<div class="text-danger">${errorMsgs}</div>`);
+            }
+          }
+        })
+        .finally(function () {
+          updateButton.html('Save');
+        });
+    });
   });
-
 </script>
