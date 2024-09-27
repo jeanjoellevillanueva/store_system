@@ -166,9 +166,8 @@ class OvertimeCustomUpdateView(LoginRequiredMixin, JSONResponseMixin, View):
             overtime.save()
             json_data = {
                 'status': 'success',
-                'message': 'Overtime created successfully.',
+                'message': 'Overtime updated successfully.',
             }
-            
             return self.render_json_response(json_data, status=201)
         else:
             json_data = {
@@ -177,3 +176,19 @@ class OvertimeCustomUpdateView(LoginRequiredMixin, JSONResponseMixin, View):
                 'errors': form.errors
             }
             return self.render_json_response(json_data, status=400)
+
+
+class OvertimeCustomDeleteView(LoginRequiredMixin, JSONResponseMixin, View):
+    """
+    Delete overtime objects
+    """
+
+    def post(self, request, *args, **kwargs):
+            primary_key = self.request.POST['primary_key']
+            overtime = Overtime.objects.get(id=int(primary_key))
+            overtime.delete()
+            json_data = {
+                'status': 'success',
+                'message': 'Overtime deleted successfully.',
+            }
+            return self.render_json_response(json_data, status=204)

@@ -35,7 +35,7 @@ class OvertimeForm(forms.ModelForm):
 
 class OvertimeUpdateForm(forms.ModelForm):
     """
-    Form used when creating an overtime.
+    Form used when updating an overtime.
     """
     tasks = forms.MultipleChoiceField(
         choices=Attendance.TASK_CHOICES,

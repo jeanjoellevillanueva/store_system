@@ -37,10 +37,13 @@
     let createOvertimeForm = $('#createOvertimeForm');
     let saveButton = $('#idCreateOvertimeSave');
     let overtimeModal = $('#overtimeModal');
-
+    $('#overtimeModal').on('hide.bs.modal', function () {
+      $('#id_tasks').val(null).trigger('change');
+    });
     /**
      * Remove all error messages on the form.
      */
+    
     function clearErrorMessages() {
       $('[id^="id_"][id$="_error"]').empty();
     }
@@ -73,7 +76,7 @@
           clearErrorMessages();
           reloadComponent("{% url 'calendars:component' %}", 'idCalendarContainer', false);
         })
-        .catch(function (error) {
+        .catch(function F(error) {
           console.log(error.response.data);
           if (error.response && error.response.data) {
             let errors = error.response.data.errors;

@@ -5,6 +5,7 @@ from .views import AttendanceCustomCreateView
 from .views import AttendanceCustomUpdateView
 from .views import AttendanceTimeoutView
 from .views import OvertimeCustomCreateView
+from .views import OvertimeCustomDeleteView
 from .views import OvertimeCustomUpdateView
 
 
@@ -41,5 +42,10 @@ urlpatterns = [
         'overtime/update/',
         OvertimeCustomUpdateView.as_view(), 
         name='update_overtime'
+    ),
+    path(
+        'overtime/delete/',
+        OvertimeCustomDeleteView.as_view(), 
+        name='delete_overtime'
     ),
 ]
