@@ -1,0 +1,110 @@
+{% load widget_tweaks %}
+<div class="modal fade" id="overtimeModal" tabindex="-1" role="dialog" aria-labelledby="overtimeModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <form id="createOvertimeForm" method="POST">
+        {% csrf_token %}
+        <div class="modal-header">
+          <h5 class="modal-title" id="overtimeModalLabel">Apply Overtime</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          {% for field in overtime_form %}
+          <div class="form-row" style="margin-bottom: 1rem;">
+            <label for="{{ field.auto_id }}">{{ field.label }}:</label>
+            {{ field|add_class:"form-control" }}
+            <div id="{{ field.auto_id }}_error"></div>
+          </div>
+          {% endfor %}
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-danger" data-dismiss="modal">Close</button>
+          <button type="button" class="btn btn-primary" id="idCreateOvertimeSave">Submit</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+  /**
+   * Script for submitting the form.
+   */
+  $(document).ready(() => {
+    $('.select2').select2();
+    let createOvertimeForm = $('#createOvertimeForm');
+    let saveButton = $('#idCreateOvertimeSave');
+    let overtimeModal = $('#overtimeModal');
+    $('#overtimeModal').on('hide.bs.modal', function () {
+      $('#id_tasks').val(null).trigger('change');
+    });
+    /**
+     * Remove all error messages on the form.
+     */
+    
+    function clearErrorMessages() {
+      $('[id^="id_"][id$="_error"]').empty();
+    }
+
+    function resetForm() {
+      createOvertimeForm[0].reset();
+      clearErrorMessages();
+    }
+
+    // Event handler for modal close and reset the fields.
+    overtimeModal.on('hidden.bs.modal', () => {
+      resetForm();
+    });
+
+    /**
+     * Script for creating overtime.
+     */
+    saveButton.on('click', () => {
+      // Serialize the form data and convert it to JSON
+      let formData = new FormData(createOvertimeForm[0]);
+      let spinner = `
+      <div class="spinner-border text-light" role="status" style="height: 1.4rem; width: 1.4rem">
+        <span class="sr-only">Loading...</span>
+      </div>`;
+      clearErrorMessages();
+      saveButton.html(spinner);
+      axios.post("{% url 'attendance:create_overtime' %}", formData)
+        .then(function (response) {
+          overtimeModal.modal('hide');
+          clearErrorMessages();
+          reloadComponent("{% url 'calendars:component' %}", 'idCalendarContainer', false);
+        })
+        .catch(function F(error) {
+          console.log(error.response.data);
+          if (error.response && error.response.data) {
+            let errors = error.response.data.errors;
+            for (let field in errors) {
+              let errorMsgs = errors[field];
+              $(`#id_${field}_error`).html(`<div class="text-danger">${errorMsgs}</div>`);
+            }
+          }
+        })
+        .finally(function () {
+          saveButton.html('Submit');
+        });
+    });
+  });
+</script>
+<script>
+  /**
+   * Apply Daterangepicker.
+   */
+  $(function() {
+    $('#id_date').daterangepicker({
+      singleDatePicker: true,
+      showDropdowns: true,
+      minYear: 1980,
+      maxYear: parseInt(moment().add(1, 'years').format('YYYY'), 10),
+      locale: {
+        format: 'MMMM D, YYYY'
+      }
+    });
+  });
+</script>

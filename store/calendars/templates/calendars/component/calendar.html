@@ -1,8 +1,23 @@
 <div id="idCalendar"></div>
- 
+
 <script>
   $(document).ready(() => {
     const calendarElement = $('#idCalendar');
+    const eventDetailsEl = document.getElementById('event-details');
+    const hoverBox = $('<div>', {
+      id: 'idEventHoverBox',
+      css: {
+        position: 'absolute',
+        zIndex: 1,
+        backgroundColor: 'white',
+        border: '1px solid #ccc',
+        padding: '10px',
+        borderRadius: '10px',
+        boxShadow: '0 2px 5px rgba(0,0,0,0.2)',
+        display: 'none'
+      }
+    }).appendTo('body');
+
     const calendar = new FullCalendar.Calendar(calendarElement[0], {
       'headerToolbar': {
         'left': 'prev,next today',
@@ -11,7 +26,46 @@
       },
       'initialView': 'dayGridMonth',
       'dayMaxEvents': true,
-      'events': JSON.parse('{{ calendar_data|safe }}')
+      'events': JSON.parse('{{ calendar_data|safe }}'),
+      'eventMouseEnter': function (info) {
+        const { event, jsEvent } = info
+        const content = `
+          <p style="margin-bottom: 0;"><strong>${event.extendedProps.subtitle}</strong></p>
+          <p style="margin-bottom: 0;"><strong>Name:</strong> ${event.extendedProps.person}</p>
+          <p style="margin-bottom: 0;"><strong>Task:</strong> ${event.extendedProps.task}</p>
+          <p style="margin-bottom: 0;"><strong>Time:</strong> ${event.extendedProps.time}</p>
+        `;
+        hoverBox.html(content)
+          .css({
+            top: jsEvent.pageY + 10,
+            left: jsEvent.pageX + 10
+          })
+          .show();
+      },
+      'eventMouseLeave': function () {
+        hoverBox.hide();
+      },
+      eventClick: function (info) {
+        if (info.event.extendedProps.subtitle === 'Overtime') {
+          const { event, jsEvent } = info
+          const task = event.extendedProps.task_value.split(",");
+          const hours = event.extendedProps.time;
+          const primary_key = event.extendedProps.id;
+          const date = new Date(info.event.start).
+            toLocaleDateString('en-US',
+            {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            });
+          // Set the values on the update form.
+          $('#idUpdateOvertimeInput').val(primary_key)
+          $('#id_date_update').val(date);
+          $('#id_hours_update').val(parseFloat(hours));
+          $('#id_tasks_update').val(task).trigger('change'); 
+          $('#updateovertimeModal').modal('show');
+        }
+      }
     });
     calendar.render();
   });

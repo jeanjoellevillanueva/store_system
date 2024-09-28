@@ -1,0 +1,94 @@
+{% load widget_tweaks %}
+<div class="modal fade" id="updateovertimeModal" tabindex="-1" role="dialog" aria-labelledby="updateovertimeModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <form id="updateOvertimeForm" method="POST">
+        {% csrf_token %}
+        <div class="modal-header">
+          <h5 class="modal-title" id="updateovertimeModalLabel">Update Overtime</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <input name="primary_key" id="idUpdateOvertimeInput"/>
+          {% for field in overtime_update_form %}
+          <div class="form-row" style="margin-bottom: 1rem;">
+            <label for="{{ field.auto_id }}">{{ field.label }}:</label>
+            {{ field|add_class:"form-control" }}
+            <div id="{{ field.auto_id }}_error"></div>
+          </div>
+          {% endfor %}
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-danger" data-dismiss="modal">Close</button>
+          <button type="button" class="btn btn-dark" id="idDeleteOvertime">Delete</button>
+          <button type="button" class="btn btn-primary" id="idUpdateOvertime">Update</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+  $(document).ready(() => {
+    let primary_key_id = $('#idUpdateOvertimeInput').hide();
+    let deleteButton = $('#idDeleteOvertime');
+    let updateButton = $('#idUpdateOvertime');
+    let updateovertimeModal = $('#updateovertimeModal');
+    let updateOvertimeForm = $('#updateOvertimeForm');
+
+    updateButton.on('click', () => {
+      let updateURL = '{% url "attendance:update_overtime" %}';
+    
+      // Serialize the form data and convert it to JSON
+      let formData = new FormData(updateOvertimeForm[0]);
+      let spinner = `
+      <div class="spinner-border text-light" role="status" style="height: 1.4rem; width: 1.4rem">
+        <span class="sr-only">Loading...</span>
+      </div>`;
+      updateButton.html(spinner);
+      axios.post(updateURL, formData)
+        .then(function (response) {
+          updateovertimeModal.modal('hide');
+          reloadComponent("{% url 'calendars:component' %}", 'idCalendarContainer', false);
+        })
+        .catch(function (error) {
+          console.log(error.response.data);
+          if (error.response && error.response.data) {
+            let errors = error.response.data.errors;
+            for (let field in errors) {
+              let errorMsgs = errors[field];
+              $(`#id_${field}_update_error`).html(`<div class="text-danger">${errorMsgs}</div>`);
+            }
+          }
+        })
+        .finally(function () {
+          updateButton.html('Save');
+        });
+    });
+    deleteButton.on('click', () => {
+      let deleteURL = '{% url "attendance:delete_overtime" %}';
+      let formData = new FormData(updateOvertimeForm[0]);
+      let spinner = `
+      <div class="spinner-border text-light" role="status" style="height: 1.4rem; width: 1.4rem">
+        <span class="sr-only">Loading...</span>
+      </div>`;
+      
+      if (confirm('are you sure you wanted to delete?')) {
+        deleteButton.html(spinner);
+        axios.post(deleteURL, formData)
+          .then(function (response) {
+            updateovertimeModal.modal('hide');
+            reloadComponent("{% url 'calendars:component' %}", 'idCalendarContainer', false);
+          })
+          .catch(error => {
+            console.error('Error:', error);
+          })
+          .finally(function () {
+          deleteButton.html('Delete');
+          });
+      }
+    });
+  });
+</script>
