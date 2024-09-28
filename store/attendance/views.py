@@ -1,5 +1,7 @@
 import json
 from decimal import Decimal
+
+import pytz
 from typing import Any
 
 from braces.views import JSONResponseMixin
@@ -26,10 +28,12 @@ class AttendanceComponentTemplateView(LoginRequiredMixin, TemplateView):
 
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
+        manila_tz = pytz.timezone('Asia/Manila')
+        manila_now = timezone.now().astimezone(manila_tz)
         attendance = get_or_none(
             Attendance,
             employee=self.request.user,
-            time_in__date=timezone.now().date()
+            time_in__date=manila_now.date()
         )
         if attendance:
             task_selected = attendance.task
@@ -38,7 +42,7 @@ class AttendanceComponentTemplateView(LoginRequiredMixin, TemplateView):
         context['attendance'] = attendance
         context['task_selected'] = task_selected.split(',')
         context['task_choices'] = Attendance.TASK_CHOICES
-        context['date_today'] = timezone.now().date()
+        context['date_today'] = manila_now.date()
         return context
 
 
@@ -53,7 +57,9 @@ class AttendanceCustomCreateView(LoginRequiredMixin, JSONResponseMixin, View):
         is_attendance = get_or_none(
             Attendance,
             employee=self.request.user,
-            time_in__date=timezone.now().date()
+            time_in__date=timezone.now().astimezone(
+                pytz.timezone('Asia/Manila')
+            ).date()
         )
         if not data['task']:
             raise ValidationError('Please select a task.')
@@ -84,7 +90,9 @@ class AttendanceCustomUpdateView(LoginRequiredMixin, JSONResponseMixin, View):
         data = json.loads(body)
         attendance = Attendance.objects.get(
             employee=self.request.user,
-            time_in__date=timezone.now().date(),
+            time_in__date=timezone.now().astimezone(
+                pytz.timezone('Asia/Manila')
+            ).date(),
             time_out__isnull=True
         )
         if not data['task']:
@@ -108,7 +116,9 @@ class AttendanceTimeoutView(LoginRequiredMixin, JSONResponseMixin, View):
         body = self.request.body
         attendance = Attendance.objects.get(
             employee=self.request.user,
-            time_in__date=timezone.now().date(),
+            time_in__date=timezone.now().astimezone(
+                pytz.timezone('Asia/Manila')
+            ).date(),
             time_out__isnull=True
         )
         attendance.time_out=timezone.now()

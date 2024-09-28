@@ -1,17 +1,14 @@
 import json
-import pytz
 from typing import Any
 
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import User
 from django.utils import timezone
 from django.views.generic import TemplateView
-from django.views.generic import View
 
 from attendance.forms import OvertimeForm
 from attendance.forms import OvertimeUpdateForm
 from attendance.models import Attendance
-from attendance.models import Overtime
 
 from .calendars import get_calendar_data
 
