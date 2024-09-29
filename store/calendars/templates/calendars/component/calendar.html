@@ -38,7 +38,8 @@
         hoverBox.html(content)
           .css({
             top: jsEvent.pageY + 10,
-            left: jsEvent.pageX + 10
+            left: jsEvent.pageX + 10,
+            zIndex: 10000, // on FullCalendar module, `see more` tooltip is 9999 so we must set to 10K so this will appear on top.
           })
           .show();
       },
