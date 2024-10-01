@@ -11,9 +11,15 @@
         <select id="idEmployeeSelect" class="form-control select2" style="width: 20%;">
           <option value="">{{ DEFAULT_SELECT }}</option>
           {% for user in users %}
-          <option value="{{ user.id }}" {% if filters.created_by == user.id %}selected{% endif %}>{{ user.username }}</option>
+          <option value="{{ user.id }}" {% if employee_number == user.id %}selected{% endif %}>{{ user.username }}</option>
           {% endfor %}
         </select>
+        <a href="{{ request.path }}" class="d-none d-sm-inline-block btn btn-sm btn-danger shadow-sm btn-icon-split">
+          <span class="icon text-white-50">
+            <i class="fas fa-recycle"></i>
+          </span>
+          <span class="text">Clear Filter</span>
+        </a>
         {% endif %}
       </div>
       <div class="card-body" id="idCalendarContainer">

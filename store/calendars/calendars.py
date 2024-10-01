@@ -26,7 +26,7 @@ def get_calendar_data(filters):
     attendance_data = [
         {
             'title': f'{employee}',
-            'start': time_in.strftime('%Y-%m-%d') if time_in else 'N/A',
+            'start': time_in.astimezone(manila_tz).strftime('%Y-%m-%d'),
             'color': settings.SUCCESS_COLOR,
             'extendedProps': {
                 'id': primary_key,
