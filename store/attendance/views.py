@@ -136,7 +136,14 @@ class OvertimeCustomCreateView(LoginRequiredMixin, JSONResponseMixin, View):
     """
 
     def post(self, request, *args, **kwargs):
-        form = OvertimeForm(request.POST)
+        
+        user_form_data = {
+            'user' : request.user,
+            'date' : request.POST['date'],
+            'tasks' : request.POST.getlist('tasks'),
+            'hours' : request.POST['hours'],
+        }
+        form = OvertimeForm(user_form_data)
         if form.is_valid():
             overtime_data = {
                 'employee': self.request.user,
