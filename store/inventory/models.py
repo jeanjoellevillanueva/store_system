@@ -84,3 +84,4 @@ class Delivery(ModelMixin):
     quantity = models.PositiveIntegerField(default=1)
     running_stock = models.PositiveIntegerField(default=0)
     reason = models.CharField(max_length=50, choices=DELIVER_CHOICES, default=DELIVER)
+    remarks = models.TextField(blank=True, default='')

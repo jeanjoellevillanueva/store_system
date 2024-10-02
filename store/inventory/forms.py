@@ -64,6 +64,7 @@ class DeliveryAddForm(forms.ModelForm):
         fields = [
             'quantity',
             'reason',
+            'remarks',
         ]
 
 
@@ -81,4 +82,5 @@ class DeliverySubtractForm(forms.ModelForm):
         fields = [
             'quantity',
             'reason',
+            'remarks',
         ]

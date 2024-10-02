@@ -331,6 +331,7 @@ class DeliveryCustomCreateView(LoginRequiredMixin, JSONResponseMixin, View):
                     'quantity': quantity_to_add,
                     'reason': form.cleaned_data['reason'],
                     'running_stock': product.quantity,
+                    'remarks': form.cleaned_data['remarks'],
                     'created_by': self.request.user,
                 }
                 Delivery.objects.create(**delivery_kwargs)
@@ -374,6 +375,7 @@ class DeliveryReportTemplateView(LoginRequiredMixin, TemplateView):
                     'created_by',
                     'running_stock',
                     'product_item_code',
+                    'remarks',
                 )
         )
         df_delivery = pd.DataFrame.from_records(queryset)
@@ -387,8 +389,8 @@ class DeliveryReportTemplateView(LoginRequiredMixin, TemplateView):
     def get_filters(self, request):
         filters = self.request.session['filters']
         delivery_filter = request.POST.get('delivery_filter')
-        product_filter = request.POST.get('product_filter')
         user_filter = request.POST.get('user_filter')
+        product_filter = request.POST.get('product_filter')
         if request.POST.get('start_date') and request.POST.get('end_date'):
             start_date = datetime.strptime(request.POST.get('start_date'), settings.DATE_FORMAT)
             end_date = datetime.strptime(request.POST.get('end_date'), settings.DATE_FORMAT)
@@ -488,7 +490,7 @@ class DeliveryListTemplateView(LoginRequiredMixin, TemplateView):
             Delivery.objects
                 .filter(**date_filter)
                 .order_by('-created_date')
-        )
+        )       
         delivery_inchoices = [choice[0] for choice in Delivery.IN_CHOICES]
         context['deliver_inchoices'] = delivery_inchoices
         return context

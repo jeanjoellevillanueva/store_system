@@ -1,43 +1,45 @@
 {% extends 'base.html' %}
 {% load tags %}
 
-{% block content %} 
-  <div class="row">
-    <div class="col-xl-12 col-lg-12">
-      <div class="card shadow mb-4">
-        <div
-          class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-          <h6 class="m-0 font-weight-bold text-primary">Deliveries</h6>
-          <a href="{{ request.path }}?clear=True" class="d-none d-sm-inline-block btn btn-sm btn-danger shadow-sm btn-icon-split">
-            <span class="icon text-white-50">
-              <i class="fas fa-recycle"></i>
-            </span>
-            <span class="text">Clear Filter</span>
-          </a>
-        </div>
-        <div class="card-body d-flex justify-content-center align-items-center">
-          <div class="table-responsive">
-            <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
-              <thead>
-                <tr>
-                  <th class="text-center">Date</th>
-                  <th class="text-center">Type</th>
-                  <th class="text-center">Item</th>
-                  <th class="text-center">Quantity</th>
-                  <th class="text-center">Running Stock</th>
-                  <th class="text-center">Delivered/Pull-out by</th>
-                </tr>
-              </thead>
-              <thead>
-                <tr>
-                  <th class="text-center">{% include 'mixins/forms/date_filter.html' %}</th>
-                  <form class="form" method="POST">
+{% block content %}
+<div class="row">
+  <div class="col-xl-12 col-lg-12">
+    <div class="card shadow mb-4">
+      <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+        <h6 class="m-0 font-weight-bold text-primary">Deliveries</h6>
+        <a href="{{ request.path }}?clear=True"
+          class="d-none d-sm-inline-block btn btn-sm btn-danger shadow-sm btn-icon-split">
+          <span class="icon text-white-50">
+            <i class="fas fa-recycle"></i>
+          </span>
+          <span class="text">Clear Filter</span>
+        </a>
+      </div>
+      <div class="card-body d-flex justify-content-center align-items-center">
+        <div class="table-responsive">
+          <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+            <thead>
+              <tr>
+                <th class="text-center">Date</th>
+                <th class="text-center">Type</th>
+                <th class="text-center">Item</th>
+                <th class="text-center">Quantity</th>
+                <th class="text-center">Running Stock</th>
+                <th class="text-center">Remarks</th>
+                <th class="text-center">Delivered/Pull-out by</th>
+              </tr>
+            </thead>
+            <thead>
+              <tr>
+                <th class="text-center">{% include 'mixins/forms/date_filter.html' %}</th>
+                <form class="form" method="POST">
                   <th class="text-center">
                     {% csrf_token %}
                     <select class="form-control select2" name="delivery_filter">
                       <option value="">{{ DEFAULT_SELECT }}</option>
                       {% for type in delivery_types %}
-                      <option value="{{ type.0 }}" {% if filters.reason == type.0 %}selected{% endif %}>{{ type.1 }}</option>
+                      <option value="{{ type.0 }}" {% if filters.reason == type.0 %}selected{% endif %}>{{ type.1 }}
+                      </option>
                       {% endfor %}
                     </select>
                   </th>
@@ -46,10 +48,12 @@
                     <select class="form-control select2" name="product_filter">
                       <option value="">{{ DEFAULT_SELECT }}</option>
                       {% for product in products %}
-                      <option value="{{ product.id_str }}" {% if filters.product_id == product.id_str %}selected{% endif %}>{{ product.name }} ({{ product.variation }})</option>
+                      <option value="{{ product.id_str }}" {% if filters.product_id == product.id_str %}selected
+                      {% endif %}>{{ product.name }} ({{ product.variation }})</option>
                       {% endfor %}
                     </select>
                   </th>
+                  <th class="text-center"></th>
                   <th class="text-center"></th>
                   <th class="text-center"></th>
                   <th class="text-center">
@@ -61,27 +65,37 @@
                       {% endfor %}
                     </select>
                   </th>
-                  </form>
-                </tr>
-              </thead>
-              <tbody>
-                {% for delivery in deliveries %}
-                <tr>
-                  <td class="text-center">{{ delivery.created_date|date:"F j, Y g:i a" }}</td>
-                  <td class="text-center {% if delivery.reason in deliver_inchoices %}text-success{% else %}text-danger{% endif %}">{{ delivery.reason|reason_display }}</td>
-                  <td class="text-center"><a href="{% url 'inventory:product' delivery.product_item_code %}">{{ delivery.product_name }}</a></td>
-                  <td class="text-center">{{ delivery.quantity }}</td>
-                  <td class="text-center">{{ delivery.running_stock }}</td>
-                  <td class="text-center">{{ delivery.created_by }}</td>
-                </tr>
-                {% endfor %}
-              </tbody>
-            </table>
-          </div>
+                </form>
+              </tr>
+            </thead>
+            <tbody>
+              {% for delivery in deliveries %}
+              <tr>
+                <td class="text-center">{{ delivery.created_date|date:"F j, Y g:i a" }}</td>
+                <td
+                  class="text-center {% if delivery.reason in deliver_inchoices %}text-success{% else %}text-danger{% endif %}">
+                  {{ delivery.reason|reason_display }}</td>
+                <td class="text-center"><a href="{% url 'inventory:product' delivery.product_item_code %}">
+                  {{ delivery.product_name }}</a></td>
+                <td class="text-center">{{ delivery.quantity }}</td>
+                <td class="text-center">{{ delivery.running_stock }}</td>
+                <td class="text-center">
+                  {% if delivery.remarks %}
+                  <button type="button" data-toggle="modal" data-target="#remarksModal" 
+                  class="btn btn-info" data-remarks="{{ delivery.remarks }}">View</button>
+                  {% endif %}
+                </td>
+                <td class="text-center">{{ delivery.created_by }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
         </div>
       </div>
     </div>
   </div>
+</div>
+{% include 'inventory/views/remarks.html' %}
 {% endblock %}
 
 {% block javascript %}
@@ -89,7 +103,7 @@
   /**
    * Apply datatable.net plugin on the table.
    */
-  $(document).ready(function() {
+  $(document).ready(function () {
     // if (window.location.search) {
     //   window.location.href = window.location.origin + window.location.pathname;
     // }
