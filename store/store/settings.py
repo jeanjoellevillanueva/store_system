@@ -27,6 +27,7 @@ LOCAL_APPS = [
     'expenses',
     'inventory',
     'mixins',
+    'payslips',
     'pos',
 ]
 
