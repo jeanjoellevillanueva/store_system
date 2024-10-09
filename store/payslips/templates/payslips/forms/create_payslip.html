@@ -2,7 +2,7 @@
 <div class="modal fade" id="payslipModal" tabindex="-1" role="dialog" aria-labelledby="payslipModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-lg" role="document">
     <div class="modal-content">
-      <form id="createExpenseForm" method="POST">
+      <form id="payslipForm" method="POST">
         {% csrf_token %}
         <div class="modal-header">
           <h5 class="modal-title" id="payslipModalLabel">Payslip</h5>
@@ -12,19 +12,134 @@
         </div>
         <div class="modal-body">
           {% for field in payslip_form %}
-          <div class="form-row" style="margin-bottom: 1rem;">
+          <div class="form-row" style="margin-bottom: 1rem;margin-left: .02rem;margin-right: .02rem;">
             <label for="{{ field.auto_id }}">{{ field.label }}:</label>
             {{ field|add_class:"form-control" }}
             <div id="{{ field.auto_id }}_error"></div>
           </div>
           {% endfor %}
+          <div id="idDeductionContainer">
+
+          </div>
+            <button type="button" class="btn btn-success" id="idAddDeduction" style="width: 100%;">Add Deduction</button>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-danger" data-dismiss="modal">Close</button>
-          <button type="button" class="btn btn-primary" id="idAddDeduction">Add</button>
-          <button type="button" class="btn btn-primary" id="idGenerate">Generate</button>
+          <button type="button" class="btn btn-primary" id="idGenerateBtn">Generate</button>
         </div>
       </form>
     </div>
   </div>
 </div>
+
+<script>
+  $(document).ready(() => {
+    let addButton = $('#idAddDeduction');
+    let deductionContainer = $('#idDeductionContainer');
+    let fieldsetCounter = 0;
+    addButton.on('click', function() {
+      fieldsetCounter++;
+      const deductionFieldset = document.createElement("fieldset");
+      deductionFieldset.innerHTML = `
+      <div class="column form-row pb-3" id="idDeductionFieldset${fieldsetCounter}">
+        <div class="col-5">
+          <label for="idDeductionType${fieldsetCounter}">Deduction ${fieldsetCounter}</label>
+          <select class="form-control select2class" id="idDeductionType${fieldsetCounter}" name="deduction_type_${fieldsetCounter}">
+            <option value="1">Loan</option>
+            <option value="2">Wrong shipment</option>
+            <option value="3">Advance Payment</option>
+            <option value="4">Misc</option>
+          </select>
+        </div>
+
+        <div class="col-6">
+          <label for="idDeductionAmount${fieldsetCounter}">Amount to deduct:</label>
+          <input type="number" class="form-control pt-2" id="idDeductionAmount${fieldsetCounter}" name="deduction_amount_${fieldsetCounter}">
+        </div>
+
+        <div class="col-1">
+          <label class="invisible">DeleteBtn</label>
+          <button type="button" class="btn btn-danger color-delete-btn" id="idDeductionDeleteBtn${fieldsetCounter}" data-id="${fieldsetCounter}" style="width:100%;">
+            <i class="fas fa-trash-alt"></i>
+          </button>
+        </div>
+      </div>
+      `;
+      deductionContainer.append(deductionFieldset);
+      });
+    
+    $('#payslipForm').on('click', ' .color-delete-btn', (event) => {
+      let id = event.currentTarget.dataset.id;
+      $(`#idDeductionFieldset${id}`).remove();
+    });
+  });
+</script>
+
+<script>
+  $(document).ready(() => {
+    let basePay = $('#id_base_pay');
+    let ratePay= $('#id_rate');
+    let generateButton = $('#idGenerateBtn');
+    let payslipModal = $('#payslipModal');
+    let payslipForm = $('#payslipForm');
+    $('.select2').select2();
+
+    function clearErrorMessages() {
+      $('[id^="id_"][id$="_error"]').empty();
+    }
+
+    function resetForm() {
+      payslipForm[0].reset();
+      clearErrorMessages();
+    }
+
+    // Event handler for modal close and reset the fields.
+    payslipModal.on('hidden.bs.modal', () => {
+      resetForm();
+    });
+
+
+    basePay.on('change', function() {
+      console.log(basePay.val());
+      ratePay.val(basePay.val());
+    });
+
+
+    generateButton.on('click', function() {
+      let formData = new FormData(payslipForm[0]);
+      let spinner = `
+      <div class="spinner-border text-light" role="status" style="height: 1.4rem; width: 1.4rem">
+        <span class="sr-only">Loading...</span>
+      </div>`;
+      generateButton.html(spinner);
+      axios.post("{% url 'payslip:create_payslip' %}", formData)
+        .then(function(response) {
+          payslipModal.modal('hide');
+          clearErrorMessages();
+          reloadComponent("{% url 'calendars:home' %}", true);
+          console.log('asd');
+        })
+          .catch(function(error) {
+          console.error('Error:', error);
+        });
+    });
+  });
+</script>
+
+<script>
+  $(function() {
+    $('#id_start_date').daterangepicker({
+      singleDatePicker: true,
+      showDropdowns: true,
+      minYear: 1980,
+      maxYear: parseInt(moment().format('YYYY'), 10)
+    });
+
+    $('#id_end_date').daterangepicker({
+      singleDatePicker: true,
+      showDropdowns: true,
+      minYear: 1980,
+      maxYear: parseInt(moment().format('YYYY'), 10)
+    });
+  });
+</script>
