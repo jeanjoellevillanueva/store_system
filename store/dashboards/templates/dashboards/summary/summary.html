@@ -1,0 +1,164 @@
+{% load humanize %}
+<div class="row">
+
+    <div class="col-xl-2 col-md-2 mb-4">
+      <div class="card border-left-primary shadow h-100 py-2">
+        <div class="card-body">
+          <div class="row no-gutters align-items-center">
+            <div class="col mr-2">
+              <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                Sale
+              </div>
+              <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_sale | default:"0" | intcomma }}</div>
+            </div>
+            <div class="col-auto">
+              <i class="fas fa-credit-card fa-2x text-gray-300"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-xl-2 col-md-2 mb-4">
+      <div class="card border-left-secondary shadow h-100 py-2">
+        <div class="card-body">
+          <div class="row no-gutters align-items-center">
+            <div class="col mr-2">
+              <div class="text-xs font-weight-bold text-secondary text-uppercase mb-1">
+                Total Stock
+              </div>
+              <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_stock | default:"0" | intcomma }}</div>
+            </div>
+            <div class="col-auto">
+              <i class="fa fa-inbox fa-2x text-gray-300"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-xl-2 col-md-2 mb-4">
+      <div class="card border-left-secondary shadow h-100 py-2">
+        <div class="card-body">
+          <div class="row no-gutters align-items-center">
+            <div class="col mr-2">
+              <div class="text-xs font-weight-bold text-secondary text-uppercase mb-1">
+                Cash in Stock
+              </div>
+              <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stock_value | default:"0" | intcomma }}</div>
+            </div>
+            <div class="col-auto">
+              <i class="fas fa-suitcase fa-2x text-gray-300"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-xl-2 col-md-2 mb-4">
+      <div class="card border-left-danger shadow h-100 py-2">
+        <div class="card-body">
+          <div class="row no-gutters align-items-center">
+            <div class="col mr-2">
+              <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
+                Expense
+              </div>
+              <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_expense | default:"0" | intcomma }}</div>
+            </div>
+            <div class="col-auto">
+              <i class="fas fa-wallet fa-2x text-gray-300"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-xl-2 col-md-2 mb-4">
+      <div class="card border-left-warning shadow h-100 py-2">
+        <div class="card-body">
+          <div class="row no-gutters align-items-center">
+            <div class="col mr-2">
+              <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                Platform Share
+              </div>
+              <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_platform_fee | default:"0" | intcomma }}</div>
+            </div>
+            <div class="col-auto">
+              <i class="fas fa-table fa-2x text-gray-300"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-xl-2 col-md-2 mb-4">
+      <div class="card border-left-info shadow h-100 py-2">
+        <div class="card-body">
+          <div class="row no-gutters align-items-center">
+            <div class="col mr-2">
+              <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                Net Profit
+              </div>
+              <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_net_profit | default:"0" | intcomma }}</div>
+            </div>
+            <div class="col-auto">
+              <i class="fas fa-cash-register fa-2x text-gray-300"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-xl-2 col-md-2 mb-4">
+      <div class="card border-left-success shadow h-100 py-2">
+        <div class="card-body">
+          <div class="row no-gutters align-items-center">
+            <div class="col mr-2">
+              <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                Gross Profit
+              </div>
+              <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_gross_profit | default:"0" | intcomma }}</div>
+            </div>
+            <div class="col-auto">
+              <i class="fas fa-dollar-sign fa-2x text-gray-300"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-xl-2 col-md-2 mb-4">
+      <div class="card border-left-primary shadow h-100 py-2">
+        <div class="card-body">
+          <div class="row no-gutters align-items-center">
+            <div class="col mr-2">
+              <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                Number of orders
+              </div>
+              <div class="h5 mb-0 font-weight-bold text-gray-800">{{ number_of_items | default:"0" | intcomma }}</div>
+            </div>
+            <div class="col-auto">
+              <i class="fas fa-ship fa-2x text-gray-300"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-xl-2 col-md-2 mb-4">
+      <div class="card border-left-secondary shadow h-100 py-2">
+        <div class="card-body">
+          <div class="row no-gutters align-items-center">
+            <div class="col mr-2">
+              <div class="text-xs font-weight-bold text-secondary text-uppercase mb-1">
+                Items sold
+              </div>
+              <div class="h5 mb-0 font-weight-bold text-gray-800">{{ item_sold | default:"0" | intcomma }}</div>
+            </div>
+            <div class="col-auto">
+              <i class="fas fa-shipping-fast fa-2x text-gray-300"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
