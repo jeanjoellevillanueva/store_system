@@ -34,21 +34,25 @@
 
 <script>
   $(document).ready(() => {
+    // initiate into variable
     let addButton = $('#idAddDeduction');
     let deductionContainer = $('#idDeductionContainer');
     let fieldsetCounter = 0;
+
+
+    // Functions
     addButton.on('click', function() {
       fieldsetCounter++;
       const deductionFieldset = document.createElement("fieldset");
+
       deductionFieldset.innerHTML = `
       <div class="column form-row pb-3" id="idDeductionFieldset${fieldsetCounter}">
         <div class="col-5">
           <label for="idDeductionType${fieldsetCounter}">Deduction ${fieldsetCounter}</label>
           <select class="form-control select2class" id="idDeductionType${fieldsetCounter}" name="deduction_type_${fieldsetCounter}">
-            <option value="1">Loan</option>
-            <option value="2">Wrong shipment</option>
-            <option value="3">Advance Payment</option>
-            <option value="4">Misc</option>
+            {% for choice in deduction_choices %}
+            <option value="{{ choice }}">{{ choice }}</option>
+            {% endfor %}
           </select>
         </div>
 
@@ -66,8 +70,14 @@
       </div>
       `;
       deductionContainer.append(deductionFieldset);
+      let select = document.getElementById(`idDeductionType${fieldsetCounter}`);
+      deduction_choices.forEach(choice => {
+        let option = document.createElement("option");
+        option.value = choice;
+        option.text = choice;
+        select.appendChild(option);
       });
-    
+    });
     $('#payslipForm').on('click', ' .color-delete-btn', (event) => {
       let id = event.currentTarget.dataset.id;
       $(`#idDeductionFieldset${id}`).remove();
@@ -77,6 +87,7 @@
 
 <script>
   $(document).ready(() => {
+    // initiate into variable
     let basePay = $('#id_base_pay');
     let ratePay= $('#id_rate');
     let generateButton = $('#idGenerateBtn');
@@ -84,14 +95,23 @@
     let payslipForm = $('#payslipForm');
     $('.select2').select2();
 
+    // setting up the elements
+    basePay.val(0.00);
+    ratePay.val(0.00);
+    ratePay.prop('readonly', true);
+    
+
+    // Functions
     function clearErrorMessages() {
       $('[id^="id_"][id$="_error"]').empty();
     }
+
 
     function resetForm() {
       payslipForm[0].reset();
       clearErrorMessages();
     }
+
 
     // Event handler for modal close and reset the fields.
     payslipModal.on('hidden.bs.modal', () => {
@@ -99,13 +119,13 @@
     });
 
 
-    basePay.on('change', function() {
+    basePay.on('change', () => {
       console.log(basePay.val());
-      ratePay.val(basePay.val());
+      ratePay.val(basePay.val()/8);
     });
 
 
-    generateButton.on('click', function() {
+    generateButton.on('click', () => {
       let formData = new FormData(payslipForm[0]);
       let spinner = `
       <div class="spinner-border text-light" role="status" style="height: 1.4rem; width: 1.4rem">
@@ -126,6 +146,9 @@
   });
 </script>
 
+<script>
+  
+</script>
 <script>
   $(function() {
     $('#id_start_date').daterangepicker({

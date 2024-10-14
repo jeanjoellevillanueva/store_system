@@ -15,3 +15,6 @@ class PayslipForm(forms.ModelForm):
             'base_pay',
             'rate',
         ]
+        labels = {
+            'rate': 'Rate per hour',
+        }

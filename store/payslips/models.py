@@ -5,9 +5,8 @@ from mixins.models import ModelMixin
 
 class Payslip(ModelMixin):
     """
-    
+    Represent a payslip that can be generated
     """
-    
     employee = models.ForeignKey(User, on_delete=models.PROTECT)
     start_date = models.DateField()
     end_date = models.DateField()
