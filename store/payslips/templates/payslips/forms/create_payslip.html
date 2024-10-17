@@ -39,7 +39,6 @@
     let deductionContainer = $('#idDeductionContainer');
     let fieldsetCounter = 0;
 
-
     // Functions
     addButton.on('click', function() {
       fieldsetCounter++;
@@ -89,6 +88,7 @@
   $(document).ready(() => {
     // initiate into variable
     let basePay = $('#id_base_pay');
+    let csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
     let ratePay= $('#id_rate');
     let generateButton = $('#idGenerateBtn');
     let payslipModal = $('#payslipModal');
@@ -132,20 +132,25 @@
         <span class="sr-only">Loading...</span>
       </div>`;
       generateButton.html(spinner);
-      axios.post("{% url 'payslip:create_payslip' %}", formData)
+      axios.post("{% url 'payslip:create_payslip' %}", formData, {
+        headers: {
+          'X-CSRFToken': csrfToken
+        }
+      })
         .then(function(response) {
           payslipModal.modal('hide');
           clearErrorMessages();
-          reloadComponent("{% url 'calendars:home' %}", true);
-          console.log('asd');
         })
           .catch(function(error) {
           console.error('Error:', error);
+          generateButton.html('Generate');
+        })
+        .finally(function () {
+          generateButton.html('Generate');
         });
     });
   });
 </script>
-
 <script>
   
 </script>
