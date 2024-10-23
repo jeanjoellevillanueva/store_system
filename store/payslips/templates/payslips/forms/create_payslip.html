@@ -120,7 +120,6 @@
 
 
     basePay.on('change', () => {
-      console.log(basePay.val());
       ratePay.val(basePay.val()/8);
     });
 
@@ -135,9 +134,16 @@
       axios.post("{% url 'payslip:create_payslip' %}", formData, {
         headers: {
           'X-CSRFToken': csrfToken
-        }
+        },
+        responseType: 'blob'
       })
         .then(function(response) {
+          // Create a blob from the response
+          const blob = new Blob([response.data], { type: response.headers['content-type'] });
+          // Create a temporary link element
+          const link = $('<a></a>');
+          const url = window.URL.createObjectURL(blob);
+          window.open(url)
           payslipModal.modal('hide');
           clearErrorMessages();
         })
