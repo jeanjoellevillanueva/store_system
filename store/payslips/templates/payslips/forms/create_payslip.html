@@ -45,12 +45,12 @@
       const deductionFieldset = document.createElement("fieldset");
 
       deductionFieldset.innerHTML = `
-      <div class="column form-row pb-3" id="idDeductionFieldset${fieldsetCounter}">
+      <div class="column form-row pb-3 deduction-container" id="idDeductionFieldset${fieldsetCounter}">
         <div class="col-5">
           <label for="idDeductionType${fieldsetCounter}">Deduction ${fieldsetCounter}</label>
           <select class="form-control select2class" id="idDeductionType${fieldsetCounter}" name="deduction_type_${fieldsetCounter}">
             {% for choice in deduction_choices %}
-            <option value="{{ choice }}">{{ choice }}</option>
+            <option value="{{ choice.0 }}">{{ choice.1 }}</option>
             {% endfor %}
           </select>
         </div>
@@ -70,22 +70,13 @@
       `;
       deductionContainer.append(deductionFieldset);
       let select = document.getElementById(`idDeductionType${fieldsetCounter}`);
-      deduction_choices.forEach(choice => {
-        let option = document.createElement("option");
-        option.value = choice;
-        option.text = choice;
-        select.appendChild(option);
-      });
+      
     });
     $('#payslipForm').on('click', ' .color-delete-btn', (event) => {
       let id = event.currentTarget.dataset.id;
       $(`#idDeductionFieldset${id}`).remove();
     });
-  });
-</script>
 
-<script>
-  $(document).ready(() => {
     // initiate into variable
     let basePay = $('#id_base_pay');
     let csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
@@ -93,9 +84,15 @@
     let generateButton = $('#idGenerateBtn');
     let payslipModal = $('#payslipModal');
     let payslipForm = $('#payslipForm');
+    let startOfWeek = moment().startOf('isoWeek').local().format('MM/DD/YYYY');
+    let endOfWeek = moment().endOf('isoWeek').local().format('MM/DD/YYYY');
+    let start_date_picker = $('#id_start_date');
+    let end_date_picker= $('#id_end_date');
     $('.select2').select2();
 
     // setting up the elements
+    start_date_picker.val(startOfWeek);
+    end_date_picker.val(endOfWeek);
     basePay.val(0.00);
     ratePay.val(0.00);
     ratePay.prop('readonly', true);
@@ -116,6 +113,11 @@
     // Event handler for modal close and reset the fields.
     payslipModal.on('hidden.bs.modal', () => {
       resetForm();
+
+      start_date_picker.val(startOfWeek);
+      end_date_picker.val(endOfWeek);
+      $('.deduction-container').remove();
+      fieldsetCounter = 0;
     });
 
 
@@ -145,6 +147,7 @@
           const url = window.URL.createObjectURL(blob);
           window.open(url)
           payslipModal.modal('hide');
+
           clearErrorMessages();
         })
           .catch(function(error) {
@@ -157,23 +160,21 @@
     });
   });
 </script>
-<script>
-  
-</script>
+
 <script>
   $(function() {
     $('#id_start_date').daterangepicker({
       singleDatePicker: true,
       showDropdowns: true,
       minYear: 1980,
-      maxYear: parseInt(moment().format('YYYY'), 10)
+      maxYear: parseInt(moment().format('YYYY'), 10),
     });
 
     $('#id_end_date').daterangepicker({
       singleDatePicker: true,
       showDropdowns: true,
       minYear: 1980,
-      maxYear: parseInt(moment().format('YYYY'), 10)
+      maxYear: parseInt(moment().format('YYYY'), 10),
     });
   });
 </script>
