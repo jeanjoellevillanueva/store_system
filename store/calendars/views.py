@@ -5,10 +5,14 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import User
 from django.utils import timezone
 from django.views.generic import TemplateView
+from django.views import View
+
 
 from attendance.forms import OvertimeForm
 from attendance.forms import OvertimeUpdateForm
 from attendance.models import Attendance
+from payslips.forms import PayslipForm
+from payslips.models import Payslip
 
 from .calendars import get_calendar_data
 
@@ -28,8 +32,10 @@ class CalendarTemplateView(LoginRequiredMixin, TemplateView):
             }
         )
         context['overtime_update_form'] = OvertimeUpdateForm(auto_id='id_%s_update')
+        context['payslip_form'] = PayslipForm
         context['task_choices'] = Attendance.TASK_CHOICES
         context['users'] = User.objects.values('id', 'username')
+        context['deduction_choices'] = Payslip.DEDUCTION_CHOICES
         return context
 
 

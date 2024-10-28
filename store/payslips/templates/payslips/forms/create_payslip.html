@@ -1,0 +1,180 @@
+{% load widget_tweaks %}
+<div class="modal fade" id="payslipModal" tabindex="-1" role="dialog" aria-labelledby="payslipModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <form id="payslipForm" method="POST">
+        {% csrf_token %}
+        <div class="modal-header">
+          <h5 class="modal-title" id="payslipModalLabel">Payslip</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          {% for field in payslip_form %}
+          <div class="form-row" style="margin-bottom: 1rem;margin-left: .02rem;margin-right: .02rem;">
+            <label for="{{ field.auto_id }}">{{ field.label }}:</label>
+            {{ field|add_class:"form-control" }}
+            <div id="{{ field.auto_id }}_error"></div>
+          </div>
+          {% endfor %}
+          <div id="idDeductionContainer">
+
+          </div>
+            <button type="button" class="btn btn-success" id="idAddDeduction" style="width: 100%;">Add Deduction</button>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-danger" data-dismiss="modal">Close</button>
+          <button type="button" class="btn btn-primary" id="idGenerateBtn">Generate</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+  $(document).ready(() => {
+    // initiate into variable
+    let addButton = $('#idAddDeduction');
+    let deductionContainer = $('#idDeductionContainer');
+    let fieldsetCounter = 0;
+
+    // Functions
+    addButton.on('click', function() {
+      fieldsetCounter++;
+      const deductionFieldset = document.createElement("fieldset");
+
+      deductionFieldset.innerHTML = `
+      <div class="column form-row pb-3 deduction-container" id="idDeductionFieldset${fieldsetCounter}">
+        <div class="col-5">
+          <label for="idDeductionType${fieldsetCounter}">Deduction ${fieldsetCounter}</label>
+          <select class="form-control select2class" id="idDeductionType${fieldsetCounter}" name="deduction_type_${fieldsetCounter}">
+            {% for choice in deduction_choices %}
+            <option value="{{ choice.0 }}">{{ choice.1 }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="col-6">
+          <label for="idDeductionAmount${fieldsetCounter}">Amount to deduct:</label>
+          <input type="number" class="form-control pt-2" id="idDeductionAmount${fieldsetCounter}" name="deduction_amount_${fieldsetCounter}">
+        </div>
+
+        <div class="col-1">
+          <label class="invisible">DeleteBtn</label>
+          <button type="button" class="btn btn-danger color-delete-btn" id="idDeductionDeleteBtn${fieldsetCounter}" data-id="${fieldsetCounter}" style="width:100%;">
+            <i class="fas fa-trash-alt"></i>
+          </button>
+        </div>
+      </div>
+      `;
+      deductionContainer.append(deductionFieldset);
+      let select = document.getElementById(`idDeductionType${fieldsetCounter}`);
+      
+    });
+    $('#payslipForm').on('click', ' .color-delete-btn', (event) => {
+      let id = event.currentTarget.dataset.id;
+      $(`#idDeductionFieldset${id}`).remove();
+    });
+
+    // initiate into variable
+    let basePay = $('#id_base_pay');
+    let csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    let ratePay= $('#id_rate');
+    let generateButton = $('#idGenerateBtn');
+    let payslipModal = $('#payslipModal');
+    let payslipForm = $('#payslipForm');
+    let startOfWeek = moment().startOf('isoWeek').local().format('MM/DD/YYYY');
+    let endOfWeek = moment().endOf('isoWeek').local().format('MM/DD/YYYY');
+    let start_date_picker = $('#id_start_date');
+    let end_date_picker= $('#id_end_date');
+    $('.select2').select2();
+
+    // setting up the elements
+    start_date_picker.val(startOfWeek);
+    end_date_picker.val(endOfWeek);
+    basePay.val(0.00);
+    ratePay.val(0.00);
+    ratePay.prop('readonly', true);
+    
+
+    // Functions
+    function clearErrorMessages() {
+      $('[id^="id_"][id$="_error"]').empty();
+    }
+
+
+    function resetForm() {
+      payslipForm[0].reset();
+      clearErrorMessages();
+    }
+
+
+    // Event handler for modal close and reset the fields.
+    payslipModal.on('hidden.bs.modal', () => {
+      resetForm();
+
+      start_date_picker.val(startOfWeek);
+      end_date_picker.val(endOfWeek);
+      $('.deduction-container').remove();
+      fieldsetCounter = 0;
+    });
+
+
+    basePay.on('change', () => {
+      ratePay.val(basePay.val()/8);
+    });
+
+
+    generateButton.on('click', () => {
+      let formData = new FormData(payslipForm[0]);
+      let spinner = `
+      <div class="spinner-border text-light" role="status" style="height: 1.4rem; width: 1.4rem">
+        <span class="sr-only">Loading...</span>
+      </div>`;
+      generateButton.html(spinner);
+      axios.post("{% url 'payslip:create_payslip' %}", formData, {
+        headers: {
+          'X-CSRFToken': csrfToken
+        },
+        responseType: 'blob'
+      })
+        .then(function(response) {
+          // Create a blob from the response
+          const blob = new Blob([response.data], { type: response.headers['content-type'] });
+          // Create a temporary link element
+          const link = $('<a></a>');
+          const url = window.URL.createObjectURL(blob);
+          window.open(url)
+          payslipModal.modal('hide');
+
+          clearErrorMessages();
+        })
+          .catch(function(error) {
+          console.error('Error:', error);
+          generateButton.html('Generate');
+        })
+        .finally(function () {
+          generateButton.html('Generate');
+        });
+    });
+  });
+</script>
+
+<script>
+  $(function() {
+    $('#id_start_date').daterangepicker({
+      singleDatePicker: true,
+      showDropdowns: true,
+      minYear: 1980,
+      maxYear: parseInt(moment().format('YYYY'), 10),
+    });
+
+    $('#id_end_date').daterangepicker({
+      singleDatePicker: true,
+      showDropdowns: true,
+      minYear: 1980,
+      maxYear: parseInt(moment().format('YYYY'), 10),
+    });
+  });
+</script>

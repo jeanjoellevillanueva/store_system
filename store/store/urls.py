@@ -14,6 +14,7 @@ urlpatterns = [
     path('dashboard/', include('dashboards.urls')),
     path('expenses/', include('expenses.urls')),
     path('inventory/', include('inventory.urls')),
+    path('payslip/', include('payslips.urls')),
 ]
 
 urlpatterns + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
