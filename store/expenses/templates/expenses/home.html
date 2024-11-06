@@ -7,12 +7,26 @@
         <div
           class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
           <h6 class="m-0 font-weight-bold text-primary">Expenses</h6>
-          <button data-toggle="modal" data-target="#expenseModal" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm btn-icon-split">
-            <span class="icon text-white-50">
-              <i class="fas fa-wallet"></i>
-            </span>
-            <span class="text">Add expense</span>
-          </button>
+          <div class="column justify-content-around">
+            <button data-toggle="modal" data-target="#expenseModal" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm btn-icon-split">
+              <span class="icon text-white-50">
+                <i class="fas fa-wallet"></i>
+              </span>
+              <span class="text">Add expense</span>
+            </button>
+            <button id="idDownloadExpense" class="d-none d-sm-inline-block btn btn-sm btn-success shadow-sm btn-icon-split">
+              <span class="icon text-white-50">
+                <i class="fas fa-download"></i>
+              </span>
+              <span class="text">Download Expense</span>
+            </button>
+            <a href="{{ request.path }}?clear=True" id="idClearFilterExpense" class="d-none d-sm-inline-block btn btn-sm btn-danger shadow-sm btn-icon-split">
+              <span class="icon text-white-50">
+                <i class="fas fa-recycle"></i>
+              </span>
+              <span class="text">Clear Filter</span>
+            </a>
+          </div>
         </div>
         <div id="idExpenseTableContainer" class="card-body d-flex justify-content-center align-items-center">
           <!-- This will be filled by axios -->
@@ -30,6 +44,15 @@
   $(document).ready(()=>{
     // Call the function to fetch data and populate the DataTable
     reloadComponent("{% url 'expenses:list_expense' %}", 'idExpenseTableContainer', true);
+  });
+</script>
+
+<script>
+  $(document).ready(() => {
+    let downloadButton = $('#idDownloadExpense');
+    downloadButton.on('click', (event) => {
+      window.location.href = "{% url 'expenses:download_expense' %}";
+    });
   });
 </script>
 {% endblock %}

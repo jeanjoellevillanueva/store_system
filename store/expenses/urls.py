@@ -4,6 +4,7 @@ from .views import ExpenseCustomCreateView
 from .views import ExpenseCustomDeleteView
 from .views import ExpenseCustomUpdateView
 from .views import ExpenseListDatatableTemplateView
+from .views import ExpenseListDownloadView
 from .views import ExpenseTemplateView
 
 
@@ -35,5 +36,10 @@ urlpatterns = [
         'delete/<int:id>',
         ExpenseCustomDeleteView.as_view(),
         name='delete_expense'
+    ),
+    path(
+        'download/',
+        ExpenseListDownloadView.as_view(),
+        name='download_expense'
     ),
 ]

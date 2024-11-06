@@ -4,16 +4,56 @@
       <tr>
         <th class="text-center">Date</th>
         <th class="text-center">Name</th>
+        <th class="text-center">Address</th>
+        <th class="text-center">TIN Number</th>
+        <th class="text-center">OR Number</th>
         <th class="text-center">Category</th>
         <th class="text-center">Amount</th>
         <th class="text-center">Action</th>
       </tr>
     </thead>
+    <thead>
+      <tr>
+        <th class="text-center">{% include 'mixins/forms/date_filter.html' %}</th>
+        <th class="text-center">
+          <form id="idNameExpenseForm" method="POST">
+            {% csrf_token %}
+            <select class="form-control select2 name-filter" name="name_filter">
+              <option value="">{{ DEFAULT_SELECT }}</option>
+              {% for name in names %}
+              <option value="{{ name }}" {% if filters.name == name %}selected{% endif %}>{{ name }}</option>
+              {% endfor %}
+            </select>
+          </form>
+        </th>
+        <th class="text-center"></th>
+        <th class="text-center"></th>
+        <th class="text-center"></th>
+        <th class="text-center">
+          <form id="idCategoryExpenseForm" method="POST">
+            {% csrf_token %}
+            <select class="form-control select2 category-filter" name="category_filter">
+              <option value="">{{ DEFAULT_SELECT }}</option>
+              {% for category in categories %}
+              <option value="{{ category.0 }}" {% if filters.category == category.0 %}selected{% endif %}>{{ category.1 }}
+              </option>
+              {% endfor %}
+            </select>
+          </form>
+        </th>
+        <th class="text-center"></th>
+        <th class="text-center"></th>
+      </tr>
+    </thead>
+
     <tbody>
       {% for expense in expenses %}
       <tr>
         <td class="text-center">{{ expense.expense_date|date:"m/d/Y" }}</td>
         <td class="text-center">{{ expense.name }}</td>
+        <td class="text-center">{{ expense.address|default:"-" }}</td>
+        <td class="text-center">{{ expense.tin_number|default:"-" }}</td>
+        <td class="text-center">{{ expense.or_number|default:"-" }}</td>
         <td class="text-center">{{ expense.get_category_display }}</td>
         <td class="text-center">{{ expense.amount }}</td>
         <td class="text-center">
@@ -22,6 +62,9 @@
             data-id="{{ expense.id }}"
             data-category="{{ expense.category }}"
             data-amount="{{ expense.amount }}"
+            data-address="{{ expense.address }}"
+            data-tin_number="{{ expense.tin_number }}"
+            data-or_number="{{ expense.or_number }}"
             data-name="{{ expense.name }}"
             data-date='{{ expense.expense_date|date:"m/d/Y" }}'
             data-url="{% url 'expenses:update_expense' expense.id %}"
@@ -54,6 +97,14 @@
     $('#dataTable').DataTable({
       order: [],
       pageLength: parseInt("{{ DATATABLES_LENGTH }}"),
+    });
+
+    $('.select2').select2();
+    $('.name-filter').on('change', () => {
+      $('#idNameExpenseForm').submit();
+    });
+    $('.category-filter').on('change', () => {
+      $('#idCategoryExpenseForm').submit();
     });
   });
 </script>
