@@ -17,4 +17,5 @@ class ExpenseForm(forms.ModelForm):
             'or_number',
             'category',
             'amount',
+            'is_business',
         ]

@@ -14,7 +14,13 @@
           {% for field in expense_form %}
           <div class="form-row" style="margin-bottom: 1rem;">
             <label for="{{ field.auto_id }}">{{ field.label }}:</label>
-            {{ field|add_class:"form-control" }}
+            {% if field.field.widget.input_type != "checkbox" %}
+              {{ field|add_class:"form-control" }}
+            {% else %}
+            <div class="col-lg-1">
+              {{ field }}
+            </div>
+            {% endif %}
             <div id="{{ field.auto_id }}_error"></div>
           </div>
           {% endfor %}
@@ -96,7 +102,7 @@
       singleDatePicker: true,
       showDropdowns: true,
       minYear: 1980,
-      maxYear: parseInt(moment().format('YYYY'), 10)
+      maxYear: parseInt(moment().format('YYYY'), 10),
     });
   });
 </script>

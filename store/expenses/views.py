@@ -155,7 +155,7 @@ class ExpenseListDatatableTemplateView(LoginRequiredMixin, TemplateView):
         start_date = datetime.strptime(self.request.session['filters']['start_date'], '%Y-%m-%d')
         end_date = datetime.strptime(self.request.session['filters']['end_date'], '%Y-%m-%d')
         filters = {
-            'expense_date__range': (start_date, end_date), 
+            'expense_date__range': (start_date, end_date),
         }
         if self.request.session['filters'].get('name'):
             name = self.request.session['filters'].get('name')
@@ -183,6 +183,11 @@ class ExpenseListDownloadView(LoginRequiredMixin, View):
     
     def get(self, request, *args, **kwargs):
         DATE_FORMAT = "%m/%d/%Y"
+        STATIC_FILTERS = {
+            'tin_number':'',
+            'or_number':'',
+            }
+        combined_filters = {}
         filters = self.request.session['filters']
         filter_list = {
             'expense_date__range': (filters['start_date'], filters['end_date'],), 
@@ -193,9 +198,11 @@ class ExpenseListDownloadView(LoginRequiredMixin, View):
         if filters.get('category'):
             category = filters.get('category')
             filter_list.update({'category': category})
+        combined_filters = {**filter_list}        
         expenses_list = (
             Expense.objects
-                .filter(**filter_list)
+                .filter(**combined_filters)
+                .exclude(**STATIC_FILTERS)
                 .order_by('-expense_date')
                 .values()
         )
@@ -217,7 +224,8 @@ class ExpenseListDownloadView(LoginRequiredMixin, View):
             buffer,
             content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
         )
-        date_in_str = date.today().strftime(settings.DATE_FORMAT)
-        filename = f'inventory summary-{date_in_str}.xlsx'
+        start_date_name = datetime.strptime(filters['start_date'], "%Y-%m-%d").strftime("%b-%d, %Y")
+        end_date_name = datetime.strptime(filters['end_date'], "%Y-%m-%d").strftime("%b-%d, %Y")
+        filename = f'expense summary-{start_date_name} - {end_date_name}.xlsx'
         response['Content-Disposition'] = f'attachment; filename="{filename}"'
         return response

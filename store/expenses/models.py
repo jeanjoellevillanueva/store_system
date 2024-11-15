@@ -58,6 +58,7 @@ class Expense(ModelMixin):
     address = models.TextField(blank=True, default='')
     tin_number = models.CharField(blank=True, max_length=255, default='')
     or_number = models.CharField(blank=True, max_length=255, default='')
+    is_business = models.BooleanField(default=True)
 
     @classmethod
     def get_expenses_by_date_range(cls, start_date, end_date):
