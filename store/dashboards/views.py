@@ -32,15 +32,22 @@ class DashboardTemplateView(LoginRequiredMixin, TemplateView):
 
     def get_context_data(self, **kwargs: Any) -> Dict[str, Any]:
         context = super().get_context_data(**kwargs)
+        start_date = self.request.session.get('start_date')
+        end_date = self.request.session.get('end_date')
         current_date = date.today()
-        start_date = current_date - timedelta(days=7)
-        end_date = current_date
 
-        ## Getting DateString and Convert to Date
+        if start_date and end_date:
+            start_date = datetime.strptime(start_date, '%m/%d/%Y')
+            end_date = datetime.strptime(end_date, '%m/%d/%Y')
+        else:
+            start_date = current_date - timedelta(days=7)
+            end_date = current_date
+
+        # Getting DateString and Convert to Date
         context['start_date'] = start_date.strftime("%m/%d/%Y")
         context['start_date'] = start_date.strftime("%m/%d/%Y")
 
-        #Context
+        # Context
         context['start_date'] = start_date
         context['end_date'] = end_date
 
@@ -86,7 +93,7 @@ class ChartTemplateView(LoginRequiredMixin, TemplateView):
         total_profit = 0
         sales = Sale.get_sales_by_date_range(start_date, end_date)
         expenses = Expense.get_expenses_by_date_range(start_date, end_date)
-
+        expenses = expenses.filter(is_business=True)
         for sale in sales:
             total_sale += (sale['price'] * sale['quantity'])
             total_profit += sale['profit']
@@ -136,6 +143,7 @@ class DashboardSummaryTemplateView(LoginRequiredMixin, TemplateView):
 
         sales = Sale.get_sales_by_date_range(start_date, end_date)
         expenses = Expense.get_expenses_by_date_range(start_date, end_date)
+        expenses = expenses.filter(is_business=True)
         total_sale = 0
         total_expense = 0
         total_profit = 0
@@ -173,4 +181,5 @@ class DashboardSummaryTemplateView(LoginRequiredMixin, TemplateView):
         context['number_of_items'] = number_of_items
         context['item_sold'] = len(sales)
         context['total_stock'] = total_stock
+        expensess = Expense.get_expenses_by_date_range(start_date, end_date)
         return context

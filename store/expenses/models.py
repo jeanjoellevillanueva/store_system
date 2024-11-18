@@ -2,6 +2,7 @@ from django.db import models
 
 from mixins.models import ModelMixin
 
+
 class Expense(ModelMixin):
     """
     The cost you incur when paying bills, taxes, services for running
@@ -54,6 +55,10 @@ class Expense(ModelMixin):
     category = models.CharField(max_length=20, choices=CATEGORY_CHOICES)
     name = models.CharField(max_length=255)
     amount = models.DecimalField(max_digits=10, decimal_places=2)
+    address = models.TextField(blank=True, default='')
+    tin_number = models.CharField(blank=True, max_length=255, default='')
+    or_number = models.CharField(blank=True, max_length=255, default='')
+    is_business = models.BooleanField(default=True)
 
     @classmethod
     def get_expenses_by_date_range(cls, start_date, end_date):

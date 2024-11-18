@@ -12,6 +12,10 @@ class ExpenseForm(forms.ModelForm):
         fields = [
             'expense_date',
             'name',
+            'address',
+            'tin_number',
+            'or_number',
             'category',
             'amount',
+            'is_business',
         ]

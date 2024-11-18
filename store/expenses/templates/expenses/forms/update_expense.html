@@ -40,6 +40,9 @@
       let amount = event.currentTarget.dataset.amount;
       let category = event.currentTarget.dataset.category;
       let date = event.currentTarget.dataset.date;
+      let address = event.currentTarget.dataset.address;
+      let tinNumber = event.currentTarget.dataset.tin_number;
+      let orNumber = event.currentTarget.dataset.or_number;
 
       updateURL = event.currentTarget.dataset.url;
 
@@ -48,6 +51,9 @@
       $('#id_amount_update').val(amount);
       $('#id_category_update').val(category);
       $('#id_expense_date_update').val(date);
+      $('#id_address_update').val(address);
+      $('#id_tin_number_update').val(tinNumber);
+      $('#id_or_number_update').val(orNumber);
       $('#expenseUpdateModal').modal('show');
     });
 
