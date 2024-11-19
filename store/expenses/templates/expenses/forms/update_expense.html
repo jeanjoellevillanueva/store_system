@@ -14,7 +14,13 @@
           {% for field in expense_update_form %}
           <div class="form-row" style="margin-bottom: 1rem;">
             <label for="{{ field.auto_id }}">{{ field.label }}:</label>
-            {{ field|add_class:"form-control" }}
+            {% if field.field.widget.input_type != "checkbox" %}
+              {{ field|add_class:"form-control" }}
+            {% else %}
+            <div class="col-lg-1">
+              {{ field }}
+            </div>
+            {% endif %}
             <div id="{{ field.auto_id }}_error"></div>
           </div>
           {% endfor %}
@@ -43,7 +49,8 @@
       let address = event.currentTarget.dataset.address;
       let tinNumber = event.currentTarget.dataset.tin_number;
       let orNumber = event.currentTarget.dataset.or_number;
-
+      let isBusiness = event.currentTarget.dataset.is_business === 'True';
+      
       updateURL = event.currentTarget.dataset.url;
 
       // Set the values on the update form.
@@ -54,6 +61,7 @@
       $('#id_address_update').val(address);
       $('#id_tin_number_update').val(tinNumber);
       $('#id_or_number_update').val(orNumber);
+      $('#id_is_business_update').prop('checked', isBusiness);
       $('#expenseUpdateModal').modal('show');
     });
 
