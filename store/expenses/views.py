@@ -134,6 +134,10 @@ class ExpenseCustomUpdateView(LoginRequiredMixin, JSONResponseMixin, View):
                 expense.expense_date = form.cleaned_data['expense_date']
                 expense.updated_date = datetime.today()
                 expense.updated_by = request.user
+                expense.address = form.cleaned_data['address']
+                expense.tin_number = form.cleaned_data['tin_number']
+                expense.or_number = form.cleaned_data['or_number']
+                expense.is_business = form.cleaned_data['is_business']
                 expense.save()
                 json_data = {
                     'status': 'success',
