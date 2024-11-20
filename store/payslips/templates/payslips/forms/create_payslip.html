@@ -97,18 +97,15 @@
     ratePay.val(0.00);
     ratePay.prop('readonly', true);
     
-
     // Functions
     function clearErrorMessages() {
       $('[id^="id_"][id$="_error"]').empty();
     }
 
-
     function resetForm() {
       payslipForm[0].reset();
       clearErrorMessages();
     }
-
 
     // Event handler for modal close and reset the fields.
     payslipModal.on('hidden.bs.modal', () => {
@@ -120,11 +117,9 @@
       fieldsetCounter = 0;
     });
 
-
     basePay.on('change', () => {
-      ratePay.val(basePay.val()/8);
+      ratePay.val((basePay.val()/8).toFixed(2));
     });
-
 
     generateButton.on('click', () => {
       let formData = new FormData(payslipForm[0]);
@@ -136,8 +131,7 @@
       axios.post("{% url 'payslip:create_payslip' %}", formData, {
         headers: {
           'X-CSRFToken': csrfToken
-        },
-        responseType: 'blob'
+        }
       })
         .then(function(response) {
           // Create a blob from the response
@@ -150,9 +144,15 @@
 
           clearErrorMessages();
         })
-          .catch(function(error) {
-          console.error('Error:', error);
-          generateButton.html('Generate');
+        .catch(function (error) {
+          console.log(error.response.data);
+          if (error.response && error.response.data) {
+            let errors = error.response.data.errors;
+            for (let field in errors) {
+              let errorMsgs = errors[field];
+              $(`#id_${field}_error`).html(`<div class="text-danger">${errorMsgs}</div>`);
+            }
+          }
         })
         .finally(function () {
           generateButton.html('Generate');
@@ -160,7 +160,6 @@
     });
   });
 </script>
-
 <script>
   $(function() {
     $('#id_start_date').daterangepicker({
