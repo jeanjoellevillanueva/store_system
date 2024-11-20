@@ -145,7 +145,6 @@
           clearErrorMessages();
         })
         .catch(function (error) {
-          debugger;
           console.log(error.response.data);
           if (error.response && error.response.data) {
             let errors = error.response.data.errors;

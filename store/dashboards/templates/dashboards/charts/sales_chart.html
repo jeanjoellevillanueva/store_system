@@ -17,7 +17,6 @@
       let start_date =  Date.parse('{{ start_date }}');
       let end_date = Date.parse('{{ end_date }}');
       let total_days = (end_date / msPerDay) - (start_date / msPerDay);
-      debugger;
       if (total_days < 364) {
         barData = JSON.parse('{{ bar_data|safe }}');
       } else {
