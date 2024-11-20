@@ -30,7 +30,7 @@ from .utils import format_deductions
 from .utils import parse_deduction
 
 
-class PayslipCustomCreateView(LoginRequiredMixin, View):
+class PayslipCustomCreateView(LoginRequiredMixin, JSONResponseMixin, View):
     """
     Saving payslip into tables
     """
@@ -97,7 +97,7 @@ class PayslipCustomCreateView(LoginRequiredMixin, View):
                     'payslip_data': payslip_data,
                     }
                 return self.generate_payslip(payslip_data)
-
+        
         json_data = {'status': 'error', 'errors': form.errors}
         return self.render_json_response(json_data, status=400)
     
@@ -131,10 +131,10 @@ class PayslipCustomCreateView(LoginRequiredMixin, View):
         rate_pay = float(payslip_data['rate']) if payslip_data['rate'] else 0.0
         total_deduction = float(payslip_data['total_deduction']) if payslip_data['total_deduction'] else 0.0
 
-        basic_pay = base_pay * days_worked
-        overtime_pay = overtime_hours * rate_pay
-        total_earnings = basic_pay + overtime_pay
-        net_pay = (basic_pay + overtime_pay) - total_deduction
+        basic_pay = round(base_pay * days_worked, 2)
+        overtime_pay = round(overtime_hours * rate_pay, 2)
+        total_earnings = round(basic_pay + overtime_pay, 2)
+        net_pay = round((basic_pay + overtime_pay) - total_deduction, 2)
 
         # Payslip PDF settings
         WIDTH, HEIGHT = letter
