@@ -85,6 +85,7 @@ class PayslipCustomCreateView(LoginRequiredMixin, JSONResponseMixin, View):
                 overtime_hours = float(overtime_data['total_hours']) if overtime_data['total_hours'] else 0.0
                 
                 # Prepare the data you want to return in JSON
+                import pdb; pdb.set_trace()
                 payslip_data = {
                     'created_to': str(created_to),
                     'start_date': str(form.cleaned_data['start_date']),
@@ -96,6 +97,7 @@ class PayslipCustomCreateView(LoginRequiredMixin, JSONResponseMixin, View):
                     'deductions': str(deductions),
                     'total_deduction': str(total_deductions),
                     'created_by': str(created_by),
+                    'date_joined': form.cleaned_data['employee'].date_joined
                 }
 
                 generate_payslip_view = GeneratePayslipView()
