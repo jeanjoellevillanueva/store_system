@@ -227,6 +227,7 @@ class GeneratePayslipView:
         self.payslip_statement.setFillColor(bg_color)
         self.payslip_statement.rect(30, 480, 552, 20, fill=1)
         self.payslip_statement.setFillColor(colors.black)
+        self.create_coordinates(show=True) # Change to false to hide the coordinates.
         self.create_header(self.font_style, 14)
         self.create_employee_section(payslip_data, self.font_style, 14)
         self.create_table(payslip_data, self.font_style, 14)
