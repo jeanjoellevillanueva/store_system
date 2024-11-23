@@ -1,6 +1,7 @@
+import ast
+import os
 from datetime import datetime
 from io import BytesIO
-import ast
 
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import letter
@@ -8,6 +9,8 @@ from reportlab.lib.units import inch
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfgen import canvas
 from reportlab.platypus import Table, TableStyle
+
+from django.templatetags.static import static
 
 from .models import Payslip
 
@@ -49,8 +52,10 @@ class GeneratePayslipView:
     company_name = 'Galinduh Co. Online Shop'
     company_street = 'Iris Street, St. Agatha Homes'
     company_address = 'Tikay, Malolos, Bulacan'
+    owner_name = 'Glenda Ann S. Ranoco'
     font_style = 'Helvetica'
     payslip_statement = None
+    
 
     def set_pdf_font(self, canvas, font_style='Helvetica', font_size=24):
         """
@@ -155,7 +160,6 @@ class GeneratePayslipView:
         overtime_hours = float(payslip_data['ot_hours']) if payslip_data['ot_hours'] else 0.0
         rate_pay = float(payslip_data['rate']) if payslip_data['rate'] else 0.0
         total_deduction = float(payslip_data['total_deduction']) if payslip_data['total_deduction'] else 0.0
-
         basic_pay = round(base_pay * days_worked, 2)
         overtime_pay = round(overtime_hours * rate_pay, 2)
         total_earnings = round(basic_pay + overtime_pay, 2)
@@ -201,11 +205,30 @@ class GeneratePayslipView:
         """
         self.set_pdf_font(self.payslip_statement, font, font_size)
         generated_payslip = 'This is system generated payslip'
-        self.payslip_statement.line(30, 150, 195.6, 150) # Created by
-        self.payslip_statement.drawString(self.center_text(30, 195.6, payslip_data['created_by']), 153, payslip_data['created_by'])
-        self.payslip_statement.line(416.4, 150, 582, 150) # Created to
-        self.payslip_statement.drawString(self.center_text(416.4, 582, payslip_data['created_to']), 153, payslip_data['created_to'])
+        employer_sign_label = 'Employer Signature'
+        employee_sign_label = 'Employee Signature'
+
+        self.payslip_statement.drawString(self.center_text(30, 195.6, employer_sign_label), 180, net_pay)
+        self.payslip_statement.drawString(self.center_text(30, 195.6, employer_sign_label), 180, net_pay)
+        self.payslip_statement.drawString(self.center_text(30, 195.6, employer_sign_label), 180, employer_sign_label)
+        self.payslip_statement.line(30, 110, 195.6, 110) # Created by
+        self.payslip_statement.drawString(self.center_text(30, 195.6, self.owner_name), 113, self.owner_name)
+        self.payslip_statement.drawString(self.center_text(416.4, 582, employee_sign_label), 180, employee_sign_label)
+        self.payslip_statement.line(416.4, 110, 582, 110) # Created to
+        self.payslip_statement.drawString(self.center_text(416.4, 582, payslip_data['created_to']), 113, payslip_data['created_to'])
         self.payslip_statement.drawString(self.center_text(0, 612, generated_payslip), 35, generated_payslip)
+
+        signature_path = static('img/signature.JPG')
+        signature_full_path = os.path.join(os.getcwd(), signature_path.lstrip('/'))
+        self.payslip_statement.drawImage(
+            signature_full_path, 
+            x=65,  # Adjust x-coordinate
+            y=120,  # Adjust y-coordinate
+            width=100,  # Adjust width
+            height=40,  # Adjust height
+            preserveAspectRatio=True,
+            mask='auto'
+        )
         
     def generate_payslip(self, payslip_data, file_name='payslip.pdf'):
         """
@@ -222,16 +245,16 @@ class GeneratePayslipView:
         # Payslip PDF settings
         WIDTH, HEIGHT = letter
         self.payslip_statement.setTitle(file_name)
-        self.set_pdf_font(self.payslip_statement, 'Helvetica', 13)
+    
         bg_color = colors.Color(0.8, 0.8, 0.8)
         self.payslip_statement.setFillColor(bg_color)
         self.payslip_statement.rect(30, 480, 552, 20, fill=1)
         self.payslip_statement.setFillColor(colors.black)
         self.create_coordinates(show=True) # Change to false to hide the coordinates.
         self.create_header(self.font_style, 14)
-        self.create_employee_section(payslip_data, self.font_style, 14)
-        self.create_table(payslip_data, self.font_style, 14)
-        self.create_footer(payslip_data, self.font_style, 14)
+        self.create_employee_section(payslip_data, self.font_style, 13)
+        self.create_table(payslip_data, self.font_style, 13)
+        self.create_footer(payslip_data, self.font_style, 13)
         self.payslip_statement.save()
         buffer.seek(0)
         return buffer

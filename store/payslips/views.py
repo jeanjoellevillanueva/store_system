@@ -85,7 +85,6 @@ class PayslipCustomCreateView(LoginRequiredMixin, JSONResponseMixin, View):
                 overtime_hours = float(overtime_data['total_hours']) if overtime_data['total_hours'] else 0.0
                 
                 # Prepare the data you want to return in JSON
-                import pdb; pdb.set_trace()
                 payslip_data = {
                     'created_to': str(created_to),
                     'start_date': str(form.cleaned_data['start_date']),
