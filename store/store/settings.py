@@ -150,3 +150,6 @@ SUCCESS_COLOR = '#5cb85c'
 DANGER_COLOR = '#d9534f'
 WARNING_COLOR = '#f0ad4e'
 INFO_COLOR = '#5bc0de'
+
+# Separate settings to easily find items.
+from .configs.configs_paylips import *
