@@ -29,6 +29,19 @@ class DashboardTemplateView(LoginRequiredMixin, TemplateView):
     analysis and overview of key business metrics and performance.
     """
     template_name = 'dashboards/dashboard.html'
+    
+    def get_chart_title(self, start_date, end_date):
+        days_difference = (end_date - start_date).days
+        start_date_disp = start_date.strftime("%b %d, %Y")
+        end_date_disp = end_date.strftime("%b %d, %Y")
+
+        if days_difference >= 364 and start_date.year == end_date.year:
+            chart_title = f"Monthly Financial Chart ({start_date.year})"
+        elif days_difference < 364:
+            chart_title = f"Daily Financial Chart ({start_date_disp} - {end_date_disp})"
+        else:
+            chart_title = f"Monthly Financial Chart ({start_date_disp} - {end_date_disp})"
+        return chart_title
 
     def get_context_data(self, **kwargs: Any) -> Dict[str, Any]:
         context = super().get_context_data(**kwargs)
@@ -43,20 +56,10 @@ class DashboardTemplateView(LoginRequiredMixin, TemplateView):
             start_date = current_date - timedelta(days=7)
             end_date = current_date
 
+        chart_title = self.get_chart_title(start_date, end_date)
         # Getting DateString and Convert to Date
         context['start_date'] = start_date.strftime("%m/%d/%Y")
         context['start_date'] = start_date.strftime("%m/%d/%Y")
-
-        if (end_date - start_date).days <= 364 and start_date.year == 2024 and end_date.year == 2024:
-            chart_title = f"Monthly Financial Chart ({start_date.year})"
-        elif (end_date - start_date).days < 364:
-            start_date_disp = start_date.strftime("%b %d, %Y")
-            end_date_disp = end_date.strftime("%b %d, %Y")
-            chart_title = f"Daily Financial Chart ({start_date_disp} - {end_date_disp})"
-        else:
-            start_date_disp = start_date.strftime("%b %d, %Y")
-            end_date_disp = end_date.strftime("%b %d, %Y")
-            chart_title = f"Monthly Financial Chart ({start_date_disp} - {end_date_disp})"
 
         # Context
         context['start_date'] = start_date
@@ -68,21 +71,10 @@ class DashboardTemplateView(LoginRequiredMixin, TemplateView):
         context = super().get_context_data(**kwargs)
         start_date = datetime.strptime(self.request.POST['start_date'], settings.DATE_FORMAT)
         end_date = datetime.strptime(self.request.POST['end_date'], settings.DATE_FORMAT)
-
+        chart_title = self.get_chart_title(start_date, end_date)
         # Getting DateString and Convert to Date
         self.request.session['start_date'] = start_date.strftime("%m/%d/%Y")
         self.request.session['end_date'] = end_date.strftime("%m/%d/%Y")
-
-        if (end_date - start_date).days >= 364 and start_date.year == end_date.year:
-            chart_title = f"Monthly Financial Chart ({start_date.year})"
-        elif (end_date - start_date).days < 364:
-            start_date_disp = start_date.strftime("%b %d, %Y")
-            end_date_disp = end_date.strftime("%b %d, %Y")
-            chart_title = f"Daily Financial Chart ({start_date_disp} - {end_date_disp})"
-        else:
-            start_date_disp = start_date.strftime("%b %d, %Y")
-            end_date_disp = end_date.strftime("%b %d, %Y")
-            chart_title = f"Monthly Financial Chart ({start_date_disp} - {end_date_disp})"
 
         # Context
         context['start_date'] = start_date
@@ -131,7 +123,7 @@ class ChartTemplateView(LoginRequiredMixin, TemplateView):
 
         bar_data = get_financial_bar_chart(sales, expenses, start_date, end_date)
         bar_month_data = get_month_financial_bar_chart(sales, expenses, start_date, end_date)
-    
+
         #Context
         context['start_date'] = start_date.isoformat()
         context['end_date'] = end_date.isoformat()
