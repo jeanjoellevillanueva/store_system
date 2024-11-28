@@ -218,7 +218,7 @@ class GeneratePayslipView:
         Creates the footer of the payslip.
         """
         self.set_pdf_font(self.payslip_statement, font, font_size)
-        generated_payslip = 'This is system generated payslip'
+        generated_payslip = 'This is a system generated payslip'
         employer_sign_label = 'Employer Signature'
         employee_sign_label = 'Employee Signature'
         (
