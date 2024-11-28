@@ -3,6 +3,7 @@ from django.db import models
 
 from mixins.models import ModelMixin
 
+
 class Payslip(ModelMixin):
     """
     Represent a payslip that can be generated
