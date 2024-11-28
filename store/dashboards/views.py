@@ -47,10 +47,21 @@ class DashboardTemplateView(LoginRequiredMixin, TemplateView):
         context['start_date'] = start_date.strftime("%m/%d/%Y")
         context['start_date'] = start_date.strftime("%m/%d/%Y")
 
+        if (end_date - start_date).days <= 364 and start_date.year == 2024 and end_date.year == 2024:
+            chart_title = f"Monthly Financial Chart ({start_date.year})"
+        elif (end_date - start_date).days < 364:
+            start_date_disp = start_date.strftime("%b %d, %Y")
+            end_date_disp = end_date.strftime("%b %d, %Y")
+            chart_title = f"Daily Financial Chart ({start_date_disp} - {end_date_disp})"
+        else:
+            start_date_disp = start_date.strftime("%b %d, %Y")
+            end_date_disp = end_date.strftime("%b %d, %Y")
+            chart_title = f"Monthly Financial Chart ({start_date_disp} - {end_date_disp})"
+
         # Context
         context['start_date'] = start_date
         context['end_date'] = end_date
-
+        context['chart_title'] = chart_title
         return context
     
     def post(self, request, **kwargs):
@@ -62,10 +73,21 @@ class DashboardTemplateView(LoginRequiredMixin, TemplateView):
         self.request.session['start_date'] = start_date.strftime("%m/%d/%Y")
         self.request.session['end_date'] = end_date.strftime("%m/%d/%Y")
 
+        if (end_date - start_date).days >= 364 and start_date.year == end_date.year:
+            chart_title = f"Monthly Financial Chart ({start_date.year})"
+        elif (end_date - start_date).days < 364:
+            start_date_disp = start_date.strftime("%b %d, %Y")
+            end_date_disp = end_date.strftime("%b %d, %Y")
+            chart_title = f"Daily Financial Chart ({start_date_disp} - {end_date_disp})"
+        else:
+            start_date_disp = start_date.strftime("%b %d, %Y")
+            end_date_disp = end_date.strftime("%b %d, %Y")
+            chart_title = f"Monthly Financial Chart ({start_date_disp} - {end_date_disp})"
+
         # Context
         context['start_date'] = start_date
         context['end_date'] = end_date
-
+        context['chart_title'] = chart_title
         return self.render_to_response(context)
     
 
@@ -97,8 +119,6 @@ class ChartTemplateView(LoginRequiredMixin, TemplateView):
         for sale in sales:
             total_sale += (sale['price'] * sale['quantity'])
             total_profit += sale['profit']
-        # if expenses:
-        #     total_expense = float(expenses.aggregate(total_amount=Sum('amount'))['total_amount'])
 
         df_receipt = pd.DataFrame.from_records(sales)
         if not df_receipt.empty:
@@ -111,7 +131,7 @@ class ChartTemplateView(LoginRequiredMixin, TemplateView):
 
         bar_data = get_financial_bar_chart(sales, expenses, start_date, end_date)
         bar_month_data = get_month_financial_bar_chart(sales, expenses, start_date, end_date)
-
+    
         #Context
         context['start_date'] = start_date.isoformat()
         context['end_date'] = end_date.isoformat()
@@ -181,5 +201,5 @@ class DashboardSummaryTemplateView(LoginRequiredMixin, TemplateView):
         context['number_of_items'] = number_of_items
         context['item_sold'] = len(sales)
         context['total_stock'] = total_stock
-        expensess = Expense.get_expenses_by_date_range(start_date, end_date)
+        
         return context
