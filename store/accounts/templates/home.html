@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+
+{% block content %} 
+  <div class="row">
+    <div class="col-xl-12 col-lg-12">
+      <div class="card shadow mb-4">
+        <div
+          class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+          <h6 class="m-0 font-weight-bold text-primary">Accounts</h6>
+          <div class="column justify-content-around">
+            <button data-toggle="modal" data-target="#createAccountModal" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm btn-icon-split">
+              <span class="icon text-white-50">
+                <i class="fa fa-user-plus" aria-hidden="true"></i>
+              </span>
+              <span class="text">Create New Account</span>
+            </button>
+          </div>
+        </div>
+        <div id="idAccountTableContainer" class="card-body d-flex justify-content-center align-items-center">
+          <!-- This will be filled by axios -->
+        </div>
+      </div>
+    </div>
+  </div>
+{% include 'accounts/forms/create_account.html' %}
+{% include 'accounts/forms/delete_account.html' %}
+{% include 'accounts/forms/update_account.html' %}
+{% endblock %}
+
+{% block javascript %}
+<script>
+  $(document).ready(()=>{
+    // Call the function to fetch data and populate the DataTable
+    reloadComponent("{% url 'accounts:list_account' %}", 'idAccountTableContainer', true);
+  });
+</script>
+{% endblock %}

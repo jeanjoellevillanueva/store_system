@@ -1,0 +1,29 @@
+{% load widget_tweaks %}
+<div class="modal fade" id="overtimeModal" tabindex="-1" role="dialog" aria-labelledby="overtimeModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <form id="createOvertimeForm" method="POST">
+        {% csrf_token %}
+        <div class="modal-header">
+          <h5 class="modal-title" id="overtimeModalLabel">Apply Overtime</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          {% for field in overtime_form %}
+          <div class="form-row" style="margin-bottom: 1rem;">
+            <label for="{{ field.auto_id }}">{{ field.label }}:</label>
+            {{ field|add_class:"form-control" }}
+            <div id="{{ field.auto_id }}_error"></div>
+          </div>
+          {% endfor %}
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-danger" data-dismiss="modal">Close</button>
+          <button type="button" class="btn btn-primary" id="idCreateOvertimeSave">Submit</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
