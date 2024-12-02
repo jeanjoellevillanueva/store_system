@@ -180,8 +180,8 @@ class DashboardSummaryTemplateView(LoginRequiredMixin, TemplateView):
 
         # Deduct platform fee
         deduction = float(total_sale) * settings.PLATFORM_PERCENTAGE
-        total_net_profit = float(total_profit)
-        total_gross_profit = float(total_profit) - deduction - total_expense
+        total_gross_profit = float(total_profit)
+        total_net_profit = float(total_profit) - deduction - total_expense
 
         # Summary
         context['stock_value'] = Product.stock_value()
