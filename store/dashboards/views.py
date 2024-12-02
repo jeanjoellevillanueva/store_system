@@ -29,6 +29,19 @@ class DashboardTemplateView(LoginRequiredMixin, TemplateView):
     analysis and overview of key business metrics and performance.
     """
     template_name = 'dashboards/dashboard.html'
+    
+    def get_chart_title(self, start_date, end_date):
+        days_difference = (end_date - start_date).days
+        start_date_disp = start_date.strftime("%b %d, %Y")
+        end_date_disp = end_date.strftime("%b %d, %Y")
+
+        if days_difference >= 364 and start_date.year == end_date.year:
+            chart_title = f"Monthly Financial Chart ({start_date.year})"
+        elif days_difference < 364:
+            chart_title = f"Daily Financial Chart ({start_date_disp} - {end_date_disp})"
+        else:
+            chart_title = f"Monthly Financial Chart ({start_date_disp} - {end_date_disp})"
+        return chart_title
 
     def get_context_data(self, **kwargs: Any) -> Dict[str, Any]:
         context = super().get_context_data(**kwargs)
@@ -43,6 +56,7 @@ class DashboardTemplateView(LoginRequiredMixin, TemplateView):
             start_date = current_date - timedelta(days=7)
             end_date = current_date
 
+        chart_title = self.get_chart_title(start_date, end_date)
         # Getting DateString and Convert to Date
         context['start_date'] = start_date.strftime("%m/%d/%Y")
         context['start_date'] = start_date.strftime("%m/%d/%Y")
@@ -50,14 +64,14 @@ class DashboardTemplateView(LoginRequiredMixin, TemplateView):
         # Context
         context['start_date'] = start_date
         context['end_date'] = end_date
-
+        context['chart_title'] = chart_title
         return context
     
     def post(self, request, **kwargs):
         context = super().get_context_data(**kwargs)
         start_date = datetime.strptime(self.request.POST['start_date'], settings.DATE_FORMAT)
         end_date = datetime.strptime(self.request.POST['end_date'], settings.DATE_FORMAT)
-
+        chart_title = self.get_chart_title(start_date, end_date)
         # Getting DateString and Convert to Date
         self.request.session['start_date'] = start_date.strftime("%m/%d/%Y")
         self.request.session['end_date'] = end_date.strftime("%m/%d/%Y")
@@ -65,7 +79,7 @@ class DashboardTemplateView(LoginRequiredMixin, TemplateView):
         # Context
         context['start_date'] = start_date
         context['end_date'] = end_date
-
+        context['chart_title'] = chart_title
         return self.render_to_response(context)
     
 
@@ -97,8 +111,6 @@ class ChartTemplateView(LoginRequiredMixin, TemplateView):
         for sale in sales:
             total_sale += (sale['price'] * sale['quantity'])
             total_profit += sale['profit']
-        # if expenses:
-        #     total_expense = float(expenses.aggregate(total_amount=Sum('amount'))['total_amount'])
 
         df_receipt = pd.DataFrame.from_records(sales)
         if not df_receipt.empty:
@@ -181,5 +193,5 @@ class DashboardSummaryTemplateView(LoginRequiredMixin, TemplateView):
         context['number_of_items'] = number_of_items
         context['item_sold'] = len(sales)
         context['total_stock'] = total_stock
-        expensess = Expense.get_expenses_by_date_range(start_date, end_date)
+        
         return context

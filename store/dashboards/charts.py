@@ -1,3 +1,5 @@
+from collections import defaultdict
+
 from decimal import Decimal
 from datetime import timedelta
 
@@ -27,14 +29,21 @@ def get_financial_bar_chart(sales, expenses, start_date, end_date):
     daily_profit = {date: 0.00 for date in date_range}
     count=1
     
-    sorted_receipts = Sale.objects.filter(
-        created_date__date__range=(
-        start_date, end_date)).values(
-        'receipt_number', 'created_date').distinct(
-        'receipt_number')
-    
-    for receipt in sorted_receipts:
-        date = (receipt['created_date'].astimezone().strftime(settings.DATE_FORMAT))
+    sales = Sale.get_sales_by_date_range(start_date, end_date)
+    daily_receipts = pd.DataFrame.from_records(sales)
+    if not daily_receipts.empty:
+        daily_receipts['created_date'] = pd.to_datetime(daily_receipts['created_date'])
+        daily_receipts.drop_duplicates(
+            subset=['receipt_number'], keep='first', inplace=True
+        )
+        daily_receipts['created_date'] = daily_receipts['created_date'].dt.date
+        daily_receipts = daily_receipts[['receipt_number', 'created_date']]
+        number_of_items = len(daily_receipts)
+    else:
+        number_of_items = 0
+
+    for _, receipt in daily_receipts.iterrows():
+        date = (receipt['created_date'].strftime(settings.DATE_FORMAT))
         daily_orders[date] += 1
 
     for sale in sales:
@@ -144,20 +153,23 @@ def get_month_financial_bar_chart(sales, expenses, start_date, end_date):
     monthly_orders= {date: 0.00 for date in date_range}
     monthly_expenses = {date: 0.00 for date in date_range}
     monthly_profit = {date: 0.00 for date in date_range}
+    #
+    sales = Sale.get_sales_by_date_range(start_date, end_date)
+    monthly_receipts = pd.DataFrame.from_records(sales)
+    if not monthly_receipts.empty:
+        monthly_receipts['created_date'] = pd.to_datetime(monthly_receipts['created_date'])
+        monthly_receipts.drop_duplicates(
+            subset=['receipt_number'], keep='first', inplace=True
+        )
+        monthly_receipts['created_date'] = monthly_receipts['created_date'].dt.strftime('%Y-%m')
+        monthly_receipts = monthly_receipts[['receipt_number', 'created_date']]
+        number_of_items = len(monthly_receipts)
+    else:
+        number_of_items = 0
 
-    sorted_receipts = Sale.objects.order_by('created_date')
-    sorted_receipts = Sale.objects.filter(
-        created_date__date__range=(
-        start_date, end_date)).values(
-        'receipt_number', 'created_date').distinct(
-        'receipt_number')
-    monthly_receipt = [{
-        **receipt, 
-        'month': receipt['created_date'].astimezone().strftime('%Y-%m')
-    } for receipt in sorted_receipts]
-
-    for receipt in monthly_receipt:
-        month = receipt['month']
+    #
+    for _, receipt in monthly_receipts.iterrows():
+        month = receipt['created_date']
         monthly_orders[month] += 1
 
     for sale in sales:
@@ -166,7 +178,7 @@ def get_month_financial_bar_chart(sales, expenses, start_date, end_date):
         deduct = float(total_sale) * settings.PLATFORM_PERCENTAGE
         monthly_sales[date] += float(total_sale)
         monthly_profit[date] += float(sale['profit']) - deduct
-    
+
     for expense in expenses:
         date = format_month_year(expense['expense_date'])
         monthly_expenses[date] += float(expense['amount'])
