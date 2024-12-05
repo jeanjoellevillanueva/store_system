@@ -48,7 +48,7 @@ class AccountComponentTemplateView(LoginRequiredMixin, JSONResponseMixin, Templa
     Creating User Account, Employee, Admin for Galinduh Web App
     """
     template_name = 'home.html'
-
+    import pdb; pdb.set_trace()
     def get_context_data(self, **kwargs: Any) -> Dict[str, Any]:
         context = super().get_context_data(**kwargs)
         context['employee_form'] = Employee
