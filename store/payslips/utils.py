@@ -1,6 +1,6 @@
 import ast
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
 from io import BytesIO
 
 from reportlab.lib import colors
@@ -10,11 +10,14 @@ from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfgen import canvas
 from reportlab.platypus import Table, TableStyle
 
+from django.conf import settings
 from django.templatetags.static import static
+from django.utils import timezone
+
 
 from .models import Payslip
 from .numbers import convert_number_to_words
-
+from attendance.models import Overtime
 
 def parse_deduction(orig_dict):
     """
@@ -70,7 +73,26 @@ class GeneratePayslipView:
         rate_pay = float(payslip_data['rate']) if payslip_data['rate'] else 0.0
         total_deduction = float(payslip_data['total_deduction']) if payslip_data['total_deduction'] else 0.0
         basic_pay = round(base_pay * days_worked, 2)
-        overtime_pay = round(overtime_hours * rate_pay, 2)
+
+        ot_start_date = datetime.strptime(settings.STANDARD_OVERTIME_START_DATE,  '%Y-%m-%d').replace(tzinfo=timezone.utc)
+        ot_end_date = datetime.strptime(settings.STANDARD_OVERTIME_END_DATE,  '%Y-%m-%d').replace(tzinfo=timezone.utc)
+        ot_rate_pay = settings.OT_RATE
+        start_date = datetime.strptime(payslip_data['start_date'], '%Y-%m-%d')
+        end_date = datetime.strptime(payslip_data['end_date'], '%Y-%m-%d')
+        ot_hours = Overtime.objects.filter(
+            employee_id=self.employee.id,
+            date__range=(start_date, end_date)
+        ).values('date', 'hours')
+        overtime_list = []
+
+        for overtime in ot_hours:
+            if overtime['date'] >= ot_start_date and overtime['date'] <= ot_end_date:
+                overtime_pay = round(float(overtime['hours']) * ot_rate_pay, 2)
+            else:
+                overtime_pay = round(float(overtime['hours']) * rate_pay, 2)
+            overtime_list.append({'ot_pay': overtime_pay})
+        
+        overtime_pay = round(sum(overtime['ot_pay'] for overtime in overtime_list), 2)
         total_earnings = round(basic_pay + overtime_pay, 2)
         net_pay = round((basic_pay + overtime_pay) - total_deduction, 2)
         return base_pay, days_worked, overtime_hours, rate_pay, total_deduction, basic_pay, overtime_pay, total_earnings, net_pay
