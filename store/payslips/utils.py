@@ -1,14 +1,12 @@
 import ast
 import os
-from datetime import datetime, timedelta
+from datetime import datetime
 from io import BytesIO
 
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import letter
-from reportlab.lib.units import inch
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfgen import canvas
-from reportlab.platypus import Table, TableStyle
 
 from django.conf import settings
 from django.templatetags.static import static
