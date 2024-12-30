@@ -5,13 +5,20 @@
       <form id="createAccountForm" method="POST">
         {% csrf_token %}
         <div class="modal-header">
-          <h5 class="modal-title" id="createAccountModalLabel">Create User</h5>
+          <h5 class="modal-title" id="createAccountModalLabel">Create New User</h5>
           <button type="button" class="close" data-dismiss="modal" aria-label="Close">
             <span aria-hidden="true">&times;</span>
           </button>
         </div>
         <div class="modal-body">
-          
+          {% for field in login_form %}
+          <div class="form-row" style="margin-bottom: 1rem;">
+            <label for="{{ field.auto_id }}">{{ field.label }}:</label>
+            {{ field|add_class:"form-control" }}
+            </div>
+            <div id="{{ field.auto_id }}_error"></div>
+          {% endfor %}
+
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-danger" data-dismiss="modal">Close</button>
@@ -21,3 +28,9 @@
     </div>
   </div>
 </div>
+
+<script>
+   $(document).ready(() => {
+    let createAccountForm = $('#createAccountForm');
+   });
+</script>

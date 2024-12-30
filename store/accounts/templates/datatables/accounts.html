@@ -11,47 +11,39 @@
       </thead>
       <thead>
         <tr>
-      <tbody>
-        {% for user in users %}
-        <tr>
-          <td class="text-center">{{ user.username }}</td>
-          <td class="text-center">{{ user.full_name }}</td>
-          <td class="text-center">{{ user.is_active }}</td>
-          <td class="text-center">{{ user.is_superuser }}</td>
-          <td class="text-center">{{ user.is_staff }}</td>
-            <a
-              class="btn btn-warning update-expense"
-              data-id="{{ expense.id }}"
-              data-category="{{ expense.category }}"
-              data-amount="{{ expense.amount }}"
-              data-address="{{ expense.address }}"
-              data-tin_number="{{ expense.tin_number }}"
-              data-or_number="{{ expense.or_number }}"
-              data-name="{{ expense.name }}"
-              data-date='{{ expense.expense_date|date:"m/d/Y" }}'
-              data-is_business="{{ expense.is_business }}"
-              data-url="{% url 'expenses:update_expense' expense.id %}"
-            >
-              <span class="icon text-white-50">
-                <i class="fas fa-pen"></i>
-              </span>
-            </a>
-            <a
-              class="btn btn-danger delete-expense"
-              data-toggle="modal"
-              data-target="#expenseDeleteModal"
-              data-url="{% url 'expenses:delete_expense' expense.id %}"
-            >
-              <span class="icon text-white-50">
-                <i class="fas fa-trash"></i>
-              </span>
-            </a>
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
+          <tbody>
+          {% for user in users %}
+            <tr>
+              <td class="text-center">{{ user.username }}</td>
+              <td class="text-center">{{ user.full_name }}</td>
+              <td class="text-center">{{ user.is_active }}</td>
+              <td class="text-center">{{ user.is_superuser }}</td>
+              <td class="text-center">{{ user.is_staff }}</td>
+                <a
+                  class="btn btn-warning update-expense"
+                  data-id="{{ user.username }}"
+                >
+                  <span class="icon text-white-50">
+                    <i class="fas fa-pen"></i>
+                  </span>
+                </a>
+                <a
+                  class="btn btn-danger delete-user"
+                  data-toggle="modal"
+                  data-target="#userDeleteModal"
+                  data-url="{% url 'accounts:delete_account' user.username %}"
+                >
+                  <span class="icon text-white-50">
+                    <i class="fas fa-trash"></i>
+                  </span>
+                </a>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
     </table>
   </div>
+
   <script>
     /**
      * Apply datatable.net plugin on the table.

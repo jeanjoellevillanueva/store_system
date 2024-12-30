@@ -22,9 +22,9 @@
       </div>
     </div>
   </div>
-{% include 'accounts/forms/create_account.html' %}
-{% include 'accounts/forms/delete_account.html' %}
-{% include 'accounts/forms/update_account.html' %}
+  {% include 'accounts/forms/create_account.html' %}
+  {% include 'accounts/forms/delete_account.html' %}
+  {% include 'accounts/forms/update_account.html' %}
 {% endblock %}
 
 {% block javascript %}
@@ -33,5 +33,8 @@
     // Call the function to fetch data and populate the DataTable
     reloadComponent("{% url 'accounts:list_account' %}", 'idAccountTableContainer', true);
   });
+</script>
+
+<script>
 </script>
 {% endblock %}

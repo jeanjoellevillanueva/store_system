@@ -48,9 +48,10 @@ class AccountComponentTemplateView(LoginRequiredMixin, JSONResponseMixin, Templa
     Creating User Account, Employee, Admin for Galinduh Web App
     """
     template_name = 'home.html'
-    import pdb; pdb.set_trace()
+
     def get_context_data(self, **kwargs: Any) -> Dict[str, Any]:
         context = super().get_context_data(**kwargs)
+        context['login_form'] = LoginForm
         context['employee_form'] = Employee
         return context
 
@@ -63,10 +64,11 @@ class AccountListDatatableTemplateView(LoginRequiredMixin, TemplateView):
     """
     List of all account user
     """
+    template_name = 'accounts/datatables/accounts.html'
 
     def get_context_data(self, **kwargs: Any) -> Dict[str, Any]:
         context = super().get_context_data(**kwargs)
-        users = User.objects.values('username', 'first_name', 'last_name', 'is_active', 'is_superuser', 'is_staff').order_by('is_superuser', 'name')
+        users = User.objects.values('username', 'first_name', 'last_name', 'is_active', 'is_superuser', 'is_staff').order_by('is_superuser', 'first_name')
         for user in users:
             user['full_name'] = f"{user['first_name'] or ''} {user['last_name'] or ''}".strip()
         context['users'] = users
@@ -79,16 +81,13 @@ class AccountCustomCreateView(LoginRequiredMixin, JSONResponseMixin, View):
     """
 
 
-
 class AccountCustomDeleteView(LoginRequiredMixin, JSONResponseMixin, View):
     """
     Updating User Account, Employee, Admin
     """
 
 
-
 class AccountCustomUpdateView(LoginRequiredMixin, JSONResponseMixin, View):
     """
     Deleting User Account, Employee, Admin
     """
-    
