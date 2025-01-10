@@ -1,0 +1,69 @@
+<div class="table-responsive">
+    <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+      <thead>
+        <tr>
+          <th class="text-center">Username</th>
+          <th class="text-center">First Name</th>
+          <th class="text-center">Last Name</th>
+          <th class="text-center">Admin</th>
+          <th class="text-center">Staff</th>
+          <th class="text-center">Action</th>
+        </tr>
+      </thead>
+      <thead>
+          <tbody>
+          {% for user in users %}
+          <tr>
+            <td class="text-center">{{ user.username }}</td>
+            <td class="text-center">{{ user.first_name }}</td>
+            <td class="text-center">{{ user.last_name }}</td>
+            <td class="text-center">{{ user.is_superuser }}</td>
+            <td class="text-center">{{ user.is_staff }}</td>
+            <td class="text-center">
+              <a
+                class="btn btn-warning update-account"
+                data-id="{{ user.id }}"
+                data-username="{{ user.username }}"
+                data-password="{{ user.password }}"
+                data-email="{{ user.email }}"
+                data-first_name="{{ user.first_name }}"
+                data-last_name="{{ user.last_name }}"
+                data-is_superuser="{{ user.is_superuser }}"
+                data-is_staff="{{ user.is_staff }}"
+                data-base_pay="{{ user.base_pay }}"
+                data-designation="{{ user.designation }}"
+                data-department="{{ user.department }}"
+                data-url="{% url 'accounts:update_account' user.id %}"
+              >
+                <span class="icon text-white-50">
+                  <i class="fas fa-pen"></i>
+                </span>
+              </a>
+              <a
+                class="btn btn-danger delete-user"
+                data-toggle="modal"
+                data-target="#accountDeleteModal"
+                data-url="{% url 'accounts:delete_account' user.id %}"
+              >
+                <span class="icon text-white-50">
+                  <i class="fas fa-trash"></i>
+                </span>
+              </a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+    </table>
+  </div>
+
+  <script>
+    /**
+     * Apply datatable.net plugin on the table.
+     */
+    $(document).ready(function() {
+      $('#dataTable').DataTable({
+        order: [],
+        pageLength: parseInt("{{ DATATABLES_LENGTH }}"),
+      });
+    });
+  </script>

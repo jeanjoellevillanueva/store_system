@@ -38,12 +38,12 @@ urlpatterns = [
         name='create_account'
     ),
     path(
-        'delete/',
+        'delete/<int:id>',
         AccountCustomDeleteView.as_view(),
         name='delete_account'
     ),
     path(
-        'update/',
+        'update/<int:id>',
         AccountCustomUpdateView.as_view(),
         name='update_account'
     ),

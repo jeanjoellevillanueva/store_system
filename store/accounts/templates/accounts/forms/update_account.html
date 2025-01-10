@@ -1,29 +1,135 @@
 {% load widget_tweaks %}
-<div class="modal fade" id="overtimeModal" tabindex="-1" role="dialog" aria-labelledby="overtimeModalLabel" aria-hidden="true">
+<div class="modal fade" id="accountUpdateModal" tabindex="-1" role="dialog" aria-labelledby="accountUpdateModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-lg" role="document">
     <div class="modal-content">
-      <form id="createOvertimeForm" method="POST">
+      <form id="accountUpdateForm" method="POST">
         {% csrf_token %}
         <div class="modal-header">
-          <h5 class="modal-title" id="overtimeModalLabel">Apply Overtime</h5>
+          <h5 class="modal-title" id="accountUpdateModalLabel">Update Account</h5>
           <button type="button" class="close" data-dismiss="modal" aria-label="Close">
             <span aria-hidden="true">&times;</span>
           </button>
         </div>
         <div class="modal-body">
-          {% for field in overtime_form %}
+
+          {% for field in update_user_form %}
           <div class="form-row" style="margin-bottom: 1rem;">
             <label for="{{ field.auto_id }}">{{ field.label }}:</label>
-            {{ field|add_class:"form-control" }}
-            <div id="{{ field.auto_id }}_error"></div>
+              {% if field.field.widget.input_type != "checkbox" %}
+                {{ field|add_class:"form-control" }}
+              {% else %}
+              <div class="col-lg-1">
+                {{ field }}
+              </div>
+              {% endif %}
+                <div id="{{ field.auto_id }}_error"></div>
           </div>
           {% endfor %}
+
+          {% for field in update_employee_form %}
+          <div class="form-row" style="margin-bottom: 1rem;">
+            <label for="{{ field.auto_id }}">{{ field.label }}:</label>
+                {{ field|add_class:"form-control" }}
+                <div id="{{ field.auto_id }}_error"></div>
+          </div>
+          {% endfor %}
+
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-danger" data-dismiss="modal">Close</button>
-          <button type="button" class="btn btn-primary" id="idCreateOvertimeSave">Submit</button>
+          <button type="button" class="btn btn-primary" id="idUpdateAccountSave">Save</button>
         </div>
       </form>
     </div>
   </div>
 </div>
+
+<script>
+  /**
+   * Script for submitting the form.
+   */
+  $(document).ready(() => {
+    $('#id_password_update').attr('type', 'password');
+    let updateURL;
+    $('#idAccountTableContainer').on('click', '.update-account', (event) => {
+      let id = event.currentTarget.dataset.id;
+      let username = event.currentTarget.dataset.username;
+      let password = event.currentTarget.dataset.password;
+      let emailAddress = event.currentTarget.dataset.email;
+      let firstName = event.currentTarget.dataset.first_name;
+      let lastName = event.currentTarget.dataset.last_name;
+      let staffStatus = event.currentTarget.dataset.is_staff === 'True';
+      let superuserStatus = event.currentTarget.dataset.is_superuser === 'True';
+      let basePay = event.currentTarget.dataset.base_pay;
+      let designation = event.currentTarget.dataset.designation;
+      let department = event.currentTarget.dataset.department;
+
+      updateURL = event.currentTarget.dataset.url;
+      // Set the values on the update form.
+      $('#id_username_update').val(username);
+      $('#id_password_update').val(password);
+      $('#id_email_update').val(emailAddress);
+      $('#id_first_name_update').val(firstName);
+      $('#id_last_name_update').val(lastName);
+      $('#id_is_staff_update').prop('checked', staffStatus);
+      $('#id_is_superuser_update').prop('checked', staffStatus);
+      $('#id_base_pay_update').val(basePay);
+      $('#id_designation_update').val(designation)
+      $('#id_department_update').val(department)
+      $('#accountUpdateModal').modal('show');
+    });
+
+    let accountUpdateForm = $('#accountUpdateForm');
+    let saveButton = $('#idUpdateAccountSave');
+    let accountUpdateModal = $('#accountUpdateModal');
+
+    /**
+     * Remove all error messages on the customer form.
+     */
+    function clearErrorMessages() {
+      $('[id^="id_"][id$="_error"]').empty();
+    }
+
+    function resetForm() {
+      accountUpdateForm[0].reset();
+      clearErrorMessages();
+    }
+
+    // Event handler for modal close and reset the fields.
+    accountUpdateModal.on('hidden.bs.modal', () => {
+      resetForm();
+    });
+
+    /**
+     * Script for updating account information.
+     */
+    saveButton.on('click', () => {
+      // Serialize the form data and convert it to JSON
+      let formData = new FormData(accountUpdateForm[0]);
+      let spinner = `
+      <div class="spinner-border text-light" role="status" style="height: 1.4rem; width: 1.4rem">
+        <span class="sr-only">Loading...</span>
+      </div>`;
+      saveButton.html(spinner);
+      axios.post(updateURL, formData)
+        .then(function (response) {
+          accountUpdateModal.modal('hide');
+          clearErrorMessages();
+          reloadComponent("{% url 'accounts:list_account' %}", 'idAccountTableContainer', true);
+        })
+        .catch(function (error) {
+          console.log(error.response.data);
+          if (error.response && error.response.data) {
+            let errors = error.response.data.errors;
+            for (let field in errors) {
+              let errorMsgs = errors[field];
+              $(`#id_${field}_update_error`).html(`<div class="text-danger">${errorMsgs}</div>`);
+            }
+          }
+        })
+        .finally(function () {
+          saveButton.html('Save');
+        });
+    });
+  });
+</script>

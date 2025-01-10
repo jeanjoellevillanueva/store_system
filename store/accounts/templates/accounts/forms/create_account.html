@@ -11,18 +11,33 @@
           </button>
         </div>
         <div class="modal-body">
-          {% for field in login_form %}
+
+          {% for field in user_form %}
           <div class="form-row" style="margin-bottom: 1rem;">
             <label for="{{ field.auto_id }}">{{ field.label }}:</label>
-            {{ field|add_class:"form-control" }}
-            </div>
-            <div id="{{ field.auto_id }}_error"></div>
+              {% if field.field.widget.input_type != "checkbox" %}
+                {{ field|add_class:"form-control" }}
+              {% else %}
+              <div class="col-lg-1">
+                {{ field }}
+              </div>
+              {% endif %}
+                <div id="{{ field.auto_id }}_error"></div>
+          </div>
           {% endfor %}
 
-        </div>
+          {% for field in employee_form %}
+          <div class="form-row" style="margin-bottom: 1rem;">
+            <label for="{{ field.auto_id }}">{{ field.label }}:</label>
+                {{ field|add_class:"form-control" }}
+                <div id="{{ field.auto_id }}_error"></div>
+          </div>
+          {% endfor %}
+          
+        </div>    
         <div class="modal-footer">
           <button type="button" class="btn btn-danger" data-dismiss="modal">Close</button>
-          <button type="button" class="btn btn-primary" id="idCreateOvertimeSave">Submit</button>
+          <button type="button" class="btn btn-primary" id="idCreateAccountSave">Save</button>
         </div>
       </form>
     </div>
@@ -31,6 +46,59 @@
 
 <script>
    $(document).ready(() => {
+    //$('#id_password').attr('type', 'password');
+    $('.select2').select2();
     let createAccountForm = $('#createAccountForm');
+    let saveButton = $('#idCreateAccountSave');
+    let createAccountModal = $('#createAccountModal');
+        /**
+     * Remove all error messages on the form.
+     */
+     function clearErrorMessages() {
+      $('[id^="id_"][id$="_error"]').empty();
+    }
+
+    function resetForm() {
+      createAccountForm[0].reset();
+      clearErrorMessages();
+    }
+
+    // Event handler for modal close and reset the fields.
+    createAccountModal.on('hidden.bs.modal', () => {
+      resetForm();
+    });
+
+    /**
+     * Script for creating account.
+     */
+    saveButton.on('click', () => {
+      // Serialize the form data and convert it to JSON
+      let formData = new FormData(createAccountForm[0]);
+      let spinner = `
+      <div class="spinner-border text-light" role="status" style="height: 1.4rem; width: 1.4rem">
+        <span class="sr-only">Loading...</span>
+      </div>`;
+      saveButton.html(spinner);
+      axios.post("{% url 'accounts:create_account' %}", formData)
+        .then(function (response) {
+          createAccountModal.modal('hide');
+          clearErrorMessages();
+          reloadComponent("{% url 'accounts:list_account' %}", 'idAccountTableContainer', true);
+        })
+        .catch(function (error) {
+          console.log(error.response.data);
+          if (error.response && error.response.data) {
+            let errors = error.response.data.errors;
+            for (let field in errors) {
+              let errorMsgs = errors[field];
+              $(`#id_${field}_error`).html(`<div class="text-danger">${errorMsgs}</div>`);
+            }
+          }
+        })
+        .finally(function () {
+          saveButton.html('Save');
+        });
+    });
+
    });
 </script>
