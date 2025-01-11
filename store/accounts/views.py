@@ -1,7 +1,7 @@
+import datetime
 from pytz import timezone
 from typing import Any
 from typing import Dict
-import datetime
 
 import pandas as pd
 from braces.views import JSONResponseMixin
@@ -74,7 +74,7 @@ class AccountComponentTemplateView(LoginRequiredMixin, JSONResponseMixin, Templa
 
 class AccountListDatatableTemplateView(LoginRequiredMixin, TemplateView):
     """
-    List of all account user
+    List of all account user.
     """
     template_name = 'accounts/datatables/accounts.html'
 
@@ -92,7 +92,7 @@ class AccountListDatatableTemplateView(LoginRequiredMixin, TemplateView):
 
 class AccountCustomCreateView(LoginRequiredMixin, JSONResponseMixin, View):
     """
-    Creating User Account, Employee, Admin for Galinduh Web App
+    Creating User Account, Employee, Admin for Galinduh Web App.
     """
     def post(self, request, *args, **kwargs):
         user_form = UserForm(request.POST)
@@ -102,21 +102,20 @@ class AccountCustomCreateView(LoginRequiredMixin, JSONResponseMixin, View):
                 accounts = User.objects.values('username')
                 user = user_form.cleaned_data
                 employee = employee_form.cleaned_data
-                for account in accounts:
-                    if user['username'] != account:
-                        user.update({'date_joined': datetime.datetime.now(timezone('Asia/Manila'))})
-                        User.objects.create(**user)
-                        employee.update({
-                            'user_id': User.objects.filter(username=user['username'])
-                            .values_list('id',flat=True)
-                            .get()
-                        })
-                        Employee.objects.create(**employee)
-                        json_data = {
-                            'status': 'success',
-                            'message': 'Account successfully created.'
-                        }
-                        return self.render_json_response(json_data, status=201)
+                if not accounts.filter(username=user['username']).exists():
+                    user.update({'date_joined': datetime.datetime.now(timezone('Asia/Manila'))})
+                    User.objects.create_user(**user)
+                    employee.update({
+                        'user_id': User.objects.filter(username=user['username'])
+                        .values_list('id',flat=True)
+                        .get()
+                    })
+                    Employee.objects.create(**employee)
+                    json_data = {
+                        'status': 'success',
+                        'message': 'Account successfully created.'
+                    }
+                    return self.render_json_response(json_data, status=201)
         if employee_form.errors:
             user_form.errors.update(employee_form.errors)
         json_data = {
@@ -128,7 +127,7 @@ class AccountCustomCreateView(LoginRequiredMixin, JSONResponseMixin, View):
 
 class AccountCustomDeleteView(LoginRequiredMixin, JSONResponseMixin, View):
     """
-    Deleting User Account, Employee, Admin
+    Deleting User Account, Employee, Admin.
     """
     def post(self, request, *args, **kwargs):
         try:
@@ -145,7 +144,7 @@ class AccountCustomDeleteView(LoginRequiredMixin, JSONResponseMixin, View):
 
 class AccountCustomUpdateView(LoginRequiredMixin, JSONResponseMixin, View):
     """
-    Updating User Account, Employee, Admin
+    Updating User Account, Employee, Admin.
     """
     def post(self, request, *args, **kwargs):
         account = User.objects.get(id=self.kwargs['id'])
@@ -165,13 +164,13 @@ class AccountCustomUpdateView(LoginRequiredMixin, JSONResponseMixin, View):
                 account.is_superuser = account_data['is_superuser']
                 account.save()
                 # Employee update
-                try:
+                if Employee.objects.filter(user__id=self.kwargs['id']).exists():
                     employee = Employee.objects.get(user__id=self.kwargs['id'])
                     employee.base_pay = employee_data['base_pay']
                     employee.designation = employee_data['designation']
                     employee.department = employee_data['department']
                     employee.save()
-                except Employee.DoesNotExist:
+                else:
                     employee_data.update({
                         'user_id': self.kwargs['id']
                     })
