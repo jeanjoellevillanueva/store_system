@@ -36,6 +36,14 @@
   <hr class="sidebar-divider">
   <div class="sidebar-heading my-1">Management</div>
 
+  {% if user.is_staff %}
+  <li class="nav-item">
+    <a class="nav-link" href="{% url 'accounts:home' %}">
+      <i class="fa fa-user" aria-hidden="true"></i>
+      <span>User</span>
+    </a>
+  </li>
+  {% endif %}
   <li class="nav-item">
     <a class="nav-link" href="{% url 'pos:home' %}">
       <i class="fas fa-fw fa-cash-register"></i>
