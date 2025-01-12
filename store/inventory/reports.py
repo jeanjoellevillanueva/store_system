@@ -1,19 +1,22 @@
 import os
+from typing import Dict
 
 import pandas as pd
 
 from django.conf import settings
 
 from .models import Product
+from .validation import is_shopee_file
+from .validation import is_tiktok_file
 
 
-def extract_orders_from_xlsx(filename='shopee.xlsx'):
+def extract_orders_from_xlsx(filename:str='shopee.xlsx') -> Dict:
     """
     Extract Shopee order file and returns a dict of product: num of order.
     """
-    if filename.casefold() == 'shopee.xlsx':
+    if is_shopee_file(filename.casefold()):
         SKU_COL = 'SKU Reference No.'
-    elif filename.casefold() == 'tiktok.xlsx':
+    elif is_tiktok_file(filename.casefold()):
         SKU_COL = 'Seller SKU'
     else:
         raise ValueError('File not supported.')

@@ -1,5 +1,6 @@
 import io
 import os
+import re
 from datetime import date
 from datetime import datetime
 from datetime import timedelta
@@ -40,6 +41,7 @@ from .models import Product
 from .reports import combine_to_ship_orders
 from .reports import get_product_stock
 from .utils import parse_variation
+from .validation import is_file_supported
 
 
 class InventoryTemplateView(LoginRequiredMixin, TemplateView):
@@ -527,12 +529,11 @@ class UploadToShipView(LoginRequiredMixin, JSONResponseMixin, View):
 
     def post(self, request, **kwargs: Any) -> Dict[str, Any]:
         files = request.FILES.getlist('file')
-        SUPPORTED_FILES = ['tiktok.xlsx', 'shopee.xlsx']
         unsupported_files = []
         supported_files = []
         for file in files:
             filename = file.name
-            if filename not in SUPPORTED_FILES:
+            if not is_file_supported(filename, settings.SUPPORTED_FILE_EXTENSIONS, settings.SUPPORTED_FILENAMES):
                 unsupported_files.append(filename)
                 continue
             self.handle_uploaded_file(file)
