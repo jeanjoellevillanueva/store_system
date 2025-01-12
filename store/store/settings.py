@@ -153,3 +153,4 @@ INFO_COLOR = '#5bc0de'
 
 # Separate settings to easily find items.
 from .configs.configs_paylips import *
+from .configs.configs_files import *
