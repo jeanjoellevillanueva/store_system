@@ -18,11 +18,9 @@ from attendance.models import Overtime
 
 from .forms import PayslipForm
 from .models import Payslip
-from .utils import format_allowances
-from .utils import format_deductions
+from .utils import format_items
 from .utils import GeneratePayslipView
-from .utils import parse_allowance
-from .utils import parse_deduction
+from .utils import parse_items
 
 
 class PayslipCustomCreateView(LoginRequiredMixin, JSONResponseMixin, View):
@@ -33,8 +31,9 @@ class PayslipCustomCreateView(LoginRequiredMixin, JSONResponseMixin, View):
         form = PayslipForm(request.POST)
         if form.is_valid():
             with transaction.atomic():
-                deductions = parse_deduction(request.POST)
-                allowances = parse_allowance(request.POST)
+                deductions = parse_items(request.POST, 'deduction')
+                allowances = parse_items(request.POST, 'allowance')
+
                 employee = form.cleaned_data['employee']
                 try:
                     employee_object = employee.employee
@@ -78,16 +77,17 @@ class PayslipCustomCreateView(LoginRequiredMixin, JSONResponseMixin, View):
                     created_date=date.today(),
                 )
                 payslips.save()
-                
+
                 created_by = request.user.get_full_name()
-                allowances = format_allowances(allowances)
-                deductions = format_deductions(deductions)
+                allowances = format_items(allowances, 'allowance')
+                deductions = format_items(deductions, 'deduction')
+
                 attendance_data = Attendance.objects.filter(
                     employee_id=employee,
                     time_in__date__gte=form.cleaned_data['start_date'],
                     time_in__date__lte=form.cleaned_data['end_date'],
                 ).count()
-                
+    
                 overtime_data = Overtime.objects.filter(
                     employee_id=employee,
                     date__date__gte=form.cleaned_data['start_date'],

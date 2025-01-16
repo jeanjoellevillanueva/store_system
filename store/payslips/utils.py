@@ -17,60 +17,33 @@ from .models import Payslip
 from .numbers import convert_number_to_words
 from attendance.models import Overtime
 
-def parse_deduction(orig_dict):
+def parse_items(orig_dict, key_base):
     """
     Parse the deduction type and amount in the dict.
     """
-
-    deductions = []
+    items = []
+    designation_name = str(f'{key_base}_type')
     for key, value in orig_dict.items():
-        if key.startswith('deduction_type_'):
+        if key.startswith(f'{key_base}_type_'):
             _, _, number = key.split('_')
-            deduction_type_key = f'deduction_type_{number}'
-            amount_key = f'deduction_amount_{number}'
-            deductions.append({
-                'deduction_type': orig_dict[deduction_type_key],
+            item_type_key = f'{key_base}_type_{number}'
+            amount_key = f'{key_base}_amount_{number}'
+            items.append({
+                designation_name: orig_dict[item_type_key],
                 'amount': orig_dict[amount_key],
-            })
-    return deductions
+            })    
+    return items
 
 
-def format_deductions(deductions):
+def format_items(items, key_base):
     """
     Converts deduction choice into human-readable
     """
-    deductions_dict = dict(Payslip.DEDUCTION_CHOICES)
-    for deduction in deductions:
-        deduction['deduction_type'] = deductions_dict.get(deduction['deduction_type'])
-    return deductions
-
-
-def parse_allowance(orig_dict):
-    """
-    Parse the allowance type and amount in the dict.
-    """
-    allowances = []
-    for key, value in orig_dict.items():
-        if key.startswith('allowance_type_'):
-            
-            _, _, number = key.split('_')
-            allowance_type_key = f'allowance_type_{number}'
-            amount_key = f'allowance_amount_{number}'
-            allowances.append({
-                'allowance_type': orig_dict[allowance_type_key],
-                'amount': orig_dict[amount_key],
-            })
-    return allowances
-
-
-def format_allowances(allowances):
-    """
-    Converts allowance choice into human-readable
-    """
-    allowances_dict = dict(Payslip.ALLOWANCE_CHOICES)
-    for allowance in allowances:
-        allowance['allowance_type'] = allowances_dict.get(allowance['allowance_type'])
-    return allowances
+    choices = f'{key_base}_CHOICES'.upper()
+    items_dict = dict(getattr(Payslip, choices))
+    for item in items:
+        item[f'{key_base}_type'] = items_dict.get(item[f'{key_base}_type'])
+    return items
 
 
 class GeneratePayslipView:
