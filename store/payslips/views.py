@@ -18,8 +18,10 @@ from attendance.models import Overtime
 
 from .forms import PayslipForm
 from .models import Payslip
+from .utils import format_allowances
 from .utils import format_deductions
 from .utils import GeneratePayslipView
+from .utils import parse_allowance
 from .utils import parse_deduction
 
 
@@ -32,6 +34,7 @@ class PayslipCustomCreateView(LoginRequiredMixin, JSONResponseMixin, View):
         if form.is_valid():
             with transaction.atomic():
                 deductions = parse_deduction(request.POST)
+                allowances = parse_allowance(request.POST)
                 employee = form.cleaned_data['employee']
                 try:
                     employee_object = employee.employee
@@ -43,6 +46,15 @@ class PayslipCustomCreateView(LoginRequiredMixin, JSONResponseMixin, View):
                 base_pay = employee_object.base_pay
                 rate = (base_pay / settings.HOURS_PER_DAY).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
 
+                for allowance in allowances:
+                    if not allowance['amount']:
+                        allowance['amount'] = 0.0
+                
+                allowance_list = [
+                    (allowance['allowance_type'], allowance['amount']) for allowance in allowances]
+                total_allowances = sum(
+                    float(allowance['amount']) for allowance in allowances if allowance['amount'])
+                
                 for deduction in deductions:
                     if not deduction['amount']:
                         deduction['amount'] = 0.0
@@ -51,14 +63,16 @@ class PayslipCustomCreateView(LoginRequiredMixin, JSONResponseMixin, View):
                     (deduction['deduction_type'], deduction['amount']) for deduction in deductions]
                 total_deductions = sum(
                     float(deduction['amount']) for deduction in deductions if deduction['amount'])
-
+                
                 payslips = Payslip(
                     employee=employee,
                     start_date=form.cleaned_data['start_date'],
                     end_date=form.cleaned_data['end_date'],
                     base_pay=base_pay,
                     rate=rate,
+                    allowance=allowance_list,
                     deduction=deduction_list,
+                    total_allowance=total_allowances,
                     total_deduction=total_deductions,
                     created_by=request.user,
                     created_date=date.today(),
@@ -66,8 +80,8 @@ class PayslipCustomCreateView(LoginRequiredMixin, JSONResponseMixin, View):
                 payslips.save()
                 
                 created_by = request.user.get_full_name()
+                allowances = format_allowances(allowances)
                 deductions = format_deductions(deductions)
-                
                 attendance_data = Attendance.objects.filter(
                     employee_id=employee,
                     time_in__date__gte=form.cleaned_data['start_date'],
@@ -78,7 +92,6 @@ class PayslipCustomCreateView(LoginRequiredMixin, JSONResponseMixin, View):
                     employee_id=employee,
                     date__date__gte=form.cleaned_data['start_date'],
                     date__date__lte=form.cleaned_data['end_date'],
-                    #is_approve=True
                 ).aggregate(total_hours=Sum('hours'))
 
                 overtime_hours = float(overtime_data['total_hours']) if overtime_data['total_hours'] else 0.0
@@ -91,7 +104,9 @@ class PayslipCustomCreateView(LoginRequiredMixin, JSONResponseMixin, View):
                     'rate': str(rate),
                     'days': str(attendance_data),
                     'ot_hours': str(overtime_hours),
+                    'allowances': str(allowances),
                     'deductions': str(deductions),
+                    'total_allowance': str(total_allowances),
                     'total_deduction': str(total_deductions),
                     'created_by': str(created_by),
                 }
