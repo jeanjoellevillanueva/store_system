@@ -2,6 +2,8 @@ import ast
 import os
 from datetime import datetime
 from io import BytesIO
+from typing import Dict
+from typing import List
 
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import letter
@@ -19,7 +21,7 @@ from attendance.models import Overtime
 
 def parse_items(orig_dict, key_base):
     """
-    Parse the deduction type and amount in the dict.
+    Parse the allowance/deduction type and amount in the dict.
     """
     items = []
     designation_name = str(f'{key_base}_type')
@@ -35,14 +37,13 @@ def parse_items(orig_dict, key_base):
     return items
 
 
-def format_items(items, key_base):
+def format_items(items: Dict, key_base: str, choices: List) -> Dict:
     """
-    Converts deduction choice into human-readable
+    Converts allowance/deduction choice into human-readable.
     """
-    choices = f'{key_base}_CHOICES'.upper()
-    items_dict = dict(getattr(Payslip, choices))
+    choices = dict(choices)
     for item in items:
-        item[f'{key_base}_type'] = items_dict.get(item[f'{key_base}_type'])
+        item[f'{key_base}_type'] = choices.get(item[f'{key_base}_type'])
     return items
 
 

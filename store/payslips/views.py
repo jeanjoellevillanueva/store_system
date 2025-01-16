@@ -79,8 +79,8 @@ class PayslipCustomCreateView(LoginRequiredMixin, JSONResponseMixin, View):
                 payslips.save()
 
                 created_by = request.user.get_full_name()
-                allowances = format_items(allowances, 'allowance')
-                deductions = format_items(deductions, 'deduction')
+                allowances = format_items(allowances, 'allowance', Payslip.ALLOWANCE_CHOICES)
+                deductions = format_items(deductions, 'deduction', Payslip.DEDUCTION_CHOICES)
 
                 attendance_data = Attendance.objects.filter(
                     employee_id=employee,
