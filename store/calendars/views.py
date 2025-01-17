@@ -36,6 +36,7 @@ class CalendarTemplateView(LoginRequiredMixin, TemplateView):
         context['task_choices'] = Attendance.TASK_CHOICES
         context['users'] = User.objects.values('id', 'username')
         context['deduction_choices'] = Payslip.DEDUCTION_CHOICES
+        context['allowance_choices'] = Payslip.ALLOWANCE_CHOICES
         return context
 
 

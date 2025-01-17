@@ -2,6 +2,8 @@ import ast
 import os
 from datetime import datetime
 from io import BytesIO
+from typing import Dict
+from typing import List
 
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import letter
@@ -17,32 +19,32 @@ from .models import Payslip
 from .numbers import convert_number_to_words
 from attendance.models import Overtime
 
-def parse_deduction(orig_dict):
+def parse_items(orig_dict, key_base):
     """
-    Parse the deduction type and amount in the dict.
+    Parse the allowance/deduction type and amount in the dict.
     """
-
-    deductions = []
+    items = []
+    designation_name = str(f'{key_base}_type')
     for key, value in orig_dict.items():
-        if key.startswith('deduction_type_'):
+        if key.startswith(f'{key_base}_type_'):
             _, _, number = key.split('_')
-            deduction_type_key = f'deduction_type_{number}'
-            amount_key = f'deduction_amount_{number}'
-            deductions.append({
-                'deduction_type': orig_dict[deduction_type_key],
+            item_type_key = f'{key_base}_type_{number}'
+            amount_key = f'{key_base}_amount_{number}'
+            items.append({
+                designation_name: orig_dict[item_type_key],
                 'amount': orig_dict[amount_key],
-            })
-    return deductions
+            })    
+    return items
 
 
-def format_deductions(deductions):
+def format_items(items: Dict, key_base: str, choices: List) -> Dict:
     """
-    Converts deduction choice into human-readable
+    Converts allowance/deduction choice into human-readable.
     """
-    deductions_dict = dict(Payslip.DEDUCTION_CHOICES)
-    for deduction in deductions:
-        deduction['deduction_type'] = deductions_dict.get(deduction['deduction_type'])
-    return deductions
+    choices = dict(choices)
+    for item in items:
+        item[f'{key_base}_type'] = choices.get(item[f'{key_base}_type'])
+    return items
 
 
 class GeneratePayslipView:
@@ -69,6 +71,7 @@ class GeneratePayslipView:
         days_worked = float(payslip_data['days']) if payslip_data['days'] else 0.0
         overtime_hours = float(payslip_data['ot_hours']) if payslip_data['ot_hours'] else 0.0
         rate_pay = float(payslip_data['rate']) if payslip_data['rate'] else 0.0
+        total_allowance = float(payslip_data['total_allowance']) if payslip_data['total_allowance'] else 0.0
         total_deduction = float(payslip_data['total_deduction']) if payslip_data['total_deduction'] else 0.0
         basic_pay = round(base_pay * days_worked, 2)
 
@@ -91,9 +94,9 @@ class GeneratePayslipView:
             overtime_list.append({'ot_pay': overtime_pay})
         
         overtime_pay = round(sum(overtime['ot_pay'] for overtime in overtime_list), 2)
-        total_earnings = round(basic_pay + overtime_pay, 2)
-        net_pay = round((basic_pay + overtime_pay) - total_deduction, 2)
-        return base_pay, days_worked, overtime_hours, rate_pay, total_deduction, basic_pay, overtime_pay, total_earnings, net_pay
+        total_earnings = round(basic_pay + overtime_pay + total_allowance, 2)
+        net_pay = round((basic_pay + overtime_pay) + total_allowance - total_deduction, 2)
+        return base_pay, days_worked, overtime_hours, rate_pay, total_allowance, total_deduction, basic_pay, overtime_pay, total_earnings, net_pay
 
     def set_pdf_font(self, canvas, font_style='Helvetica', font_size=24):
         """
@@ -188,14 +191,15 @@ class GeneratePayslipView:
         self.create_table_border()
         self.set_pdf_font(self.payslip_statement, font, font_size)
         (
-            base_pay, 
-            days_worked, 
-            overtime_hours, 
-            rate_pay, 
-            total_deduction, 
-            basic_pay, 
-            overtime_pay, 
-            total_earnings, 
+            base_pay,
+            days_worked,
+            overtime_hours,
+            rate_pay,
+            total_allowance, 
+            total_deduction,
+            basic_pay,
+            overtime_pay,
+            total_earnings,
             net_pay
         ) = self.compute_payslip(payslip_data)
 
@@ -211,6 +215,20 @@ class GeneratePayslipView:
         self.payslip_statement.drawString(self.center_text(195.6, 306, str(overtime_pay)), 435, str(overtime_pay))
         self.payslip_statement.drawString(105, 275, 'Total Earnings')
         self.payslip_statement.drawString(self.center_text(195.6, 306, str(total_earnings)), 275, str(total_earnings))
+
+        # Allowance Earnings
+        allowance_dict = ast.literal_eval(payslip_data['allowances'])
+        ALLOWANCES_TEXT_Y_POSITION = 410
+        for allowance in allowance_dict:
+            allowance_text = f"{allowance['allowance_type']}"
+            self.payslip_statement.drawString(38, ALLOWANCES_TEXT_Y_POSITION, allowance_text)
+            ALLOWANCES_TEXT_Y_POSITION -= 25
+
+        ALLOWANCES_TEXT_Y_POSITION = 410
+        for allowance in allowance_dict:
+            allowance_amount = f"{allowance['amount']}"
+            self.payslip_statement.drawString(self.center_text(195.6, 306, str(allowance_amount)), ALLOWANCES_TEXT_Y_POSITION, allowance_amount)
+            ALLOWANCES_TEXT_Y_POSITION -= 25
 
         # Deductions
         deduction_dict = ast.literal_eval(payslip_data['deductions'])
@@ -242,14 +260,15 @@ class GeneratePayslipView:
         employer_sign_label = 'Employer Signature'
         employee_sign_label = 'Employee Signature'
         (
-            base_pay, 
-            days_worked, 
-            overtime_hours, 
-            rate_pay, 
-            total_deduction, 
-            basic_pay, 
-            overtime_pay, 
-            total_earnings, 
+            base_pay,
+            days_worked,
+            overtime_hours,
+            rate_pay,
+            total_allowance,
+            total_deduction,
+            basic_pay,
+            overtime_pay,
+            total_earnings,
             net_pay
         ) = self.compute_payslip(payslip_data)
 

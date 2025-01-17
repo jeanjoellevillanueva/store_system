@@ -18,10 +18,13 @@
             <div id="{{ field.auto_id }}_error"></div>
           </div>
           {% endfor %}
-          <div id="idDeductionContainer">
+          <div id="idFieldSetContainer">
 
           </div>
-            <button type="button" class="btn btn-success" id="idAddDeduction" style="width: 100%;">Add Deduction</button>
+          <div class="d-flex" style="gap: 20px;">
+            <button type="button" class="btn btn-success" id="idAddAllowance" style="width: 100%;">Add Allowance</button>
+            <button type="button" class="btn btn-warning" id="idAddDeduction" style="width: 100%;">Add Deduction</button>
+          </div>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-danger" data-dismiss="modal">Close</button>
@@ -35,20 +38,56 @@
 <script>
   $(document).ready(() => {
     // initiate into variable
-    let addButton = $('#idAddDeduction');
-    let deductionContainer = $('#idDeductionContainer');
-    let fieldsetCounter = 0;
+    let addDeductionButton = $('#idAddDeduction');
+    let addAllowanceButton = $('#idAddAllowance');
+    let additionalFieldsetContainer = $('#idFieldSetContainer');
+    let allowanceFieldsetCounter = 0;
+    let deductionFieldsetCounter = 0;
 
-    // Functions
-    addButton.on('click', function() {
-      fieldsetCounter++;
+    // Adding new fieldset for Allowance
+    addAllowanceButton.on('click', function() {
+      allowanceFieldsetCounter++;
+      const allowanceFieldset = document.createElement("fieldset");
+
+      allowanceFieldset.innerHTML = `
+      <div class="column form-row pb-3 allowance-container" id="idAllowanceFieldset${allowanceFieldsetCounter}">
+        <div class="col-5">
+          <label for="idAllowanceType${allowanceFieldsetCounter}">Allowance ${allowanceFieldsetCounter}</label>
+          <select class="form-control select2class" id="idAllowanceType${allowanceFieldsetCounter}" name="allowance_type_${allowanceFieldsetCounter}">
+            {% for choice in allowance_choices %}
+            <option value="{{ choice.0 }}">{{ choice.1 }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="col-6">
+          <label for="idAllowanceAmount${allowanceFieldsetCounter}">Amount to add:</label>
+          <input type="number" class="form-control pt-2" id="idAllowanceAmount${allowanceFieldsetCounter}" name="allowance_amount_${allowanceFieldsetCounter}">
+        </div>
+
+        <div class="col-1">
+          <label class="invisible">DeleteBtn</label>
+          <button type="button" class="btn btn-danger color-delete-btn" id="idAllowanceDeleteBtn${allowanceFieldsetCounter}" data-id="${allowanceFieldsetCounter}" style="width:100%;">
+            <i class="fas fa-trash-alt"></i>
+          </button>
+        </div>
+      </div>
+      `;
+      additionalFieldsetContainer.append(allowanceFieldset);
+      let select = document.getElementById(`idAllowanceType${allowanceFieldsetCounter}`);
+      
+    });
+
+    // Adding new fieldset for Deduction
+    addDeductionButton.on('click', function() {
+      deductionFieldsetCounter++;
       const deductionFieldset = document.createElement("fieldset");
 
       deductionFieldset.innerHTML = `
-      <div class="column form-row pb-3 deduction-container" id="idDeductionFieldset${fieldsetCounter}">
+      <div class="column form-row pb-3 deduction-container" id="idDeductionFieldset${deductionFieldsetCounter}">
         <div class="col-5">
-          <label for="idDeductionType${fieldsetCounter}">Deduction ${fieldsetCounter}</label>
-          <select class="form-control select2class" id="idDeductionType${fieldsetCounter}" name="deduction_type_${fieldsetCounter}">
+          <label for="idDeductionType${deductionFieldsetCounter}">Deduction ${deductionFieldsetCounter}</label>
+          <select class="form-control select2class" id="idDeductionType${deductionFieldsetCounter}" name="deduction_type_${deductionFieldsetCounter}">
             {% for choice in deduction_choices %}
             <option value="{{ choice.0 }}">{{ choice.1 }}</option>
             {% endfor %}
@@ -56,25 +95,26 @@
         </div>
 
         <div class="col-6">
-          <label for="idDeductionAmount${fieldsetCounter}">Amount to deduct:</label>
-          <input type="number" class="form-control pt-2" id="idDeductionAmount${fieldsetCounter}" name="deduction_amount_${fieldsetCounter}">
+          <label for="idDeductionAmount${deductionFieldsetCounter}">Amount to deduct:</label>
+          <input type="number" class="form-control pt-2" id="idDeductionAmount${deductionFieldsetCounter}" name="deduction_amount_${deductionFieldsetCounter}">
         </div>
 
         <div class="col-1">
           <label class="invisible">DeleteBtn</label>
-          <button type="button" class="btn btn-danger color-delete-btn" id="idDeductionDeleteBtn${fieldsetCounter}" data-id="${fieldsetCounter}" style="width:100%;">
+          <button type="button" class="btn btn-danger color-delete-btn" id="idDeductionDeleteBtn${deductionFieldsetCounter}" data-id="${deductionFieldsetCounter}" style="width:100%;">
             <i class="fas fa-trash-alt"></i>
           </button>
         </div>
       </div>
       `;
-      deductionContainer.append(deductionFieldset);
-      let select = document.getElementById(`idDeductionType${fieldsetCounter}`);
+      additionalFieldsetContainer.append(deductionFieldset);
+      let select = document.getElementById(`idDeductionType${deductionFieldsetCounter}`);
       
     });
     $('#payslipForm').on('click', ' .color-delete-btn', (event) => {
       let id = event.currentTarget.dataset.id;
       $(`#idDeductionFieldset${id}`).remove();
+      $(`#idAllowanceFieldset${id}`).remove();
     });
 
     // initiate into variable
@@ -114,7 +154,9 @@
       start_date_picker.val(startOfWeek);
       end_date_picker.val(endOfWeek);
       $('.deduction-container').remove();
-      fieldsetCounter = 0;
+      deductionFieldsetCounter = 0;
+      $('.allowance-container').remove();
+      allowanceFieldsetCounter = 0;
     });
 
     basePay.on('change', () => {
