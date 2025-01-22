@@ -154,9 +154,12 @@ class AccountCustomUpdateView(LoginRequiredMixin, JSONResponseMixin, View):
             with transaction.atomic():
                 account_data = update_user_form.cleaned_data
                 employee_data = update_employee_form.cleaned_data
+                # Check if the password is not the same with the current and starts with pbkdf2 for hashed so it wouldn't set the hashed password
+                if not account.check_password(account_data):
+                    if not account_data['password'].startswith('pbkdf2_'):
+                        account.set_password(account_data['password'])
                 # User update
                 account.username = account_data['username']
-                account.set_password(account_data['password'])
                 account.email = account_data['email']
                 account.first_name = account_data['first_name']
                 account.last_name = account_data['last_name']
