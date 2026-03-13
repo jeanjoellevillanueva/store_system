@@ -26,6 +26,7 @@ class Product(ModelMixin):
     variation = models.CharField(max_length=255)
     sku = models.CharField(blank=True, max_length=255, default='')
     quantity = models.PositiveIntegerField(default=0)
+    stock_location = models.CharField(blank=True, default='', max_length=255)
 
     def __str__(self):
         return self.name

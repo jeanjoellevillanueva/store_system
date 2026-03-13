@@ -4,8 +4,9 @@
       <tr>
         <th class="text-center" style="width: 10%;">Item Code</th>
         <th class="text-center" style="width: 30%;">Product</th>
+        <th class="text-center" style="width: 15%;">Stock location</th>
         {% if user.is_staff %}
-        <th class="text-center" style="width: 50%;">Description</th>
+        <th class="text-center" style="width: 35%;">Description</th>
         <th class="text-center" style="width: 10%;">Action</th>
         {% endif %}
       </tr>
@@ -19,6 +20,7 @@
             {{ product.name }}
           </a>
         </td>
+        <td>{{ product.stock_location|default:"" }}</td>
         {% if user.is_staff %}
         <td>{{ product.description }}</td>
         <td class="text-center">
@@ -27,6 +29,7 @@
             data-item_code="{{ product.item_code }}"
             data-name="{{ product.name }}"
             data-description="{{ product.description }}"
+            data-stock_location="{{ product.stock_location|default:'' }}"
           >
             <span class="icon text-white-50">
               <i class="fas fa-pen"></i>
