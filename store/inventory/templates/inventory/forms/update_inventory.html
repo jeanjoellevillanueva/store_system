@@ -39,12 +39,14 @@
       let item_code = event.currentTarget.dataset.item_code;
       let name = event.currentTarget.dataset.name;
       let description = event.currentTarget.dataset.description;
+      let stock_location = event.currentTarget.dataset.stock_location || '';
 
       old_item_code = item_code;
       // Set the values on the update form.
       $('#id_item_code_update').val(item_code);
       $('#id_name_update').val(name);
       $('#id_description_update').val(description);
+      $('#id_stock_location_update').val(stock_location);
       $('#inventoryUpdateModal').modal('show');
     });
 

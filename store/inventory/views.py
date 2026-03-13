@@ -69,7 +69,8 @@ class ProductListDatatableTemplateView(LoginRequiredMixin, TemplateView):
         context['products'] = Product.objects.values(
             'item_code',
             'name',
-            'description'
+            'description',
+            'stock_location',
         ).order_by('name').distinct()
         return context
 
@@ -155,6 +156,7 @@ class ProductCustomUpdateView(LoginRequiredMixin, JSONResponseMixin, View):
                     product.item_code = form.cleaned_data['item_code']
                     product.name = form.cleaned_data['name']
                     product.description = form.cleaned_data['description']
+                    product.stock_location = form.cleaned_data.get('stock_location', '') or ''
                     product.updated_date = datetime.today()
                     product.updated_by = request.user
                     product.save()
@@ -233,6 +235,7 @@ class VariationCustomCreateView(LoginRequiredMixin, JSONResponseMixin, View):
                     item_code=sample_product.item_code,
                     name=sample_product.name,
                     description=sample_product.description,
+                    stock_location=sample_product.stock_location,
                 )
                 product.pk = None  # Reset the primary key to create a new instance.
                 product.sku = product_variation['sku']

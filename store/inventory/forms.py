@@ -31,7 +31,8 @@ class ProductUpdateForm(forms.ModelForm):
         fields = [
             'item_code',
             'name',
-            'description', 
+            'description',
+            'stock_location',
         ]
 
 

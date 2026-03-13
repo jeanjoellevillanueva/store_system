@@ -4,6 +4,7 @@
       <tr>
         <th class="text-center">SKU</th>
         <th class="text-center">Variation</th>
+        <th class="text-center">Stock location</th>
         {% if user.is_staff %}
         <th class="text-center">Capital</th>
         {% endif %}
@@ -20,6 +21,7 @@
       <tr>
         <td>{{ variation.sku }}</td>
         <td>{{ variation.variation }}</td>
+        <td>{{ variation.stock_location|default:"" }}</td>
         {% if user.is_staff %}
         <td>{{ variation.capital }}</td>
         {% endif %}
@@ -89,7 +91,7 @@
   $(document).ready(function() {
     $('#dataTable').DataTable({
       order: [
-        [3, 'asc']
+        [4, 'asc']
       ],
     });
   });
