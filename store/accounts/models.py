@@ -1,5 +1,7 @@
 from django.contrib.auth.models import User
 from django.db import models
+from django.db.models import Q
+from django.utils import timezone
 
 
 class Employee(models.Model):
@@ -29,3 +31,49 @@ class Employee(models.Model):
     designation = models.CharField(max_length=100, default='')
     department = models.CharField(
         max_length=100, choices=DEPARTMENT_CHOICES, default=FULLFILMENT)
+
+
+class EmailOTP(models.Model):
+    class Purpose(models.TextChoices):
+        LOGIN = 'login', 'Login'
+
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='email_otps',
+    )
+    purpose = models.CharField(
+        max_length=20,
+        choices=Purpose.choices,
+        default=Purpose.LOGIN,
+    )
+    code_hash = models.CharField(max_length=128)
+    expires_at = models.DateTimeField()
+    attempt_count = models.PositiveSmallIntegerField(default=0)
+    consumed_at = models.DateTimeField(null=True, blank=True)
+    invalidated_at = models.DateTimeField(null=True, blank=True)
+    sent_at = models.DateTimeField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            # It prevents accidental creation of two active login OTPs for the same user.
+            models.UniqueConstraint(
+                fields=['user', 'purpose'],
+                condition=Q(
+                    consumed_at__isnull=True,
+                    invalidated_at__isnull=True,
+                ),
+                name='one_active_email_otp_per_user_and_purpose',
+            ),
+        ]
+        indexes = [
+            models.Index(fields=['user', 'purpose', 'expires_at']),
+        ]
+
+    @property
+    def is_expired(self):
+        return timezone.now() >= self.expires_at
+
+    def __str__(self):
+        return f'{self.user.email} - {self.purpose}'
