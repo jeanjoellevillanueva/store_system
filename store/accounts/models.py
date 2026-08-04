@@ -36,6 +36,7 @@ class Employee(models.Model):
 class EmailOTP(models.Model):
     class Purpose(models.TextChoices):
         LOGIN = 'login', 'Login'
+        EMAIL_ENROLLMENT = 'email_enrollment', 'Email Enrollment'
 
     user = models.ForeignKey(
         User,
@@ -46,6 +47,10 @@ class EmailOTP(models.Model):
         max_length=20,
         choices=Purpose.choices,
         default=Purpose.LOGIN,
+    )
+    email = models.EmailField(
+        blank=True,
+        default='',
     )
     code_hash = models.CharField(max_length=128)
     expires_at = models.DateTimeField()

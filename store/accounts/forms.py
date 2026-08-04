@@ -19,6 +19,34 @@ class LoginForm(AuthenticationForm):
         widget=forms.PasswordInput()
     )
 
+class OTPVerificationForm(forms.Form):
+    """
+    Validate the six-digit otp entered by the user.
+    """
+
+    code = forms.CharField(
+        label='Verification code',
+        min_length=6,
+        max_length=6,
+        widget=forms.TextInput(
+            attrs={
+                'autocomplete': 'one-time-code',
+                'inputmode': 'numeric',
+            },
+        ),
+    )
+
+    def clean_code(self):
+        """Reject OTP input that contains non-numeric characters."""
+        code = self.cleaned_data['code']
+
+        if not code.isdigit():
+            raise forms.ValidationError(
+                'Enter the six-digit verification code.'
+            )
+
+        return code
+
 
 class EmployeeForm(forms.ModelForm):
     """
