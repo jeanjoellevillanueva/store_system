@@ -75,7 +75,7 @@ def issue_login_otp(user):
     return issue_otp(
         user=user,
         email=user.email,
-        purpose=EmailOTP.Purpose.EMAIL_ENROLLMENT,
+        purpose=EmailOTP.Purpose.LOGIN,
     )
 
 def issue_email_enrollment_otp(user, email):

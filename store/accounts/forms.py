@@ -47,6 +47,19 @@ class OTPVerificationForm(forms.Form):
 
         return code
 
+class EmailEnrollmentForm(forms.Form):
+    """Collect the email a legacy user must verify before future email logins."""
+
+    email = forms.EmailField(
+        label='Email address',
+        widget=forms.EmailInput(
+            attrs={
+                'autocomplete': 'email',
+                'placeholder': 'Email address',
+            },
+        ),
+    )
+
 
 class EmployeeForm(forms.ModelForm):
     """

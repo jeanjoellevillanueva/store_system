@@ -21,7 +21,18 @@ from django.views.generic import FormView
 from .forms import LoginForm
 from .forms import EmployeeForm
 from .forms import UserForm
+from .forms import EmailEnrollmentForm
+
 from .models import Employee
+from .models import EmailOTP
+
+from .services import(
+    OTPEmailAlreadyInUse,
+    OTPEmailInvalid,
+    OTPEmailRequired,
+    OTPResendTooSoon,
+    issue_email_enrollment_otp,
+)
 
 
 class LoginView(FormView):
@@ -47,6 +58,54 @@ def logout_view(request):
     """
     logout(request)
     return redirect(reverse_lazy('accounts:login'))
+
+class EmailEnrollmentView(FormView):
+    """
+    Send a verification OTP for a legacy user who passed password validation
+    but does not yet have a verified email address.
+
+    The pending user ID is placed in the session by the login flow in step 9.
+    This view deliberately does not call login().
+    """
+
+    template_name = 'accounts/email_enrollment.html'
+    form_class = EmailEnrollmentForm
+
+    def dispatch(self, request, *args, **kwargs):
+        self.pending_user_id = request.session.get('pending_otp_user_id')
+
+        if not self.pending_user_id:
+            return redirect('accounts:login')
+
+        try: 
+            self.pending_user = User.objects.get(
+                pk=self.pending_user_id,
+                email='',
+                is_active=True,
+            )
+        except User.DoesNotExist:
+            request.session.pop('pending_otp_user_id', None)
+            return redirect('accounts:login')
+
+        return super().dispatch(request, *args, **kwargs)
+
+    def form_valid(self, form):
+        try:
+            issue_email_enrollment_otp(
+                self.pending_user,
+                form.cleaned_data['email'],
+            )
+        except (
+            OTPEmailRequired,
+            OTPEmailInvalid,
+            OTPEmailAlreadyInUse,
+            OTPResendTooSoon
+        ) as error:
+            form.add_error('email', str(error))
+            return self.form_invalid(form)
+
+        # The OTP verification URL is added in step 9.
+        return redirect('accounts:otp_verify')
 
 
 class AccountComponentTemplateView(LoginRequiredMixin, JSONResponseMixin, TemplateView):
