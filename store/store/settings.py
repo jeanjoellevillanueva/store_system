@@ -133,6 +133,10 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 LOGIN_URL = 'accounts:login'
 LOGIN_REDIRECT_URL = 'dashboards:home'
 
+AUTHENTICATION_BACKENDS = [
+    'accounts.backend.EmailOrLegacyUsernameBackend'
+]
+
 # Project Details.
 PROJECT_NAME = PROJECT_DETAIL['NAME']
 FAVICON_LINK = PROJECT_DETAIL['FAVICON_LINK']

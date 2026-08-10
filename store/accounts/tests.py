@@ -4,6 +4,7 @@ from unittest.mock import patch
 from django.contrib.auth.hashers import check_password
 from django.contrib.auth.hashers import make_password 
 from django.contrib.auth.models import User
+from django.contrib.auth import authenticate
 from django.core import mail
 from django.test import TestCase
 from django.test import override_settings
@@ -274,3 +275,64 @@ class EmailEnrollmentOTPTestCase(TestCase):
 
         otp.refresh_from_db()
         self.assertIsNone(otp.consumed_at)
+
+
+@override_settings(
+    AUTHENTICATION_BACKENDS=[
+        'accounts.backends.EmailOrLegacyUsernameBackend',
+    ],
+)
+
+class EmailOrLegacyUsernameBackendTestCase(TestCase):
+    """Test email login and the temporary legacy-username path."""
+
+    def setUp(self):
+        self.email_user = User.objects.create_user(
+            username='maria',
+            email='Maria@example.com',
+            password='safe-password',
+        )
+        self.legacy_user = User.objects.create_user(
+            username='legacy-user',
+            email='',
+            password='safe-password',
+        )
+        self.inactive_user = User.objects.create_user(
+            username='inactive-user',
+            email='inactive@example.com',
+            password='safe-password',
+            is_active=False,
+        )
+
+    def test_authenticates_verified_user_by_email_case_insensitively(self):
+        user = authenticate(
+            username='MARIA@EXAMPLE.COM',
+            password='safe-password',
+        )
+
+        self.assertEqual(user, self.email_user)
+
+    def test_authenticates_legacy_user_by_username_while_email_is_blank(self):
+
+        user = authenticate(
+            username='legacy-user',
+            password='safe-password',
+        )
+
+        self.assertEqual(user, self.legacy_user)
+
+    def test_rejects_verified_user_username_login(self):
+        user = authenticate(
+            username='maria',
+            password='safe-password',
+        )
+
+        self.assertIsNone(user)
+
+    def test_rejects_inactive_user(self):
+        user = authenticate(
+            username='inactive@example.com',
+            password='safe-password',
+        )
+
+        self.assertIsNone(user)
