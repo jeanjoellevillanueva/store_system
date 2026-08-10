@@ -7,6 +7,7 @@ import pandas as pd
 from braces.views import JSONResponseMixin
 
 from django.conf import settings
+from django.contrib import messages
 from django.contrib.auth import login
 from django.contrib.auth import logout
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -22,69 +23,96 @@ from .forms import LoginForm
 from .forms import EmployeeForm
 from .forms import UserForm
 from .forms import EmailEnrollmentForm
+from .forms import OTPVerificationForm
 
 from .models import Employee
 from .models import EmailOTP
 
 from .services import(
+    OTPAttemptsExceeded,
     OTPEmailAlreadyInUse,
     OTPEmailInvalid,
     OTPEmailRequired,
+    OTPExpired,
+    OTPInvalidCode,
+    OTPNotAvailable,
     OTPResendTooSoon,
     issue_email_enrollment_otp,
+    issue_login_otp,
+    verify_email_enrollment_otp,
+    verify_login_otp,
 )
+
+PENDING_OTP_USER_ID_SESSION_KEY = 'pending_otp_user_id'
+PENDING_OTP_PURPOSE_SESSION_KEY = 'pending_otp_purpose'
+
+
+def clear_pending_otp(request):
+    """Remove the temporary pre-authentication state from the session"""
+    request.session.pop(PENDING_OTP_USER_ID_SESSION_KEY, None)
+    request.session.pop(PENDING_OTP_PURPOSE_SESSION_KEY, None)
+
+def get_pending_otp_user(request):
+    """Return the active user stored during password verification, if any."""
+    user_id = request.session.get(PENDING_OTP_USER_ID_SESSION_KEY)
+
+    if not user_id:
+        return None
+
+    return User.objects.filter(pk=user_id, is_active=True).first()
 
 
 class LoginView(FormView):
     """
-    View used for logging in.
+    Verify the password, then start OTP Verification.
+
+    This view never calls login(); Django creates the authenticated session
+    only after OTP is verified.
     """
 
     template_name = 'login.html'
-    form_class = LoginForm
-    success_url = reverse_lazy(settings.LOGIN_REDIRECT_URL)
+    form_class = LoginForm 
 
     def form_valid(self, form):
         user = form.get_user()
-        login(self.request, user)
-        if not self.request.user.is_staff:
-            self.success_url = reverse_lazy('calendars:home')
-        return super().form_valid(form)
 
+        # Replace any anonymous session identifier before storing pre-auth state.
+        self.request.session.cycle_key()
+        self.request.session[PENDING_OTP_USER_ID_SESSION_KEY] = user.pk
+
+        if user.email:
+            self.request.session[
+                PENDING_OTP_PURPOSE_SESSION_KEY
+            ] = EmailOTP.Purpose.LOGIN
+            issue_login_otp(user)
+            return redirect('accounts:otp_verify')
+
+        self.request.session[
+            PENDING_OTP_PURPOSE_SESSION_KEY
+        ] = EmailOTP.Purpose.EMAIL_ENROLLMENT
+        return redirect('accounts:email_enrollment')
 
 def logout_view(request):
-    """
-    View used for logging out the user.
-    """
+    """Log out the current user."""
     logout(request)
     return redirect(reverse_lazy('accounts:login'))
 
 class EmailEnrollmentView(FormView):
-    """
-    Send a verification OTP for a legacy user who passed password validation
-    but does not yet have a verified email address.
-
-    The pending user ID is placed in the session by the login flow in step 9.
-    This view deliberately does not call login().
-    """
+    """Collect and verify an email address for a legacy username user."""
 
     template_name = 'accounts/email_enrollment.html'
     form_class = EmailEnrollmentForm
 
     def dispatch(self, request, *args, **kwargs):
-        self.pending_user_id = request.session.get('pending_otp_user_id')
+        self.pending_user = get_pending_otp_user(request)
+        purpose = request.session.get(PENDING_OTP_PURPOSE_SESSION_KEY)
 
-        if not self.pending_user_id:
-            return redirect('accounts:login')
-
-        try: 
-            self.pending_user = User.objects.get(
-                pk=self.pending_user_id,
-                email='',
-                is_active=True,
-            )
-        except User.DoesNotExist:
-            request.session.pop('pending_otp_user_id', None)
+        if (
+            self.pending_user is None
+            or purpose != EmailOTP.Purpose.EMAIL_ENROLLMENT
+            or self.pending_user.email
+        ):
+            clear_pending_otp(request)
             return redirect('accounts:login')
 
         return super().dispatch(request, *args, **kwargs)
@@ -99,14 +127,108 @@ class EmailEnrollmentView(FormView):
             OTPEmailRequired,
             OTPEmailInvalid,
             OTPEmailAlreadyInUse,
-            OTPResendTooSoon
+            OTPResendTooSoon,
         ) as error:
             form.add_error('email', str(error))
             return self.form_invalid(form)
 
-        # The OTP verification URL is added in step 9.
         return redirect('accounts:otp_verify')
 
+
+class OTPVerificationView(FormView):
+    """Verify an OTP and create the Django session only on success."""
+
+    template_name = 'accounts/otp_verify.html'
+    form_class = OTPVerificationForm
+
+    def dispatch(self, request, *args, **kwargs):
+        self.pending_user = get_pending_otp_user(request)
+        self.purpose = request.session.get(PENDING_OTP_PURPOSE_SESSION_KEY)
+
+        if (
+            self.pending_user is None
+            or self.purpose not in (
+                EmailOTP.Purpose.LOGIN,
+                EmailOTP.Purpose.EMAIL_ENROLLMENT,
+            )
+        ):
+            clear_pending_otp(request)
+            return redirect('accounts:login')
+
+        return super().dispatch(request, *args, **kwargs)
+
+    def form_valid(self, form):
+        try:
+            if self.purpose == EmailOTP.Purpose.LOGIN:
+                verify_login_otp(self.pending_user, form.cleaned_data['code'])
+            else:
+                verify_email_enrollment_otp(
+                    self.pending_user,
+                    form.cleaned_data['code'],
+                )
+        except (
+            OTPNotAvailable,
+            OTPExpired,
+            OTPInvalidCode,
+            OTPAttemptsExceeded,
+            OTPEmailAlreadyInUse,
+        ) as error:
+            form.add_error('code', str(error))
+            return self.form_invalid(form)
+
+        self.pending_user.refresh_from_db()
+        login(self.request, self.pending_user)
+        clear_pending_otp(self.request)
+
+        if self.pending_user.is_staff:
+            return redirect('dashboards:home')
+
+        return redirect('calendars:home')
+
+class ResendOTPView(View):
+    """Resend the active OTP while preserving the service cooldown rule."""
+
+    def post(self, request, *args, **kwargs):
+        pending_user = get_pending_otp_user(request)
+        purpose = request.session.get(PENDING_OTP_PURPOSE_SESSION_KEY)
+
+        if pending_user is None or purpose is None:
+            clear_pending_otp(request)
+            return redirect('accounts:login')
+
+        try:
+            if purpose == EmailOTP.Purpose.LOGIN:
+                issue_login_otp(pending_user)
+            elif purpose == EmailOTP.Purpose.EMAIL_ENROLLMENT:
+                active_otp = (
+                    EmailOTP.objects.filter(
+                        user=pending_user,
+                        purpose=purpose,
+                        consumed_at__isnull=True,
+                        invalidated_at__isnull=True,
+                    )
+                    .order_by('-created_at')
+                    .first()
+                )
+
+                if active_otp is None:
+                    messages.error(
+                        request,
+                        'Enter your email address to request a new code.',
+                    )
+                    return redirect('accounts:email_enrollment')
+
+                issue_email_enrollment_otp(pending_user, active_otp.email)
+            else:
+                clear_pending_otp(request)
+                return redirect('accounts:login')
+        except OTPResendTooSoon as error:
+            messages.error(request, str(error))
+        else:
+            messages.success(request, 'A new verification code has been sent')
+
+        return redirect('accounts:otp_verify')
+        
 
 class AccountComponentTemplateView(LoginRequiredMixin, JSONResponseMixin, TemplateView):
     """

@@ -11,8 +11,13 @@ class LoginForm(AuthenticationForm):
     Form used for logging in.
     """
     username = forms.CharField(
-        label="Username",
-        widget=forms.TextInput()
+        label='Email or username',
+        widget=forms.TextInput(
+            attrs={
+                'autocomplete': 'username',
+                'placeholder': 'Email or username',
+            },
+        ),
     )
     password = forms.CharField(
         label="Password",

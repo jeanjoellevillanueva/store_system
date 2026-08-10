@@ -1,0 +1,39 @@
+{% load widget_tweaks %}
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Verify email | {{ PROJECT_NAME }}</title>
+  <link href="{% static 'css/sb-admin-2.min.css' %}" rel="stylesheet">
+</head>
+<body class="bg-gradient-primary">
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-md-6 col-lg-5">
+        <div class="card shadow-lg my-5">
+          <div class="card-body p-5">
+            <h1 class="h4 text-gray-900 text-center mb-3">Add your email address</h1>
+            <p class="text-muted text-center">
+              We will send a verification code before signing you in.
+            </p>
+            <form method="post">
+              {% csrf_token %}
+              <div class="form-group">
+                {{ form.email|add_class:"form-control"|attr:"placeholder:Email address" }}
+                {% for error in form.email.errors %}
+                  <div class="text-danger small mt-1">{{ error }}</div>
+                {% endfor %}
+              </div>
+              <button class="btn btn-primary btn-block" type="submit">
+                Send verification code
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

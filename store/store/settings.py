@@ -134,7 +134,7 @@ LOGIN_URL = 'accounts:login'
 LOGIN_REDIRECT_URL = 'dashboards:home'
 
 AUTHENTICATION_BACKENDS = [
-    'accounts.backend.EmailOrLegacyUsernameBackend'
+    'accounts.backends.EmailOrLegacyUsernameBackend'
 ]
 
 # Project Details.
