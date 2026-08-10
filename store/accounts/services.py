@@ -1,5 +1,5 @@
 from datetime import timedelta
-from secrets import randbelow
+from secrets import randbelow, token_urlsafe
 
 from django.conf import settings
 from django.contrib.auth.hashers import check_password
@@ -65,6 +65,52 @@ def normalize_email(email):
         raise OTPEmailInvalid('Enter a valid email address.') from error
 
     return normalized_email
+
+
+
+def generate_internal_username():
+    """Generate an opaque username for users who register by email."""
+    return f'user_{token_urlsafe(18)}'
+
+def create_pending_registration(email, raw_password):
+    """
+    Create a new user with a generated username and blank User.email.
+
+    The submitted email is stored only on the enrollment OTP. It is copied to 
+    User.email by verify_email_enrollment_otp() after successful verification
+    """
+    normalized_email = normalize_email(email)
+
+    if User.objects.filter(email__iexact=normalized_email).exists():
+        raise OTPEmailAlreadyInUse(
+            'This email address is already associated with another account.'
+        )
+
+    for _ in range(3):
+        username = generate_internal_username()
+
+        try:
+            user = User.objects.create_user(
+                username=username,
+                email='',
+                password=raw_password,
+            )
+        except IntegrityError:
+            # A generated username collision is extremely unlikely; retry safely.
+            continue
+
+        try:
+            issue_email_enrollment_otp(user, normalized_email)
+        except Exception:
+            # Avoid leaving a blank-email account when OTP delivery fails.
+            user.delete()
+            raise
+
+        return user
+
+    raise RuntimeError('Could not generate a unique internal username.')
+
+
 
 def issue_login_otp(user):
     """

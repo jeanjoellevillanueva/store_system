@@ -11,6 +11,7 @@ from .views import AccountListDatatableTemplateView
 from .views import EmailEnrollmentView
 from .views import OTPVerificationView
 from .views import ResendOTPView
+from .views import RegistrationView
 
 app_name = 'accounts'
 
@@ -65,4 +66,9 @@ urlpatterns = [
         AccountCustomUpdateView.as_view(),
         name='update_account'
     ),
+    path(
+        'register/',
+        RegistrationView.as_view(),
+        name='register'
+    )
 ]

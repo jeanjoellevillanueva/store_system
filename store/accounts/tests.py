@@ -9,6 +9,7 @@ from django.core import mail
 from django.test import TestCase
 from django.test import override_settings
 from django.utils import timezone
+from django.urls import reverse
 
 from .models import EmailOTP
 
@@ -22,9 +23,10 @@ from .services import verify_login_otp
 from .services import OTPEmailAlreadyInUse
 from .services import issue_email_enrollment_otp
 from .services import verify_email_enrollment_otp
+from .services import create_pending_registration
 
 from .forms import OTPVerificationForm
-
+from .forms import RegistrationForm
 
 
 # Create your tests here.
@@ -336,3 +338,99 @@ class EmailOrLegacyUsernameBackendTestCase(TestCase):
         )
 
         self.assertIsNone(user)
+
+
+class RegistrationFormTestCase(TestCase):
+    """Test new-user registration input validation."""
+
+    def test_rejects_mismatched_passwords(self):
+        form = RegistrationForm(
+            data={
+                'email': 'new.user@example.com',
+                'password1': 'safe-password',
+                'password2': 'different-password',
+            },
+        )
+
+        self.assertFalse(form.is_valid())
+        self.assertIn('password2', form.errors)
+
+
+@override_settings(
+    EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend',
+    DEFAULT_FROM_EMAIL='no-reply@example.com',
+)
+class PendingRegistrationTestCase(TestCase):
+    """Test internal username generation and deferred email persistence."""
+
+    @patch(
+        'accounts.services.generate_internal_username',
+        return_value='user_internal_123',
+    )
+    def test_creates_blank_email_user_and_enrollment_otp(self, _):
+        user = create_pending_registration(
+            'New.User@example.com',
+            'safe-password',
+        )
+
+        user.refresh_from_db()
+        otp = EmailOTP.objects.get(user=user)
+
+        self.assertEqual(user.username, 'user_internal_123')
+        self.assertEqual(user.email, '')
+        self.assertTrue(user.check_password('safe-password'))
+        self.assertEqual(otp.email, 'new.user@example.com')
+        self.assertEqual(otp.purpose, EmailOTP.Purpose.EMAIL_ENROLLMENT)
+        self.assertEqual(len(mail.outbox), 1)
+
+    def test_rejects_an_email_already_owned_by_a_user(self):
+        User.objects.create_user(
+            username='existing-user',
+            email='owner@example.com',
+            password='safe-password',
+        )
+
+        with self.assertRaises(OTPEmailAlreadyInUse):
+            create_pending_registration(
+                'OWNER@example.com',
+                'safe-password',
+            )
+
+@override_settings(
+    EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend',
+    DEFAULT_FROM_EMAIL='no-reply@example.com',
+)
+class RegistrationViewTestCase(TestCase):
+    """Test the registration page's handoff into enrollment OTP verification"""
+
+    @patch(
+        'accounts.services.generate_internal_username',
+        return_value='user_registration_123',
+    )
+    def test_registration_starts_email_enrollment_otp(self, _):
+        response = self.client.post(
+            reverse('accounts:register'),
+            {
+                'email': 'new.user@example.com',
+                'password1': 'Strong-password-2026!',
+                'password2': 'Strong-password-2026!',
+            },
+        )
+
+        self.assertRedirects(response, reverse('accounts:otp_verify'))
+
+        user = User.objects.get(username='user_registration_123')
+        otp = EmailOTP.objects.get(user=user)
+        session = self.client.session
+
+        self.assertEqual(user.email, '')
+        self.assertEqual(otp.email, 'new.user@example.com')
+        self.assertEqual(
+            session['pending_otp_user_id'],
+            user.pk,
+        )
+        self.assertEqual(
+            session['pending_otp_purpose'],
+            EmailOTP.Purpose.EMAIL_ENROLLMENT,
+        )
+        self.assertNotIn('_auth_user_id', session)

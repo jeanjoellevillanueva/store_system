@@ -24,6 +24,7 @@ from .forms import EmployeeForm
 from .forms import UserForm
 from .forms import EmailEnrollmentForm
 from .forms import OTPVerificationForm
+from .forms import RegistrationForm
 
 from .models import Employee
 from .models import EmailOTP
@@ -41,6 +42,7 @@ from .services import(
     issue_login_otp,
     verify_email_enrollment_otp,
     verify_login_otp,
+    create_pending_registration,
 )
 
 PENDING_OTP_USER_ID_SESSION_KEY = 'pending_otp_user_id'
@@ -97,10 +99,47 @@ def logout_view(request):
     logout(request)
     return redirect(reverse_lazy('accounts:login'))
 
+
+
+class RegistrationView(FormView):
+    """
+    Start a new email-based account registration.
+
+    The service creates an internal username and blank User.email, sends an
+    enrollment OTP, and this view stores only the pending user ID in session
+    """
+
+    template_name = 'registration.html'
+    form_class = RegistrationForm
+
+    def form_valid(self, form):
+        try:
+            user = create_pending_registration(
+                form.cleaned_data['email'],
+                form.cleaned_data['password1'],
+            )
+        except (
+            OTPEmailRequired,
+            OTPEmailInvalid,
+            OTPEmailAlreadyInUse,
+        ) as error:
+            form.add_error('email', str(error))
+            return self.form_invalid(form)
+
+        self.request.session.cycle_key()
+        self.request.session[PENDING_OTP_USER_ID_SESSION_KEY] = user.pk 
+        self.request.session[
+            PENDING_OTP_PURPOSE_SESSION_KEY
+        ] = EmailOTP.Purpose.EMAIL_ENROLLMENT 
+
+        return redirect('accounts:otp_verify')
+
+
+
 class EmailEnrollmentView(FormView):
     """Collect and verify an email address for a legacy username user."""
 
-    template_name = 'accounts/email_enrollment.html'
+    template_name = 'email_enrollment.html'
     form_class = EmailEnrollmentForm
 
     def dispatch(self, request, *args, **kwargs):
@@ -138,7 +177,7 @@ class EmailEnrollmentView(FormView):
 class OTPVerificationView(FormView):
     """Verify an OTP and create the Django session only on success."""
 
-    template_name = 'accounts/otp_verify.html'
+    template_name = 'otp_verify.html'
     form_class = OTPVerificationForm
 
     def dispatch(self, request, *args, **kwargs):
