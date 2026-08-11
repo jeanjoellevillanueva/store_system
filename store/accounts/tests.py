@@ -434,3 +434,143 @@ class RegistrationViewTestCase(TestCase):
             EmailOTP.Purpose.EMAIL_ENROLLMENT,
         )
         self.assertNotIn('_auth_user_id', session)
+
+
+@override_settings(
+    AUTHENTICATION_BACKENDS=[
+        'accounts.backends.EmailOrLegacyUsernameBackend',
+    ],
+    EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend',
+    DEFAULT_FROM_EMAIL='no-reply@example.com',
+)
+class AuthenticationFlowIntegrationTestCase(TestCase):
+    """Exercise the public authentication flow from credentials through OTP."""
+
+    def setUp(self):
+        self.password = 'Strong-password-2026!'
+
+        self.verified_user = User.objects.create_user(
+            username='verified-user',
+            email='verified@example.com',
+            password=self.password,
+        )
+        self.legacy_user = User.objects.create_user(
+            username='legacy-user',
+            email='',
+            password=self.password,
+        )
+
+    def assert_authenticated_as(self, user):
+        """Confirm Django created an authenticated session for this user."""
+        self.assertEqual(
+            int(self.client.session['_auth_user_id']),
+            user.pk,
+        )
+
+    @patch('accounts.services.generate_otp_code', return_value='123456')
+    def test_verified_email_login_requires_otp_before_session_createion(self, _):
+        response = self.client.post(
+            reverse('accounts:login'),
+            {
+                'username': 'VERIFIED@example.com',
+                'password': self.password,
+            },
+        )
+
+        self.assertRedirects(response, reverse('accounts:otp_verify'))
+        self.assertNotIn('_auth_user_id', self.client.session)
+        self.assertEqual(len(mail.outbox), 1)
+
+        response = self.client.post(
+            reverse('accounts:otp_verify'),
+            {'code': '123456'},
+        )
+
+        self.assertRedirects(response, reverse('calendars:home'))
+        self.assert_authenticated_as(self.verified_user)
+
+        otp = EmailOTP.objects.get(user=self.verified_user)
+        self.assertIsNotNone(otp.consumed_at)
+
+    @patch('accounts.services.generate_otp_code', return_value='123456')
+    def test_legacy_username_login_enrolls_email_then_creates_session(self, _):
+        response = self.client.post(
+            reverse('accounts:login'),
+            {
+                'username': 'legacy-user',
+                'password': self.password,
+            },
+        )
+
+        self.assertRedirects(response, reverse('accounts:email_enrollment'))
+        self.assertNotIn('_auth_user_id', self.client.session)
+
+        response = self.client.post(
+            reverse('accounts:email_enrollment'),
+            {'email': 'legacy@example.com'},
+        )
+
+        self.assertRedirects(response, reverse('accounts:otp_verify'))
+        self.legacy_user.refresh_from_db()
+        self.assertEqual(self.legacy_user.email, '')
+
+        response = self.client.post(
+            reverse('accounts:otp_verify'),
+            {'code': '123456'},
+        )
+
+        self.assertRedirects(response, reverse('calendars:home'))
+        self.legacy_user.refresh_from_db()
+        self.assertEqual(self.legacy_user.email, 'legacy@example.com')
+        self.assert_authenticated_as(self.legacy_user)
+
+    @patch('accounts.services.generate_internal_username', return_value='user_new_123')
+    @patch('accounts.services.generate_otp_code', return_value='123456')
+    def test_registration_saves_email_only_after_otp_and_creates_session(
+        self,
+        _,
+        __,
+    ):
+        response = self.client.post(
+            reverse('accounts:register'),
+            {
+                'email': 'new.user@example.com',
+                'password1': self.password,
+                'password2': self.password,
+            },
+        )
+
+        self.assertRedirects(response, reverse('accounts:otp_verify'))
+
+        new_user = User.objects.get(username='user_new_123')
+        self.assertEqual(new_user.email, '')
+        self.assertNotIn('_auth_user_id', self.client.session)
+
+        response = self.client.post(
+            reverse('accounts:otp_verify'),
+            {'code': '123456'},
+        )
+
+        self.assertRedirects(response, reverse('calendars:home'))
+        new_user.refresh_from_db()
+        self.assertEqual(new_user.email, 'new.user@example.com')
+        self.assert_authenticated_as(new_user)
+
+    @patch('accounts.services.generate_otp_code', return_value='123456')
+    def test_resend_endpoint_observes_the_cooldown(self, _):
+        response = self.client.post(
+            reverse('accounts:login'),
+            {
+                'username': 'verified@example.com',
+                'password': self.password,
+            },
+        )
+
+        self.assertRedirects(response, reverse('accounts:otp_verify'))
+        self.assertEqual(len(mail.outbox), 1)
+
+        response = self.client.post(reverse('accounts:otp_resend'))
+
+        self.assertRedirects(response, reverse('accounts:otp_verify'))
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(EmailOTP.objects.count(), 1)
