@@ -19,22 +19,17 @@ from django.core.validators import validate_email
 class OTPResendTooSoon(Exception):
     """Raised when a user requests another OTP before the resend cooldown ends."""
 
-
 class OTPVerificationError(Exception):
     """Base class for OTP verification failures."""
-
 
 class OTPNotAvailable(OTPVerificationError):
     """Raised when no active OTP is available for verification."""
 
-
 class OTPExpired(OTPVerificationError):
     """Raised when the submitted OTP has expired."""
 
-
 class OTPInvalidCode(OTPVerificationError):
     """Raised when the submitted OTP does not match the stored hash."""
-
 
 class OTPAttemptsExceeded(OTPVerificationError):
     """Raised when an OTP reaches the maximum number of failed attempts."""
@@ -47,6 +42,9 @@ class OTPEmailInvalid(Exception):
 
 class OTPEmailAlreadyInUse(Exception):
     """Raised when another user already owns the requested email address."""
+
+class OTPDeliveryFailed(Exception):
+    """Raised when a verification email could not be delivered."""
 
 def generate_otp_code():
     """Generate a cryptographically secure six-digit numeric OTP code."""
@@ -132,22 +130,54 @@ def issue_email_enrollment_otp(user, email):
     after the user submits the correct OTP.
     """
     normalized_email = normalize_email(email)
+    now = timezone.now()
 
     if (
         User.objects
         .filter(email__iexact=normalized_email)
         .exclude(pk=user.pk)
         .exists()
-    ): 
+    ):
         raise OTPEmailAlreadyInUse(
             'This email address is already associated with another account.'
         )
 
-    return issue_otp(
-        user=user,
-        email=normalized_email,
+    # Expired enrollment OTPs must no longer reserve the address.
+    EmailOTP.objects.filter(
+        email__iexact=normalized_email,
         purpose=EmailOTP.Purpose.EMAIL_ENROLLMENT,
-    )
+        consumed_at__isnull=True,
+        invalidated_at__isnull=True,
+        expires_at__lte=now,
+    ).update(invalidated_at=now)
+
+    # Reject another user's still-active claim before trying to create an OTP.
+    if (
+        EmailOTP.objects
+        .filter(
+            email__iexact=normalized_email,
+            purpose=EmailOTP.Purpose.EMAIL_ENROLLMENT,
+            consumed_at__isnull=True,
+            invalidated_at__isnull=True,
+        )
+        .exclude(user=user)
+        .exists()
+    ):
+        raise OTPEmailAlreadyInUse(
+            'This email address is already being verified by another account.'
+        )
+
+    try:
+        return issue_otp(
+            user=user,
+            email=normalized_email,
+            purpose=EmailOTP.Purpose.EMAIL_ENROLLMENT,
+        )
+    except IntegrityError as error:
+        # Covers a concurrent request that passed the check above first.
+        raise OTPEmailAlreadyInUse(
+            'This email address is already being verified by another account.'
+        ) from error
 
 def issue_otp(user, email, purpose):
     """
@@ -214,18 +244,27 @@ def issue_otp(user, email, purpose):
         if purpose == EmailOTP.Purpose.EMAIL_ENROLLMENT
         else 'Your login verification code'
     )
-
-    send_mail(
-        subject=subject,
-        message=(
-            f'Your verification code is: {raw_code}\n\n'
-            f'It expires in {expiry_seconds // 60} minutes.'
-            'Do not share this code with anyone.'
-        ),
-        from_email=settings.DEFAULT_FROM_EMAIL,
-        recipient_list=[email],
-        fail_silently=False,
-    )
+    try:
+        send_mail(
+            subject=subject,
+            message=(
+                f'Your verification code is: {raw_code}\n\n'
+                f'It expires in {expiry_seconds // 60} minutes.\n'
+                'Do not share this code with anyone.'
+            ),
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[email],
+            fail_silently=False,
+        )
+    except Exception as error:
+        EmailOTP.objects.filter(
+            pk=otp.pk,
+            consumed_at__isnull=True,
+            invalidated_at__isnull=True,
+        ).update(invalidated_at=timezone.now())
+        raise OTPDeliveryFailed(
+            'We could not send your verification code. Please try again.'
+        ) from error
 
     return otp
 

@@ -468,7 +468,7 @@ class AuthenticationFlowIntegrationTestCase(TestCase):
         )
 
     @patch('accounts.services.generate_otp_code', return_value='123456')
-    def test_verified_email_login_requires_otp_before_session_createion(self, _):
+    def test_verified_email_login_requires_otp_before_session_creation(self, _):
         response = self.client.post(
             reverse('accounts:login'),
             {
@@ -574,3 +574,35 @@ class AuthenticationFlowIntegrationTestCase(TestCase):
         self.assertRedirects(response, reverse('accounts:otp_verify'))
         self.assertEqual(len(mail.outbox), 1)
         self.assertEqual(EmailOTP.objects.count(), 1)
+
+    @patch('accounts.services.generate_otp_code', return_value='123456')
+    def test_second_login_during_cooldown_redirects_to_otp_without_resending(self, _):
+        credentials = {
+            'username': 'verified@example.com',
+            'password': self.password,
+        }
+
+        first_response = self.client.post(
+            reverse('accounts:login'),
+            credentials,
+        )
+        self.assertRedirects(first_response, reverse('accounts:otp_verify'))
+        self.assertEqual(len(mail.outbox), 1)
+
+        second_response = self.client.post(
+            reverse('accounts:login'),
+            credentials,
+        )
+
+        self.assertEqual(second_response.status_code, 302)
+        self.assertRedirects(second_response, reverse('accounts:otp_verify'))
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(
+            EmailOTP.objects.filter(
+                user=self.verified_user,
+                purpose=EmailOTP.Purpose.LOGIN,
+                consumed_at__isnull=True,
+                invalidated_at__isnull=True,
+            ).count(),
+            1,
+        )

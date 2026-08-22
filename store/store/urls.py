@@ -3,12 +3,21 @@ from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include
 from django.urls import path
+from django.shortcuts import redirect
+from django.views import View
+
+class AdminLoginRedirectView(View):
+    """Require staff to use the public OTP flow before opening Django admin."""
+
+    def dispatch(self, request, *args, **kwargs):
+        return redirect('accounts:login')
 
 
 urlpatterns = [
     path('', include('pos.urls')),
     path('accounts/', include('accounts.urls')),
     path('attendance/', include('attendance.urls')),
+    path('admin/login/', AdminLoginRedirectView.as_view()),
     path('admin/', admin.site.urls),
     path('calendar/', include('calendars.urls')),
     path('dashboard/', include('dashboards.urls')),

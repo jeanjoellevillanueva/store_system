@@ -137,6 +137,16 @@ AUTHENTICATION_BACKENDS = [
     'accounts.backends.EmailOrLegacyUsernameBackend'
 ]
 
+EMAIL_OTP_EXPIRY_SECONDS = int(
+    os.environ.get('EMAIL_OTP_EXPIRY_SECONDS', '600')
+)
+EMAIL_OTP_RESEND_COOLDOWN_SECONDS = int(
+    os.environ.get('EMAIL_OTP_RESEND_COOLDOWN_SECONDS', '60')
+)
+EMAIL_OTP_MAX_ATTEMPTS = int(
+    os.environ.get('EMAIL_OTP_MAX_ATTEMPTS', '5')
+)
+
 # SMTP settings are supplied by the deployment environment only.
 # Do not add SMTP credentials to env.json or source control.
 EMAIL_BACKEND = os.environ.get(

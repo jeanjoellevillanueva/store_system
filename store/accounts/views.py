@@ -38,6 +38,7 @@ from .services import(
     OTPInvalidCode,
     OTPNotAvailable,
     OTPResendTooSoon,
+    OTPDeliveryFailed,
     issue_email_enrollment_otp,
     issue_login_otp,
     verify_email_enrollment_otp,
@@ -86,9 +87,17 @@ class LoginView(FormView):
             self.request.session[
                 PENDING_OTP_PURPOSE_SESSION_KEY
             ] = EmailOTP.Purpose.LOGIN
-            issue_login_otp(user)
-            return redirect('accounts:otp_verify')
 
+            try:
+                issue_login_otp(user)
+            except OTPResendTooSoon as error:
+                messages.info(self.request, str(error))
+                return redirect('accounts:otp_verify')
+            except OTPDeliveryFailed as error:
+                clear_pending_otp(self.request)
+                form.add_error(None, str(error))
+                return self.form_invalid(form)
+            return redirect('accounts:otp_verify')
         self.request.session[
             PENDING_OTP_PURPOSE_SESSION_KEY
         ] = EmailOTP.Purpose.EMAIL_ENROLLMENT
@@ -122,6 +131,7 @@ class RegistrationView(FormView):
             OTPEmailRequired,
             OTPEmailInvalid,
             OTPEmailAlreadyInUse,
+            OTPDeliveryFailed,
         ) as error:
             form.add_error('email', str(error))
             return self.form_invalid(form)
@@ -167,6 +177,7 @@ class EmailEnrollmentView(FormView):
             OTPEmailInvalid,
             OTPEmailAlreadyInUse,
             OTPResendTooSoon,
+            OTPDeliveryFailed,
         ) as error:
             form.add_error('email', str(error))
             return self.form_invalid(form)
@@ -261,7 +272,7 @@ class ResendOTPView(View):
             else:
                 clear_pending_otp(request)
                 return redirect('accounts:login')
-        except OTPResendTooSoon as error:
+        except (OTPResendTooSoon, OTPDeliveryFailed) as error:
             messages.error(request, str(error))
         else:
             messages.success(request, 'A new verification code has been sent')

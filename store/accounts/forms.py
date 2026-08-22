@@ -98,7 +98,7 @@ class RegistrationForm(forms.Form):
         password2 = cleaned_data.get('password2')
 
         if password1 and password2 and password1 != password2:
-            self.add_error('password2', 'The password do not much.')
+            self.add_error('password2', 'The passwords do not match.')
             return cleaned_data
 
         if email and password1:

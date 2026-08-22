@@ -24,7 +24,7 @@
 
               {% for field in form %}
                 <div class="form-group">
-                  {{ field|add_class:"form-control"|attr:"placeholder:"|add:field.label }}
+                  {% render_field field class="form-control" placeholder=field.label %}
                   {% for error in field.errors %}
                     <div class="text-danger small mt-1">{{ error }}</div>
                   {% endfor %}

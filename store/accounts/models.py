@@ -2,7 +2,7 @@ from django.contrib.auth.models import User
 from django.db import models
 from django.db.models import Q
 from django.utils import timezone
-
+from django.db.models.functions import Lower
 
 class Employee(models.Model):
     """
@@ -62,16 +62,28 @@ class EmailOTP(models.Model):
 
     class Meta:
         constraints = [
-            # It prevents accidental creation of two active login OTPs for the same user.
-            models.UniqueConstraint(
-                fields=['user', 'purpose'],
-                condition=Q(
-                    consumed_at__isnull=True,
-                    invalidated_at__isnull=True,
-                ),
-                name='one_active_email_otp_per_user_and_purpose',
+        # One active OTP per user and purpose.
+        models.UniqueConstraint(
+            fields=['user', 'purpose'],
+            condition=Q(
+                consumed_at__isnull=True,
+                invalidated_at__isnull=True,
             ),
+            name='one_active_email_otp_per_user_and_purpose',
+        ),
+
+        # One active email-enrollment OTP per email address.
+        models.UniqueConstraint(
+            Lower('email'),
+            condition=Q(
+                purpose='email_enrollment',
+                consumed_at__isnull=True,
+                invalidated_at__isnull=True,
+            ),
+            name='one_active_enrollment_otp_per_email_ci',
+        ),
         ]
+
         indexes = [
             models.Index(fields=['user', 'purpose', 'expires_at']),
         ]
