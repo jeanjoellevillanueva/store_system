@@ -18,6 +18,7 @@ from django.urls import reverse_lazy
 from django.views import View
 from django.views.generic import TemplateView
 from django.views.generic import FormView
+from django.utils.http import url_has_allowed_host_and_scheme
 
 from .forms import LoginForm
 from .forms import EmployeeForm
@@ -48,12 +49,14 @@ from .services import(
 
 PENDING_OTP_USER_ID_SESSION_KEY = 'pending_otp_user_id'
 PENDING_OTP_PURPOSE_SESSION_KEY = 'pending_otp_purpose'
+PENDING_OTP_NEXT_URL_SESSION_KEY = 'pending_otp_next_url'
 
 
 def clear_pending_otp(request):
     """Remove the temporary pre-authentication state from the session"""
     request.session.pop(PENDING_OTP_USER_ID_SESSION_KEY, None)
     request.session.pop(PENDING_OTP_PURPOSE_SESSION_KEY, None)
+    request.session.pop(PENDING_OTP_NEXT_URL_SESSION_KEY, None)
 
 def get_pending_otp_user(request):
     """Return the active user stored during password verification, if any."""
@@ -64,6 +67,17 @@ def get_pending_otp_user(request):
 
     return User.objects.filter(pk=user_id, is_active=True).first()
 
+def get_safe_next_url(request):
+    next_url = request.POST.get('next') or request.GET.get('next')
+
+    if next_url and url_has_allowed_host_and_scheme(
+        next_url,
+        allowed_hosts={request.get_host()},
+        require_https=request.is_secure(),
+    ):
+        return next_url
+
+    return None
 
 class LoginView(FormView):
     """
@@ -81,6 +95,14 @@ class LoginView(FormView):
 
         # Replace any anonymous session identifier before storing pre-auth state.
         self.request.session.cycle_key()
+
+        next_url = get_safe_next_url(self.request)
+
+        if next_url:
+            self.request.session[PENDING_OTP_NEXT_URL_SESSION_KEY] = next_url
+        else:
+            self.request.session.pop(PENDING_OTP_NEXT_URL_SESSION_KEY, None)
+
         self.request.session[PENDING_OTP_USER_ID_SESSION_KEY] = user.pk
 
         if user.email:
@@ -228,7 +250,12 @@ class OTPVerificationView(FormView):
 
         self.pending_user.refresh_from_db()
         login(self.request, self.pending_user)
+        next_url = self.request.session.get(PENDING_OTP_NEXT_URL_SESSION_KEY)
+
         clear_pending_otp(self.request)
+
+        if next_url:
+            return redirect(next_url)
 
         if self.pending_user.is_staff:
             return redirect('dashboards:home')
