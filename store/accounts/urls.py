@@ -8,6 +8,10 @@ from .views import AccountCustomCreateView
 from .views import AccountCustomDeleteView
 from .views import AccountCustomUpdateView
 from .views import AccountListDatatableTemplateView
+from .views import EmailEnrollmentView
+from .views import OTPVerificationView
+from .views import ResendOTPView
+from .views import RegistrationView
 
 app_name = 'accounts'
 
@@ -16,6 +20,21 @@ urlpatterns = [
         'login/',
         LoginView.as_view(),
         name='login'
+    ),
+    path(
+        'email-enrollment/',
+        EmailEnrollmentView.as_view(),
+        name='email_enrollment',
+        ),
+    path(
+        'otp/',
+        OTPVerificationView.as_view(),
+        name='otp_verify',
+    ),
+    path(
+        'otp/resend/',
+        ResendOTPView.as_view(),
+        name='otp_resend',
     ),
     path(
         'logout/',
@@ -47,4 +66,9 @@ urlpatterns = [
         AccountCustomUpdateView.as_view(),
         name='update_account'
     ),
+    path(
+        'register/',
+        RegistrationView.as_view(),
+        name='register'
+    )
 ]

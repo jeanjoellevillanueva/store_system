@@ -133,6 +133,45 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 LOGIN_URL = 'accounts:login'
 LOGIN_REDIRECT_URL = 'dashboards:home'
 
+AUTHENTICATION_BACKENDS = [
+    'accounts.backends.EmailOrLegacyUsernameBackend'
+]
+
+EMAIL_OTP_EXPIRY_SECONDS = int(
+    os.environ.get('EMAIL_OTP_EXPIRY_SECONDS', '600')
+)
+EMAIL_OTP_RESEND_COOLDOWN_SECONDS = int(
+    os.environ.get('EMAIL_OTP_RESEND_COOLDOWN_SECONDS', '60')
+)
+EMAIL_OTP_MAX_ATTEMPTS = int(
+    os.environ.get('EMAIL_OTP_MAX_ATTEMPTS', '5')
+)
+
+# SMTP settings are supplied by the deployment environment only.
+# Do not add SMTP credentials to env.json or source control.
+EMAIL_BACKEND = os.environ.get(
+    'EMAIL_BACKEND',
+    'django.core.mail.backends.smtp.EmailBackend',
+)
+EMAIL_HOST = os.environ.get('EMAIL_HOST', '')
+EMAIL_PORT = int(os.environ.get('EMAIL_PORT', '587'))
+EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
+EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', 'true').lower() in (
+    '1',
+    'true',
+    'yes',
+)
+EMAIL_USE_SSL = os.environ.get('EMAIL_USE_SSL', 'false').lower() in (
+    '1',
+    'true',
+    'yes',
+)
+EMAIL_TIMEOUT = int(os.environ.get('EMAIL_TIMEOUT', '10'))
+DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', '')
+
+
+
 # Project Details.
 PROJECT_NAME = PROJECT_DETAIL['NAME']
 FAVICON_LINK = PROJECT_DETAIL['FAVICON_LINK']

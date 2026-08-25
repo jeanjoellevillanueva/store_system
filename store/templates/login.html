@@ -40,8 +40,11 @@
                     </div>
                     <form class="user" method="POST" action="{% url 'accounts:login' %}">
                       {% csrf_token %}
+                      {% if request.GET.next %}
+                        <input type="hidden" name="next" value="{{ request.GET.next }}">
+                      {% endif %}
                       <div class="form-group">
-                        {{ form.username|add_class:"form-control form-control-user"|attr:"placeholder:Username" }}
+                        {{ form.username|add_class:"form-control form-control-user"|attr:"placeholder:Email or username" }}
                         {% if form.username.errors %}
                           <ul class="list-unstyled text-danger">
                             {% for error in form.username.errors %}
@@ -90,7 +93,7 @@
                       <!-- <a class="small" href="forgot-password.html">Forgot Password?</a> -->
                     </div>
                     <div class="text-center">
-                      <!-- <a class="small" href="register.html">Create an Account!</a> -->
+                      <a class="small" href="{% url 'accounts:register' %}">Create an Account!</a>
                     </div>
                   </div>
                 </div>
