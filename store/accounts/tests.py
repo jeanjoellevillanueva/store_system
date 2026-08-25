@@ -383,6 +383,38 @@ class PendingRegistrationTestCase(TestCase):
         self.assertEqual(otp.purpose, EmailOTP.Purpose.EMAIL_ENROLLMENT)
         self.assertEqual(len(mail.outbox), 1)
 
+    def test_rejects_duplicate_pending_registration_without_changing_password(self):
+        first_user = create_pending_registration(
+            'person@example.com',
+            'original-password',
+        )
+
+        with self.assertRaises(OTPEmailAlreadyInUse):
+            create_pending_registration(
+                'PERSON@example.com',
+                'attacker-password',
+            )
+
+        first_user.refresh_from_db()
+
+        self.assertTrue(first_user.check_password('original-password'))
+        self.assertFalse(first_user.check_password('attacker-password'))
+        self.assertEqual(
+            User.objects.filter(
+                email='',
+                email_otps__purpose=EmailOTP.Purpose.EMAIL_ENROLLMENT,
+                email_otps__email__iexact='person@example.com'
+            ).distinct().count(),
+            1,
+        )
+        self.assertEqual(
+            EmailOTP.objects.filter(
+                purpose=EmailOTP.Purpose.EMAIL_ENROLLMENT,
+                email__iexact='person@example.com',
+            ).count(),
+            1,
+        )
+
     def test_rejects_an_email_already_owned_by_a_user(self):
         User.objects.create_user(
             username='existing-user',
@@ -434,6 +466,28 @@ class RegistrationViewTestCase(TestCase):
             EmailOTP.Purpose.EMAIL_ENROLLMENT,
         )
         self.assertNotIn('_auth_user_id', session)
+
+    def test_duplicate_pending_registration_shows_email_error(self):
+        create_pending_registration(
+            'person@example.com',
+            'original-password',
+        )
+
+        response = self.client.post(
+            reverse('accounts:register'),
+            {
+                'email': 'PERSON@example.com',
+                'password1': 'Strong-password-2026!',
+                'password2': 'Strong-password-2026!',
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(
+            response,
+            'This email address is already associated with another account.',
+        )
+        self.assertEqual(User.objects.filter(email='').count(), 1)
 
 
 @override_settings(

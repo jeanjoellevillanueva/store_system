@@ -86,24 +86,16 @@ def create_pending_registration(email, raw_password):
 
     # Reuse an existing unverified account for this email instead of creating
     # another blank-email user after its OTP expires or is invalidated.
-    pending_user = (
-        User.objects
-        .filter(
-            email='',
-            email_otps__purpose=EmailOTP.Purpose.EMAIL_ENROLLMENT,
-            email_otps__email__iexact=normalized_email,
+    pending_user_exists = User.objects.filter(
+        email='',
+        email_otps__purpose=EmailOTP.Purpose.EMAIL_ENROLLMENT,
+        email_otps__email__iexact=normalized_email,
+    ).exists()
+
+    if pending_user_exists:
+        raise OTPEmailAlreadyInUse(
+            'This email address is already associated with another account.'
         )
-        .order_by('pk')
-        .first()
-    )
-
-    if pending_user:
-        issue_email_enrollment_otp(pending_user, normalized_email)
-
-        pending_user.set_password(raw_password)
-        pending_user.save(update_fields=['password'])
-
-        return pending_user
 
     for _ in range(3):
         username = generate_internal_username()

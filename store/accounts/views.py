@@ -153,6 +153,7 @@ class RegistrationView(FormView):
             OTPEmailRequired,
             OTPEmailInvalid,
             OTPEmailAlreadyInUse,
+            OTPResendTooSoon,
             OTPDeliveryFailed,
         ) as error:
             form.add_error('email', str(error))
