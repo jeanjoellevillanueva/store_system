@@ -384,12 +384,13 @@ class PendingRegistrationTestCase(TestCase):
         self.assertEqual(len(mail.outbox), 1)
 
     def test_rejects_duplicate_pending_registration_without_changing_password(self):
+        """An active pending signup keeps its password and is not taken over."""
         first_user = create_pending_registration(
             'person@example.com',
             'original-password',
         )
 
-        with self.assertRaises(OTPEmailAlreadyInUse):
+        with self.assertRaises(OTPResendTooSoon):
             create_pending_registration(
                 'PERSON@example.com',
                 'attacker-password',
@@ -411,6 +412,37 @@ class PendingRegistrationTestCase(TestCase):
             EmailOTP.objects.filter(
                 purpose=EmailOTP.Purpose.EMAIL_ENROLLMENT,
                 email__iexact='person@example.com',
+            ).count(),
+            1,
+        )
+
+    def test_expired_pending_registration_can_register_again(self):
+        """An expired enrollment OTP does not lock the email address."""
+        first_user = create_pending_registration(
+            'person@example.com',
+            'original-password',
+        )
+        EmailOTP.objects.filter(user=first_user).update(
+            expires_at=timezone.now() - timedelta(seconds=1),
+        )
+
+        reused_user = create_pending_registration(
+            'PERSON@example.com',
+            'new-password',
+        )
+
+        first_user.refresh_from_db()
+
+        self.assertEqual(reused_user.pk, first_user.pk)
+        self.assertTrue(first_user.check_password('new-password'))
+        self.assertFalse(first_user.check_password('original-password'))
+        self.assertEqual(User.objects.filter(email='').count(), 1)
+        self.assertEqual(
+            EmailOTP.objects.filter(
+                user=first_user,
+                purpose=EmailOTP.Purpose.EMAIL_ENROLLMENT,
+                consumed_at__isnull=True,
+                invalidated_at__isnull=True,
             ).count(),
             1,
         )
@@ -468,6 +500,7 @@ class RegistrationViewTestCase(TestCase):
         self.assertNotIn('_auth_user_id', session)
 
     def test_duplicate_pending_registration_shows_email_error(self):
+        """A second signup during cooldown keeps the original pending user."""
         create_pending_registration(
             'person@example.com',
             'original-password',
@@ -485,8 +518,34 @@ class RegistrationViewTestCase(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(
             response,
-            'This email address is already associated with another account.',
+            'Please wait before requesting another verification code.',
         )
+        self.assertEqual(User.objects.filter(email='').count(), 1)
+
+    def test_expired_pending_registration_resumes_otp_flow(self):
+        """A lost session can finish signup after the first OTP expires."""
+        user = create_pending_registration(
+            'person@example.com',
+            'original-password',
+        )
+        EmailOTP.objects.filter(user=user).update(
+            expires_at=timezone.now() - timedelta(seconds=1),
+        )
+
+        response = self.client.post(
+            reverse('accounts:register'),
+            {
+                'email': 'PERSON@example.com',
+                'password1': 'Strong-password-2026!',
+                'password2': 'Strong-password-2026!',
+            },
+        )
+
+        user.refresh_from_db()
+
+        self.assertRedirects(response, reverse('accounts:otp_verify'))
+        self.assertTrue(user.check_password('Strong-password-2026!'))
+        self.assertEqual(self.client.session['pending_otp_user_id'], user.pk)
         self.assertEqual(User.objects.filter(email='').count(), 1)
 
 

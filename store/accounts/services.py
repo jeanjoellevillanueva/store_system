@@ -74,8 +74,10 @@ def create_pending_registration(email, raw_password):
     """
     Create a new user with a generated username and blank User.email.
 
-    The submitted email is stored only on the enrollment OTP. It is copied to 
-    User.email by verify_email_enrollment_otp() after successful verification
+    The submitted email is stored only on the enrollment OTP. It is copied to
+    User.email by verify_email_enrollment_otp() after successful verification.
+    An existing unverified account for this email is reused so an expired OTP
+    or a lost browser session does not permanently lock the address.
     """
     normalized_email = normalize_email(email)
 
@@ -84,18 +86,35 @@ def create_pending_registration(email, raw_password):
             'This email address is already associated with another account.'
         )
 
-    # Reuse an existing unverified account for this email instead of creating
-    # another blank-email user after its OTP expires or is invalidated.
-    pending_user_exists = User.objects.filter(
-        email='',
-        email_otps__purpose=EmailOTP.Purpose.EMAIL_ENROLLMENT,
-        email_otps__email__iexact=normalized_email,
-    ).exists()
-
-    if pending_user_exists:
-        raise OTPEmailAlreadyInUse(
-            'This email address is already associated with another account.'
+    pending_user = (
+        User.objects
+        .filter(
+            email='',
+            email_otps__purpose=EmailOTP.Purpose.EMAIL_ENROLLMENT,
+            email_otps__email__iexact=normalized_email,
         )
+        .order_by('pk')
+        .distinct()
+        .first()
+    )
+
+    if pending_user:
+        has_active_otp = EmailOTP.objects.filter(
+            user=pending_user,
+            purpose=EmailOTP.Purpose.EMAIL_ENROLLMENT,
+            email__iexact=normalized_email,
+            consumed_at__isnull=True,
+            invalidated_at__isnull=True,
+            expires_at__gt=timezone.now(),
+        ).exists()
+
+        issue_email_enrollment_otp(pending_user, normalized_email)
+
+        if not has_active_otp:
+            pending_user.set_password(raw_password)
+            pending_user.save(update_fields=['password'])
+
+        return pending_user
 
     for _ in range(3):
         username = generate_internal_username()
